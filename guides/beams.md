@@ -297,7 +297,6 @@ end
    - Use parallel execution when possible
    - Set appropriate timeouts
    - Monitor execution times
-   - Cache expensive operations
 
 4. **Testing**
    - Test happy paths

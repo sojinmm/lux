@@ -189,7 +189,6 @@ The framework includes comprehensive error handling:
 - Automatic retries with backoff
 - Error logging and tracking
 - Recovery strategies
-- Circuit breakers
 
 ### Testing and Development
 Lux is designed for testability:

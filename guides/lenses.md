@@ -248,61 +248,6 @@ end
 
 ## Advanced Topics
 
-### Rate Limiting
-```elixir
-defmodule MyApp.Lenses.RateLimitedAPI do
-  use Lux.Lens,
-    name: "Rate Limited API",
-    url: "https://api.example.com/data",
-    rate_limit: %{
-      requests: 100,
-      window: :timer.seconds(60)
-    }
-
-  def before_focus(_params, opts) do
-    case check_rate_limit() do
-      :ok -> {:ok, opts}
-      :error -> {:error, "Rate limit exceeded"}
-    end
-  end
-
-  defp check_rate_limit do
-    # Implementation
-    :ok
-  end
-end
-```
-
-### Caching
-```elixir
-defmodule MyApp.Lenses.CachedAPI do
-  use Lux.Lens,
-    name: "Cached API",
-    url: "https://api.example.com/data",
-    cache: %{
-      ttl: :timer.minutes(5),
-      key_fn: &__MODULE__.cache_key/1
-    }
-
-  def cache_key(params) do
-    "cached_api:#{params.id}"
-  end
-
-  def before_focus(params, opts) do
-    case Cachex.get(:api_cache, cache_key(params)) do
-      {:ok, value} when not is_nil(value) ->
-        {:ok, value}
-      _ ->
-        {:continue, opts}
-    end
-  end
-
-  def after_focus(response) do
-    {:ok, response}
-  end
-end
-```
-
 ### Retry Logic
 ```elixir
 defmodule MyApp.Lenses.RetryingAPI do
