@@ -3,6 +3,26 @@ defmodule Lux.Prism do
   Modular, composable units of functionality for defining actions.
 
   Prisms are used to define actions that can be executed by agents.
+
+  ## Example
+
+      defmodule MyApp.Prisms.WeatherPrism do
+        use Lux.Prism,
+          name: "Weather Data",
+          description: "Fetches weather data for a given location",
+          input_schema: %{
+            type: :object,
+            properties: %{
+              location: %{type: :string, description: "City name"},
+              units: %{type: :string, description: "Temperature units (C/F)"}
+            }
+          }
+
+        def handler(input, _ctx) do
+          # Implementation
+        end
+      end
+
   """
   use Lux.Types
 
@@ -45,11 +65,6 @@ defmodule Lux.Prism do
 
   @doc """
   Creates a new prism from a map or keyword list.
-
-  ## Examples:
-
-  iex> Prism.new(%{id: "1", name: "test", handler: &String.split/2, description: "test", examples: ["test"]})
-  %Prism{id: "1", name: "test", handler: &String.split/2, description: "test", examples: ["test"]}
   """
   @spec new(map() | keyword()) :: t()
   def new(attrs) when is_map(attrs) do
@@ -74,14 +89,46 @@ defmodule Lux.Prism do
   """
   @callback handler(input :: any(), context :: any()) :: {:ok, any()} | {:error, any()}
 
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     quote do
-      alias Lux.Prism
       @behaviour Lux.Prism
+      alias Lux.Prism
+
+      # Register compile-time attributes
+      Module.register_attribute(__MODULE__, :prism_config, persist: false)
+      Module.register_attribute(__MODULE__, :prism_struct, persist: false)
+
+      # Store the configuration at compile time
+      @prism_config %{
+        name: Keyword.get(unquote(opts), :name, __MODULE__ |> Module.split() |> List.last()),
+        description: Keyword.get(unquote(opts), :description, ""),
+        input_schema: Keyword.get(unquote(opts), :input_schema),
+        output_schema: Keyword.get(unquote(opts), :output_schema),
+        examples: Keyword.get(unquote(opts), :examples, [])
+      }
+
+      # Create the struct at compile time
+      @prism_struct Lux.Prism.new(
+                      id: Lux.UUID.generate(),
+                      name: @prism_config.name,
+                      description: @prism_config.description,
+                      input_schema: @prism_config.input_schema,
+                      output_schema: @prism_config.output_schema,
+                      examples: @prism_config.examples
+                    )
 
       def run(input, context \\ nil) do
         Lux.Prism.run(__MODULE__, input, context)
       end
+
+      @doc """
+      Returns the Prism struct for this module.
+      """
+      def view do
+        %{@prism_struct | handler: &__MODULE__.handler/2}
+      end
+
+      defoverridable run: 2
     end
   end
 

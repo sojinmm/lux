@@ -2,7 +2,27 @@ defmodule Lux.Lens do
   @moduledoc """
   Lenses are used to load data from a source and return it to the calling specter.
 
-  Given a
+  ## Example
+
+      defmodule MyApp.Lenses.WeatherLens do
+        use Lux.Lens,
+          name: "Weather API",
+          description: "Fetches weather data from OpenWeather API",
+          url: "https://api.openweathermap.org/data/2.5/weather",
+          method: :get,
+          schema: %{
+            type: :object,
+            properties: %{
+              location: %{type: :string, description: "City name"},
+              units: %{type: :string, description: "Temperature units (metric/imperial)"}
+            }
+          }
+
+        # Optional: Define a custom after_focus function
+        def after_focus(%{"main" => %{"temp" => temp}} = body) do
+          {:ok, %{temperature: temp, raw_data: body}}
+        end
+      end
   """
   use Lux.Types
 
@@ -28,11 +48,56 @@ defmodule Lux.Lens do
           schema: map()
         }
 
-  defmacro __using__(_opts) do
+  @optional_callbacks after_focus: 1
+
+  defmacro __using__(opts) do
     quote do
+      @behaviour Lux.Lens
       alias Lux.Lens
+
+      # Register compile-time attributes
+      Module.register_attribute(__MODULE__, :lens_struct, persist: false)
+
+      # Create the struct at compile time
+      @lens_struct Lux.Lens.new(
+                     name:
+                       Keyword.get(
+                         unquote(opts),
+                         :name,
+                         __MODULE__ |> Module.split() |> List.last()
+                       ),
+                     description: Keyword.get(unquote(opts), :description, ""),
+                     url: Keyword.get(unquote(opts), :url),
+                     method: Keyword.get(unquote(opts), :method, :get),
+                     params: Keyword.get(unquote(opts), :params, %{}),
+                     headers: Keyword.get(unquote(opts), :headers, []),
+                     auth: Keyword.get(unquote(opts), :auth),
+                     schema: Keyword.get(unquote(opts), :schema, %{}),
+                     after_focus: &__MODULE__.after_focus/1
+                   )
+
+      @doc """
+      Returns the Lens struct for this module.
+      """
+      def view do
+        case function_exported?(__MODULE__, :after_focus, 1) do
+          true -> %{@lens_struct | after_focus: &__MODULE__.after_focus/1}
+          false -> @lens_struct
+        end
+      end
+
+      @doc """
+      Focuses the lens with the given input.
+      """
+      def focus(input \\ %{}) do
+        __MODULE__.view()
+        |> Map.update!(:params, &Map.merge(&1, input))
+        |> Lux.Lens.focus()
+      end
     end
   end
+
+  @callback after_focus(response :: any()) :: {:ok, any()} | {:error, any()}
 
   def new(attrs) when is_map(attrs) do
     %__MODULE__{

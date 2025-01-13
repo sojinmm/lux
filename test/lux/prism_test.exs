@@ -57,5 +57,59 @@ defmodule Lux.PrismTest do
 
       assert MyExclamationPrism.run("Hello world") == {:ok, "Hello world!!!"}
     end
+
+    test "creates a prism with declarative attributes" do
+      defmodule WeatherPrism do
+        use Lux.Prism,
+          name: "Weather Data",
+          description: "Fetches weather data for a location",
+          input_schema: %{
+            type: :object,
+            properties: %{
+              location: %{type: :string, description: "City name"},
+              units: %{type: :string, description: "Temperature units"}
+            }
+          },
+          examples: ["London, C", "New York, F"]
+
+        def handler(input, _ctx) do
+          {:ok, %{temperature: 20, location: input.location, units: input.units}}
+        end
+      end
+
+      prism = WeatherPrism.view()
+
+      assert %Prism{} = prism
+      assert prism.name == "Weather Data"
+      assert prism.description == "Fetches weather data for a location"
+
+      assert prism.input_schema == %{
+               type: :object,
+               properties: %{
+                 location: %{type: :string, description: "City name"},
+                 units: %{type: :string, description: "Temperature units"}
+               }
+             }
+
+      assert prism.examples == ["London, C", "New York, F"]
+      assert is_function(prism.handler, 2)
+
+      # Test that the handler still works through the struct
+      assert {:ok, result} = Prism.run(prism, %{location: "London", units: "C"}, nil)
+      assert result.temperature == 20
+      assert result.location == "London"
+      assert result.units == "C"
+    end
+
+    test "uses module name as default name" do
+      defmodule DefaultNamePrism do
+        use Lux.Prism
+
+        def handler(_input, _ctx), do: {:ok, :done}
+      end
+
+      prism = DefaultNamePrism.view()
+      assert prism.name == "DefaultNamePrism"
+    end
   end
 end
