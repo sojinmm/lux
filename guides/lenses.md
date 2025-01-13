@@ -59,6 +59,8 @@ weather.raw_data    # Full API response
 
 ## Authentication Types
 
+Lenses support several authentication methods that are automatically applied when making requests:
+
 ### API Key Authentication
 ```elixir
 defmodule MyApp.Lenses.APIKeyAuth do
@@ -67,11 +69,12 @@ defmodule MyApp.Lenses.APIKeyAuth do
     url: "https://api.example.com/data",
     auth: %{
       type: :api_key,
-      key: System.get_env("API_KEY"),
-      header: "X-API-Key"  # Optional, defaults to "Authorization"
+      key: System.get_env("API_KEY")
     }
 end
 ```
+
+When using API key authentication, the key is automatically added as a Bearer token in the Authorization header.
 
 ### Basic Authentication
 ```elixir
@@ -87,6 +90,8 @@ defmodule MyApp.Lenses.BasicAuth do
 end
 ```
 
+Basic authentication automatically encodes the username and password in Base64 format and adds them to the Authorization header.
+
 ### OAuth Authentication
 ```elixir
 defmodule MyApp.Lenses.OAuthExample do
@@ -95,15 +100,12 @@ defmodule MyApp.Lenses.OAuthExample do
     url: "https://api.example.com/oauth",
     auth: %{
       type: :oauth,
-      token: fn -> fetch_oauth_token() end
+      token: System.get_env("OAUTH_TOKEN")
     }
-
-  defp fetch_oauth_token do
-    # Implementation to fetch/refresh OAuth token
-    {:ok, "token"}
-  end
 end
 ```
+
+OAuth authentication adds the token as a Bearer token in the Authorization header.
 
 ### Custom Authentication
 ```elixir
@@ -123,6 +125,8 @@ defmodule MyApp.Lenses.CustomAuth do
   end
 end
 ```
+
+Custom authentication allows you to implement your own authentication logic by providing a function that modifies the lens before the request is made.
 
 ## Response Transformation
 
@@ -175,9 +179,9 @@ end
 
 1. **Authentication**
    - Use environment variables for credentials
-   - Implement token refresh for OAuth
-   - Handle authentication errors gracefully
+   - Keep sensitive data out of version control
    - Use appropriate auth type for the API
+   - Handle authentication errors gracefully
 
 2. **Error Handling**
    - Handle common HTTP errors
@@ -201,7 +205,6 @@ Example test:
 ```elixir
 defmodule MyApp.Lenses.WeatherAPITest do
   use ExUnit.Case, async: true
-  import Mox
 
   setup do
     Req.Test.verify_on_exit!()
@@ -212,6 +215,9 @@ defmodule MyApp.Lenses.WeatherAPITest do
     test "fetches weather data successfully" do
       Req.Test.expect(Lux.Lens, fn conn ->
         assert conn.params == %{"city" => "London", "units" => "metric"}
+        assert Enum.any?(conn.headers, fn {k, v} -> 
+          k == "Authorization" and String.starts_with?(v, "Bearer ")
+        end)
         Req.Test.json(conn, %{
           "main" => %{"temp" => 20.5},
           "weather" => [%{"description" => "clear sky"}]

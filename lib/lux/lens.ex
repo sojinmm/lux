@@ -146,6 +146,12 @@ defmodule Lux.Lens do
     end
   end
 
+  def focus(%__MODULE__{auth: auth} = lens) when not is_nil(auth) do
+    lens
+    |> authenticate()
+    |> focus()
+  end
+
   def authenticate(%__MODULE__{auth: %{type: :api_key, key: key}} = lens),
     do: update_headers(lens, [{"Authorization", "Bearer #{key}"}])
 
