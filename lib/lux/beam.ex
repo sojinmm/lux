@@ -23,9 +23,10 @@ defmodule Lux.Beam do
       input_schema: %{
         type: :object,
         properties: %{
-          symbol: %{type: :string}
+          symbol: %{type: :string},
+          amount: %{type: :number}
         },
-        required: ["symbol"]
+        required: ["symbol", "amount"]
       },
       output_schema: %{
         type: :object,
@@ -162,6 +163,7 @@ defmodule Lux.Beam do
   - `track`: Enable step tracking (default: false)
   - `dependencies`: List of dependent step IDs (default: [])
   - `store_io`: Store step I/O in execution log (default: false)
+  - `fallback`: Module or function to handle step failures (default: nil)
 
   ## Parameter References
 
@@ -223,7 +225,8 @@ defmodule Lux.Beam do
             retry_backoff: pos_integer(),
             track: boolean(),
             dependencies: [String.t()],
-            store_io: boolean()
+            store_io: boolean(),
+            fallback: module() | (map() -> {:continue | :stop, term()}) | nil
           }
         }
 
@@ -248,30 +251,20 @@ defmodule Lux.Beam do
       import Lux.Beam, only: [step: 3, step: 4, parallel: 1, sequence: 1, branch: 2]
       alias Lux.Beam
 
-      @before_compile Lux.Beam
+      @beam %Beam{
+        id: unquote(opts[:id]) || Lux.UUID.generate(),
+        name: unquote(opts[:name]),
+        description: unquote(opts[:description]),
+        input_schema: unquote(opts[:input_schema]),
+        output_schema: unquote(opts[:output_schema]),
+        timeout: unquote(opts[:timeout] || :timer.minutes(5)),
+        generate_execution_log: unquote(opts[:generate_execution_log] || false),
+        definition: nil
+      }
 
-      def beam do
-        beam_steps = steps()
-
-        Lux.Beam.new(
-          id: unquote(opts[:id]),
-          name: unquote(opts[:name]),
-          description: unquote(opts[:description]),
-          input_schema: unquote(opts[:input_schema]),
-          output_schema: unquote(opts[:output_schema]),
-          timeout: unquote(opts[:timeout] || :timer.minutes(5)),
-          generate_execution_log: unquote(opts[:generate_execution_log] || false),
-          definition: beam_steps
-        )
-      end
+      def beam, do: %{@beam | definition: steps()}
 
       def run(input, opts \\ []), do: Lux.Beam.Runner.run(beam(), input, opts)
-    end
-  end
-
-  defmacro __before_compile__(_env) do
-    quote do
-      def steps, do: nil
     end
   end
 
@@ -305,7 +298,8 @@ defmodule Lux.Beam do
             retry_backoff: 1000,
             track: false,
             dependencies: [],
-            store_io: false
+            store_io: false,
+            fallback: nil
           })
       }
     end

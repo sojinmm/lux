@@ -186,15 +186,58 @@ defmodule MyApp.Beams.RobustBeam do
     sequence do
       step(:risky, RiskyPrism, %{},
         retries: 3,
-        retry_backoff: 1000)
+        retry_backoff: 1000,
+        fallback: MyApp.Fallbacks.RiskyFallback)
+    end
+  end
+end
 
-      step(:fallback, FallbackPrism, %{
-        error: {:ref, "risky.error"}
-      })
+defmodule MyApp.Fallbacks.RiskyFallback do
+  def handle_error(%{error: error, context: ctx}) do
+    case error do
+      %{recoverable: true} ->
+        {:continue, %{status: :degraded, result: compute_fallback(ctx)}}
+      _ ->
+        {:stop, "Unrecoverable error: #{inspect(error)}"}
+    end
+  end
+
+  defp compute_fallback(ctx) do
+    # Compute fallback result
+    %{value: 0}
+  end
+end
+```
+
+### Inline Fallbacks
+You can also define fallbacks inline using anonymous functions:
+
+```elixir
+defmodule MyApp.Beams.InlineFallbackBeam do
+  use Lux.Beam
+
+  def steps do
+    sequence do
+      step(:operation, OperationPrism, %{},
+        fallback: fn %{error: error, context: ctx} ->
+          if recoverable?(error) do
+            {:continue, %{status: :degraded}}
+          else
+            {:stop, "Cannot proceed: #{inspect(error)}"}
+          end
+        end)
     end
   end
 end
 ```
+
+### Fallback Behavior
+Fallbacks can:
+- Access the error and context
+- Return `{:continue, result}` to continue execution
+- Return `{:stop, reason}` to halt the beam
+- Transform errors into valid results
+- Implement recovery strategies
 
 ### Custom Error Handling
 ```elixir

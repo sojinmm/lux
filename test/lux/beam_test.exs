@@ -200,12 +200,153 @@ defmodule Lux.BeamTest do
     end
   end
 
-  # Helper module for tests
   defmodule TestPrism do
     use Lux.Prism
 
     def handler(input, _ctx) do
-      {:ok, input}
+      case input do
+        %{fail: true} -> {:error, "Intentional failure"}
+        %{fail: :unrecoverable} -> {:error, %{type: :unrecoverable, message: "Cannot recover"}}
+        %{fail: :recoverable} -> {:error, %{type: :recoverable, message: "Can recover"}}
+        _ -> {:ok, input}
+      end
+    end
+  end
+
+  defmodule TestFallback do
+    def handle_error(%{error: %{type: :recoverable} = error, context: _ctx}) do
+      {:continue, %{recovered: true, original_error: error}}
+    end
+
+    def handle_error(%{error: error, context: _ctx}) do
+      {:stop, "Stopped by fallback: #{inspect(error)}"}
+    end
+  end
+
+  describe "fallbacks" do
+    test "handles module-level fallbacks" do
+      defmodule ModuleFallbackBeam do
+        use Lux.Beam
+
+        def steps do
+          sequence do
+            step(:test, TestPrism, %{fail: :recoverable}, fallback: TestFallback)
+          end
+        end
+      end
+
+      {:ok, result, _log} = ModuleFallbackBeam.run(%{})
+      assert result.recovered == true
+      assert result.original_error.type == :recoverable
+    end
+
+    test "module fallback can stop execution" do
+      defmodule ModuleFallbackStopBeam do
+        use Lux.Beam
+
+        def steps do
+          sequence do
+            step(:test, TestPrism, %{fail: :unrecoverable}, fallback: TestFallback)
+          end
+        end
+      end
+
+      {:error, message, _log} = ModuleFallbackStopBeam.run(%{})
+      assert message =~ "Stopped by fallback"
+    end
+
+    test "handles inline fallbacks with continue" do
+      defmodule InlineFallbackBeam do
+        use Lux.Beam
+
+        def steps do
+          sequence do
+            step(:test, TestPrism, %{fail: true},
+              fallback: fn %{error: error, context: _ctx} ->
+                {:continue, %{handled: true, error: error}}
+              end
+            )
+          end
+        end
+      end
+
+      {:ok, result, _log} = InlineFallbackBeam.run(%{})
+      assert result.handled == true
+      assert result.error == "Intentional failure"
+    end
+
+    test "inline fallback can stop execution" do
+      defmodule InlineFallbackStopBeam do
+        use Lux.Beam
+
+        def steps do
+          sequence do
+            step(:test, TestPrism, %{fail: true},
+              fallback: fn %{error: _error, context: _ctx} ->
+                {:stop, "Stopped by inline fallback"}
+              end
+            )
+          end
+        end
+      end
+
+      {:error, message, _log} = InlineFallbackStopBeam.run(%{})
+      assert message == "Stopped by inline fallback"
+    end
+
+    test "fallback has access to context" do
+      defmodule ContextFallbackBeam do
+        use Lux.Beam
+
+        def steps do
+          sequence do
+            step(:first, TestPrism, %{value: 123})
+
+            step(:second, TestPrism, %{fail: true},
+              fallback: fn %{context: ctx} ->
+                {:continue, %{previous_value: ctx["first"].value}}
+              end
+            )
+          end
+        end
+      end
+
+      {:ok, result, _log} = ContextFallbackBeam.run(%{})
+      assert result.previous_value == 123
+    end
+
+    test "retries are attempted before fallback" do
+      defmodule RetryThenFallbackBeam do
+        use Lux.Beam,
+          generate_execution_log: true
+
+        def steps do
+          sequence do
+            step(:test, TestPrism, %{fail: true},
+              retries: 2,
+              retry_backoff: 1,
+              fallback: fn %{error: _error} ->
+                {:continue, %{retried: true}}
+              end
+            )
+          end
+        end
+      end
+
+      {:ok, result, log} = RetryThenFallbackBeam.run(%{})
+      assert result.retried == true
+
+      assert [
+               %{
+                 error: nil,
+                 id: "test",
+                 input: %{fail: true},
+                 output: %{retried: true},
+                 status: :completed,
+                 started_at: _,
+                 completed_at: _
+               }
+             ] = log.steps
     end
   end
 end

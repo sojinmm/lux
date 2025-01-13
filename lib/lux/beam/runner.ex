@@ -67,29 +67,54 @@ defmodule Lux.Beam.Runner do
           {:ok, Map.put(context, to_string(id), result), final_log}
 
         {:error, error} ->
-          if opts.retries > 0 do
-            Process.sleep(opts.retry_backoff)
-
-            execute_step(
-              %{
-                id: id,
-                module: module,
-                params: params,
-                opts: %{opts | retries: opts.retries - 1}
-              },
-              context,
-              log
-            )
-          else
-            final_log = maybe_update_step_log(updated_log, id, :failed, nil, error)
-            {:error, error, final_log}
-          end
+          handle_step_error(id, module, params, opts, error, context, updated_log)
       end
     rescue
       error ->
-        final_log = maybe_update_step_log(updated_log, id, :failed, nil, error)
-        {:error, error, final_log}
+        handle_step_error(id, module, params, opts, error, context, updated_log)
     end
+  end
+
+  defp handle_step_error(id, module, params, %{retries: retries} = opts, _error, context, log)
+       when retries > 0 do
+    Process.sleep(opts.retry_backoff)
+
+    execute_step(
+      %{
+        id: id,
+        module: module,
+        params: params,
+        opts: %{opts | retries: retries - 1}
+      },
+      context,
+      log
+    )
+  end
+
+  defp handle_step_error(id, _module, _params, %{fallback: fallback} = _opts, error, context, log)
+       when not is_nil(fallback) do
+    case apply_fallback(fallback, %{error: error, context: context}) do
+      {:continue, result} ->
+        final_log = maybe_update_step_log(log, id, :completed, result)
+        {:ok, Map.put(context, to_string(id), result), final_log}
+
+      {:stop, result} ->
+        final_log = maybe_update_step_log(log, id, :failed, nil, error)
+        {:error, result, final_log}
+    end
+  end
+
+  defp handle_step_error(id, _module, _params, _opts, error, _context, log) do
+    final_log = maybe_update_step_log(log, id, :failed, nil, error)
+    {:error, error, final_log}
+  end
+
+  defp apply_fallback(fallback, params) when is_function(fallback, 1) do
+    fallback.(params)
+  end
+
+  defp apply_fallback(fallback, params) when is_atom(fallback) do
+    apply(fallback, :handle_error, [params])
   end
 
   defp maybe_update_execution_log(nil, _status, _output), do: nil
