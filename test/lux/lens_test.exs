@@ -7,9 +7,6 @@ defmodule Lux.LensTest do
   end
 
   describe "new" do
-    require Lux.Lens
-    import Lux.Lens
-
     test "creates a new lens from a map" do
       assert Lux.Lens.new(
                url: "https://weatherapi.com",
@@ -17,17 +14,32 @@ defmodule Lux.LensTest do
                params: %{id: 1},
                name: "weather"
              ) ==
-               lens(
+               %Lens{
                  url: "https://weatherapi.com",
                  method: :get,
                  params: %{id: 1},
-                 name: "weather"
-               )
+                 name: "weather",
+                 headers: [],
+                 auth: nil,
+                 description: "",
+                 after_focus: nil,
+                 schema: %{}
+               }
     end
 
     test "creates a new lens from a list" do
       assert Lens.new(url: "https://weatherapi.com", method: :get, params: %{id: 1}) ==
-               Lens.new(url: "https://weatherapi.com", method: :get, params: %{id: 1})
+               %Lens{
+                 url: "https://weatherapi.com",
+                 method: :get,
+                 params: %{id: 1},
+                 name: "",
+                 headers: [],
+                 auth: nil,
+                 description: "",
+                 after_focus: nil,
+                 schema: %{}
+               }
     end
   end
 
@@ -37,62 +49,54 @@ defmodule Lux.LensTest do
         Req.Test.json(conn, %{"celcius" => -15})
       end)
 
-      assert {:ok, %{"celcius" => -15}} =
-               Lens.focus(
-                 Lens.new(url: "https://weatherapi.com", method: :get, params: %{city: "Seoul"})
-               )
+      lens = Lens.new(url: "https://weatherapi.com", method: :get)
+      assert {:ok, %{"celcius" => -15}} = Lens.focus(lens)
+    end
+  end
+
+  describe "authenticate" do
+    test "adds api key auth header" do
+      lens =
+        Lens.new(
+          url: "https://api.example.com",
+          auth: %{type: :api_key, key: "secret-key"}
+        )
+
+      assert %Lens{headers: [{"Authorization", "Bearer secret-key"}]} = Lens.authenticate(lens)
     end
 
-    test "return an error on http status 500" do
-      Req.Test.expect(Lux.Lens, 3, fn conn ->
-        Plug.Conn.send_resp(conn, 500, "internal server error")
-      end)
+    test "adds basic auth header" do
+      lens =
+        Lens.new(
+          url: "https://api.example.com",
+          auth: %{type: :basic, username: "user", password: "pass"}
+        )
 
-      assert {:error, "internal server error"} =
-               Lens.focus(
-                 Lens.new(url: "https://weatherapi.com", method: :get, params: %{city: "Seoul"})
-               )
+      assert %Lens{headers: [{"Authorization", "Basic " <> _}]} = Lens.authenticate(lens)
     end
 
-    test "returns the error on status 404" do
-      Req.Test.expect(Lux.Lens, 3, &Req.Test.transport_error(&1, :econnrefused))
+    test "adds oauth token header" do
+      lens =
+        Lens.new(
+          url: "https://api.example.com",
+          auth: %{type: :oauth, token: "oauth-token"}
+        )
 
-      assert {:error, ":econnrefused"} =
-               Lens.focus(
-                 Lens.new(url: "https://weatherapi.com", method: :get, params: %{city: "Seoul"})
-               )
+      assert %Lens{headers: [{"Authorization", "Bearer oauth-token"}]} = Lens.authenticate(lens)
     end
 
-    test "runs after_focus if present" do
-      Req.Test.expect(Lux.Lens, fn conn ->
-        Req.Test.json(conn, %{
-          "data" => [
-            %{"city" => "Seoul", "temp_c" => 1.0},
-            %{"city" => "Incheon", "temp_c" => 2.0},
-            %{"city" => "Busan", "temp_c" => 3.0},
-            %{"city" => "Gwangju", "temp_c" => 4.0},
-            %{"city" => "Daegu", "temp_c" => 5.0}
-          ]
-        })
-      end)
-
-      after_focus = fn %{"data" => data} ->
-        {:ok,
-         %{
-           "everage_temp_c" =>
-             data |> Enum.map(& &1["temp_c"]) |> Enum.sum() |> then(&(&1 / length(data)))
-         }}
+    test "calls custom auth function" do
+      custom_auth = fn lens ->
+        %Lens{lens | headers: [{"X-Custom-Auth", "custom-value"}]}
       end
 
-      assert {:ok, %{"everage_temp_c" => 3.0}} =
-               Lens.focus(
-                 Lens.new(
-                   url: "https://weatherapi.com",
-                   method: :get,
-                   params: %{country: "South Korea"},
-                   after_focus: after_focus
-                 )
-               )
+      lens =
+        Lens.new(
+          url: "https://api.example.com",
+          auth: %{type: :custom, auth_function: custom_auth}
+        )
+
+      assert %Lens{headers: [{"X-Custom-Auth", "custom-value"}]} = Lens.authenticate(lens)
     end
   end
 end

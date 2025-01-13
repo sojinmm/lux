@@ -2,23 +2,9 @@ defmodule Lux.Prism do
   @moduledoc """
   Modular, composable units of functionality for defining actions.
 
-  Prisms are used to define actions that can be executed by agents and are defined as records.
-
-
+  Prisms are used to define actions that can be executed by agents.
   """
   use Lux.Types
-  require Record
-
-  Record.defrecord(:prism, __MODULE__, [
-    :description,
-    :examples,
-    :handler,
-    :id,
-    :input_schema,
-    :name,
-    :output_schema,
-    :schema
-  ])
 
   @typedoc """
   A schema is a map of key-value pairs that describe the structure of the data.
@@ -35,16 +21,27 @@ defmodule Lux.Prism do
   """
   @type validator :: function() | mfa() | binary()
 
-  @type t ::
-          record(:prism,
-            id: String.t(),
-            name: String.t(),
-            handler: function() | mfa() | binary(),
-            description: nullable(String.t()),
-            examples: nullable([String.t()]),
-            input_schema: nullable(schema()),
-            output_schema: nullable(schema())
-          )
+  defstruct [
+    :id,
+    :name,
+    :handler,
+    :description,
+    :examples,
+    :input_schema,
+    :output_schema,
+    :schema
+  ]
+
+  @type t :: %__MODULE__{
+          id: String.t(),
+          name: String.t(),
+          handler: handler(),
+          description: nullable(String.t()),
+          examples: nullable([String.t()]),
+          input_schema: nullable(schema()),
+          output_schema: nullable(schema()),
+          schema: nullable(schema())
+        }
 
   @doc """
   Creates a new prism from a map or keyword list.
@@ -52,23 +49,24 @@ defmodule Lux.Prism do
   ## Examples:
 
   iex> Prism.new(%{id: "1", name: "test", handler: &String.split/2, description: "test", examples: ["test"]})
-  prism(id: "1", name: "test", handler: &String.split/2, description: "test", examples: ["test"])
+  %Prism{id: "1", name: "test", handler: &String.split/2, description: "test", examples: ["test"]}
   """
   @spec new(map() | keyword()) :: t()
-  def new(atrs) when is_map(atrs) do
-    prism(
-      id: atrs[:id] || "",
-      name: atrs[:name] || "",
-      handler: atrs[:handler] || nil,
-      description: atrs[:description] || "",
-      examples: atrs[:examples] || [],
-      input_schema: atrs[:input_schema] || nil,
-      output_schema: atrs[:output_schema] || nil
-    )
+  def new(attrs) when is_map(attrs) do
+    %__MODULE__{
+      id: attrs[:id] || "",
+      name: attrs[:name] || "",
+      handler: attrs[:handler] || nil,
+      description: attrs[:description] || "",
+      examples: attrs[:examples] || [],
+      input_schema: attrs[:input_schema] || nil,
+      output_schema: attrs[:output_schema] || nil,
+      schema: attrs[:schema] || nil
+    }
   end
 
-  def new(atrs) when is_list(atrs) do
-    atrs |> Map.new() |> new()
+  def new(attrs) when is_list(attrs) do
+    attrs |> Map.new() |> new()
   end
 
   @doc """
@@ -78,23 +76,8 @@ defmodule Lux.Prism do
 
   defmacro __using__(_opts) do
     quote do
-      require Lux.Prism
-      import Lux.Prism
-
+      alias Lux.Prism
       @behaviour Lux.Prism
-
-      # Later let's use this to setup the Prism via use...
-      # @name opts[:name] || __MODULE__
-      # @description opts[:description] || ""
-      # @input_schema opts[:input_schema] || %{}
-      # @output_schema opts[:output_schema] || %{}
-      # @handler opts[:handler] || nil
-      # @examples opts[:examples] || []
-
-      # def config do
-      #   # extrac the config at compile time
-      #   # return the prism
-      # end
 
       def run(input, context \\ nil) do
         Lux.Prism.run(__MODULE__, input, context)
@@ -108,7 +91,7 @@ defmodule Lux.Prism do
     module.handler(input, context)
   end
 
-  def run(prism(handler: handler), input, context) do
+  def run(%__MODULE__{handler: handler}, input, context) do
     handler.(input, context)
   end
 

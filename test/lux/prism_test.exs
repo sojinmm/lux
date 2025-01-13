@@ -1,8 +1,6 @@
 defmodule Lux.PrismTest do
   use ExUnit.Case, async: true
   alias Lux.Prism
-  require Prism
-
   doctest Lux.Prism, import: true
 
   describe "new/1" do
@@ -15,13 +13,13 @@ defmodule Lux.PrismTest do
         examples: ["test"]
       }
 
-      assert Prism.prism(
+      assert %Prism{
                name: name,
                id: id,
                handler: handler,
                description: description,
                examples: examples
-             ) = Prism.new(attrs)
+             } = Prism.new(attrs)
 
       assert name == "test"
       assert id == "1"
@@ -39,7 +37,7 @@ defmodule Lux.PrismTest do
         handler: handler
       ]
 
-      assert Prism.prism(name: name, id: id, handler: handler) = Prism.new(attrs)
+      assert %Prism{name: name, id: id, handler: handler} = Prism.new(attrs)
 
       assert name == "test"
       assert id == "1"

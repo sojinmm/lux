@@ -75,7 +75,7 @@ defmodule Lux.LLM.OpenAI do
     end
   end
 
-  def tool_to_function(Beam.beam(name: name, description: description, input_schema: schema)) do
+  def tool_to_function(%Beam{name: name, description: description, input_schema: schema}) do
     %{
       type: "function",
       function: %{
@@ -89,7 +89,7 @@ defmodule Lux.LLM.OpenAI do
     }
   end
 
-  def tool_to_function(Prism.prism(name: name, description: description, input_schema: schema)) do
+  def tool_to_function(%Prism{name: name, description: description, input_schema: schema}) do
     %{
       type: "function",
       function: %{
@@ -103,7 +103,7 @@ defmodule Lux.LLM.OpenAI do
     }
   end
 
-  def tool_to_function(Lens.lens(name: name, description: description, schema: schema)) do
+  def tool_to_function(%Lens{name: name, description: description, schema: schema}) do
     %{
       type: "function",
       function: %{

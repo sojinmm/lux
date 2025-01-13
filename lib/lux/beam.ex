@@ -171,18 +171,15 @@ defmodule Lux.Beam do
   """
 
   use Lux.Types
-  require Record
 
-  Record.defrecord(:beam, __MODULE__,
-    id: nil,
-    name: "",
-    description: "",
-    input_schema: nil,
-    output_schema: nil,
-    definition: nil,
-    timeout: :timer.minutes(5),
-    generate_execution_log: false
-  )
+  defstruct id: nil,
+            name: "",
+            description: "",
+            input_schema: nil,
+            output_schema: nil,
+            definition: nil,
+            timeout: :timer.minutes(5),
+            generate_execution_log: false
 
   @type execution_log :: %{
           beam_id: String.t(),
@@ -222,17 +219,16 @@ defmodule Lux.Beam do
 
   @type schema :: map()
 
-  @type t ::
-          record(:beam,
-            id: String.t(),
-            name: String.t(),
-            description: String.t(),
-            input_schema: nullable(schema()),
-            output_schema: nullable(schema()),
-            definition: [step()],
-            timeout: pos_integer(),
-            generate_execution_log: boolean()
-          )
+  @type t :: %__MODULE__{
+          id: String.t(),
+          name: String.t(),
+          description: String.t(),
+          input_schema: nullable(schema()),
+          output_schema: nullable(schema()),
+          definition: [step()],
+          timeout: pos_integer(),
+          generate_execution_log: boolean()
+        }
 
   @callback steps() :: term()
 
@@ -240,7 +236,7 @@ defmodule Lux.Beam do
     quote do
       @behaviour Lux.Beam
       import Lux.Beam, only: [step: 3, step: 4, parallel: 1, sequence: 1, branch: 2]
-      require Record
+      alias Lux.Beam
 
       @before_compile Lux.Beam
 
@@ -273,7 +269,7 @@ defmodule Lux.Beam do
   Creates a new beam from attributes
   """
   def new(attrs) when is_list(attrs) do
-    beam(
+    %__MODULE__{
       id: attrs[:id] || Lux.UUID.generate(),
       name: attrs[:name] || "",
       description: attrs[:description] || "",
@@ -282,7 +278,7 @@ defmodule Lux.Beam do
       definition: attrs[:definition],
       timeout: attrs[:timeout] || :timer.minutes(5),
       generate_execution_log: attrs[:generate_execution_log] || false
-    )
+    }
   end
 
   # DSL Macros
@@ -366,9 +362,11 @@ defmodule Lux.Beam do
   @doc """
   Validates a beam definition at compile time
   """
-  def validate!(
-        beam(input_schema: input_schema, output_schema: output_schema, definition: definition)
-      ) do
+  def validate!(%__MODULE__{
+        input_schema: input_schema,
+        output_schema: output_schema,
+        definition: definition
+      }) do
     with :ok <- validate_schema(input_schema),
          :ok <- validate_schema(output_schema),
          :ok <- validate_definition(definition) do
@@ -384,7 +382,7 @@ defmodule Lux.Beam do
   defp validate_definition(definition) when is_list(definition), do: :ok
   defp validate_definition(_), do: {:error, :invalid_definition}
 
-  def steps(beam(definition: definition)) when not is_nil(definition) do
+  def steps(%__MODULE__{definition: definition}) when not is_nil(definition) do
     definition
   end
 

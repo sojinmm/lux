@@ -1,7 +1,6 @@
 defmodule Lux.BeamTest do
   use ExUnit.Case, async: true
   alias Lux.Beam
-  require Beam
 
   defmodule TestBeam do
     use Lux.Beam,
@@ -42,13 +41,13 @@ defmodule Lux.BeamTest do
         generate_execution_log: true
       ]
 
-      assert Beam.beam(
+      assert %Beam{
                id: id,
                name: name,
                description: description,
                input_schema: input_schema,
                generate_execution_log: generate_execution_log
-             ) = Beam.new(attrs)
+             } = Beam.new(attrs)
 
       assert id == "test-1"
       assert name == "Test Beam"
@@ -60,10 +59,10 @@ defmodule Lux.BeamTest do
     test "sets default values" do
       beam = Beam.new([])
 
-      assert Beam.beam(
+      assert %Beam{
                timeout: timeout,
                generate_execution_log: generate_execution_log
-             ) = beam
+             } = beam
 
       assert timeout == :timer.minutes(5)
       assert generate_execution_log == false
@@ -72,11 +71,11 @@ defmodule Lux.BeamTest do
 
   describe "when using Beam" do
     test "defines a beam module with correct attributes" do
-      assert Lux.Beam.beam(
+      assert %Beam{
                name: "Test Beam",
                description: "A test beam",
                input_schema: [value: [type: :string]]
-             ) = TestBeam.beam()
+             } = TestBeam.beam()
     end
 
     test "serializes step definitions" do

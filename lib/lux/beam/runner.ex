@@ -4,8 +4,6 @@ defmodule Lux.Beam.Runner do
   based on the beam's structure.
   """
 
-  require Record
-
   def run(beam, input, opts \\ []) do
     with :ok <- validate_input(beam, input) do
       execution_log = init_execution_log(beam, input, opts[:specter])
@@ -24,29 +22,27 @@ defmodule Lux.Beam.Runner do
     end
   end
 
-  defp validate_input(beam, _input) do
-    case elem(beam, 4) do
+  defp validate_input(%Lux.Beam{input_schema: input_schema}, _input) do
+    case input_schema do
       nil -> :ok
       _schema -> :ok
     end
   end
 
-  defp init_execution_log(beam, input, specter) do
-    if elem(beam, 8) do
-      %{
-        beam_id: elem(beam, 1),
-        started_by: specter || "system",
-        started_at: DateTime.utc_now(),
-        completed_at: nil,
-        status: :running,
-        input: input,
-        output: nil,
-        steps: []
-      }
-    else
-      nil
-    end
+  defp init_execution_log(%Lux.Beam{id: id, generate_execution_log: true}, input, specter) do
+    %{
+      beam_id: id,
+      started_by: specter || "system",
+      started_at: DateTime.utc_now(),
+      completed_at: nil,
+      status: :running,
+      input: input,
+      output: nil,
+      steps: []
+    }
   end
+
+  defp init_execution_log(_, _, _), do: nil
 
   # Handle composite steps
   defp execute_step({:sequence, steps}, context, log),

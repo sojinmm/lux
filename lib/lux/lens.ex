@@ -4,68 +4,62 @@ defmodule Lux.Lens do
 
   Given a
   """
+  use Lux.Types
 
-  require Record
+  defstruct after_focus: nil,
+            name: nil,
+            url: nil,
+            method: :get,
+            params: %{},
+            headers: [],
+            auth: nil,
+            description: "",
+            schema: %{}
 
-  Record.defrecord(:lens,
-    after_focus: nil,
-    name: nil,
-    url: nil,
-    method: :get,
-    params: %{},
-    headers: [],
-    auth: nil,
-    description: "",
-    schema: %{}
-  )
-
-  @type t ::
-          record(:lens,
-            name: String.t(),
-            url: String.t(),
-            method: atom(),
-            params: map(),
-            headers: list(),
-            after_focus: (any() -> any()),
-            auth: map(),
-            description: String.t(),
-            schema: map()
-          )
+  @type t :: %__MODULE__{
+          name: String.t(),
+          url: String.t(),
+          method: atom(),
+          params: map(),
+          headers: list(),
+          after_focus: (any() -> any()),
+          auth: map(),
+          description: String.t(),
+          schema: map()
+        }
 
   defmacro __using__(_opts) do
     quote do
-      import Lux.Lens
+      alias Lux.Lens
     end
   end
 
-  def new(atrs) when is_map(atrs) do
-    lens(
-      name: atrs[:name] || "",
-      url: atrs[:url] || "",
-      method: atrs[:method] || :get,
-      params: atrs[:params] || %{},
-      headers: atrs[:headers] || [],
-      auth: atrs[:auth] || nil,
-      description: atrs[:description] || "",
-      after_focus: atrs[:after_focus] || nil,
-      schema: atrs[:schema] || %{}
-    )
+  def new(attrs) when is_map(attrs) do
+    %__MODULE__{
+      name: attrs[:name] || "",
+      url: attrs[:url] || "",
+      method: attrs[:method] || :get,
+      params: attrs[:params] || %{},
+      headers: attrs[:headers] || [],
+      auth: attrs[:auth] || nil,
+      description: attrs[:description] || "",
+      after_focus: attrs[:after_focus] || nil,
+      schema: attrs[:schema] || %{}
+    }
   end
 
-  def new(atrs) when is_list(atrs) do
-    atrs |> Map.new() |> new()
+  def new(attrs) when is_list(attrs) do
+    attrs |> Map.new() |> new()
   end
 
-  def focus(
-        lens(
-          auth: nil,
-          url: url,
-          method: method,
-          params: params,
-          headers: headers,
-          after_focus: after_focus
-        )
-      ) do
+  def focus(%__MODULE__{
+        auth: nil,
+        url: url,
+        method: method,
+        params: params,
+        headers: headers,
+        after_focus: after_focus
+      }) do
     after_focus = after_focus || fn body -> {:ok, body} end
 
     [url: url, headers: headers, max_retries: 2]
@@ -87,26 +81,26 @@ defmodule Lux.Lens do
     end
   end
 
-  def authenticate(lens(auth: %{:type => :api_key, :key => key}) = record),
-    do: update_headers(record, [{"Authorization", "Bearer #{key}"}])
+  def authenticate(%__MODULE__{auth: %{type: :api_key, key: key}} = lens),
+    do: update_headers(lens, [{"Authorization", "Bearer #{key}"}])
 
   def authenticate(
-        lens(auth: %{:type => :basic, :username => username, :password => password}) = record
+        %__MODULE__{auth: %{type: :basic, username: username, password: password}} = lens
       ),
       do:
-        update_headers(record, [
+        update_headers(lens, [
           {"Authorization", "Basic #{Base.encode64("#{username}:#{password}")}"}
         ])
 
-  def authenticate(lens(auth: %{:type => :oauth, :token => token}) = record),
-    do: update_headers(record, [{"Authorization", "Bearer #{token}"}])
+  def authenticate(%__MODULE__{auth: %{type: :oauth, token: token}} = lens),
+    do: update_headers(lens, [{"Authorization", "Bearer #{token}"}])
 
-  def authenticate(lens(auth: %{:type => :custom, :auth_function => func}) = record),
-    do: func.(record)
+  def authenticate(%__MODULE__{auth: %{type: :custom, auth_function: func}} = lens),
+    do: func.(lens)
 
   # Helper function to update headers
-  defp update_headers(lens(headers: headers) = record, new_headers) do
-    lens(record, headers: headers ++ new_headers)
+  defp update_headers(%__MODULE__{headers: headers} = lens, new_headers) do
+    %__MODULE__{lens | headers: headers ++ new_headers}
   end
 
   defp body_or_params(:get, params), do: [params: params]
