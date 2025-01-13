@@ -226,51 +226,6 @@ end
 
 ## Advanced Topics
 
-### Stateful Prisms
-
-Some Prisms may need to maintain state:
-
-```elixir
-defmodule MyApp.Prisms.RateLimiter do
-  use Lux.Prism,
-    name: "Rate Limiter",
-    description: "Limits request rates",
-    state: %{
-      max_requests: 100,
-      window_seconds: 60
-    }
-
-  def init(opts) do
-    {:ok, table} = :ets.new(:rate_limiter, [:set, :public])
-    {:ok, Map.put(opts, :table, table)}
-  end
-
-  def handler(%{key: key}, %{state: state}) do
-    case check_rate(key, state) do
-      :ok -> {:ok, %{allowed: true}}
-      :error -> {:error, "Rate limit exceeded"}
-    end
-  end
-
-  defp check_rate(key, %{table: table, max_requests: max, window_seconds: window}) do
-    now = System.system_time(:second)
-    case :ets.lookup(table, key) do
-      [] ->
-        :ets.insert(table, {key, 1, now})
-        :ok
-      [{^key, count, timestamp}] when now - timestamp > window ->
-        :ets.insert(table, {key, 1, now})
-        :ok
-      [{^key, count, _}] when count >= max ->
-        :error
-      [{^key, count, timestamp}] ->
-        :ets.insert(table, {key, count + 1, timestamp})
-        :ok
-    end
-  end
-end
-```
-
 ### Composable Prisms
 
 Prisms can be composed together:

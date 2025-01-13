@@ -8,7 +8,7 @@ A Signal consists of:
 - A unique identifier
 - A schema identifier that defines its structure
 - Content that conforms to the schema
-- Optional metadata and transformations
+- Metadata about the signal's context and processing
 
 ## Creating a Signal Schema
 
@@ -60,6 +60,16 @@ defmodule MyApp.Signals.Task do
      |> Map.put_new_lazy(:due_date, &DateTime.utc_now/0)
      |> Map.update(:tags, [], &Enum.uniq/1)}
   end
+
+  # Optional: Extract metadata from the content
+  def extract_metadata(content) do
+    {:ok, %{
+      created_at: DateTime.utc_now(),
+      created_by: get_current_user(),
+      version: 1,
+      trace_id: get_trace_id()
+    }}
+  end
 end
 ```
 
@@ -80,6 +90,7 @@ Signals can be created and used in various ways:
 signal.id          # Unique identifier
 signal.schema_id   # Schema identifier
 signal.content     # Validated and transformed content
+signal.metadata    # Signal metadata
 ```
 
 ## Schema Evolution
@@ -136,10 +147,17 @@ end
    - Add computed or default values
    - Clean up or format data
 
-4. **Testing**
+4. **Metadata**
+   - Use `extract_metadata/1` for signal context
+   - Keep metadata separate from content
+   - Include processing information
+   - Add tracing and debugging data
+
+5. **Testing**
    - Test schema validation
    - Test business rule validation
    - Test transformations
+   - Test metadata extraction
    - Test compatibility between versions
 
 Example test:
@@ -159,6 +177,7 @@ defmodule MyApp.Signals.TaskTest do
       assert signal.content.priority == "high"
       assert signal.content.assignee == "bob"
       assert signal.content.due_date # Auto-added by transform
+      assert %DateTime{} = signal.metadata.created_at # Added by extract_metadata
     end
 
     test "validates title presence" do
@@ -241,20 +260,29 @@ end
 
 ### Signal Metadata
 
-You can extend signals with metadata:
+Metadata provides context about the signal's creation and processing:
 
 ```elixir
 defmodule MyApp.Signals.MetadataTask do
   use Lux.Signal,
     schema: MyApp.Schemas.TaskSchema
 
-  def transform(content) do
-    {:ok,
-     content
-     |> Map.put(:created_at, DateTime.utc_now())
-     |> Map.put(:created_by, get_current_user())
-     |> Map.put(:version, 1)
-     |> Map.put(:trace_id, get_trace_id())}
+  def extract_metadata(content) do
+    {:ok, %{
+      # Signal creation context
+      created_at: DateTime.utc_now(),
+      created_by: get_current_user(),
+      source_system: System.get_env("SERVICE_NAME"),
+      
+      # Processing information
+      version: 1,
+      trace_id: get_trace_id(),
+      correlation_id: get_correlation_id(),
+      
+      # Content-derived metadata
+      content_size: byte_size(Jason.encode!(content)),
+      field_count: map_size(content)
+    }}
   end
 end
 ``` 

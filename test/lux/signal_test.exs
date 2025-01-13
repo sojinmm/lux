@@ -7,7 +7,8 @@ defmodule Lux.SignalTest do
       attrs = %{
         id: "test-1",
         schema_id: "schema-1",
-        content: %{message: "Hello"}
+        content: %{message: "Hello"},
+        metadata: %{created_at: "2024-01-01"}
       }
 
       signal = Signal.new(attrs)
@@ -16,6 +17,18 @@ defmodule Lux.SignalTest do
       assert signal.id == "test-1"
       assert signal.schema_id == "schema-1"
       assert signal.content == %{message: "Hello"}
+      assert signal.metadata == %{created_at: "2024-01-01"}
+    end
+
+    test "initializes empty metadata when not provided" do
+      attrs = %{
+        id: "test-1",
+        schema_id: "schema-1",
+        content: %{message: "Hello"}
+      }
+
+      signal = Signal.new(attrs)
+      assert signal.metadata == %{}
     end
   end
 
@@ -43,6 +56,7 @@ defmodule Lux.SignalTest do
       assert is_binary(signal.id)
       assert signal.schema_id == TestSchema.schema_id()
       assert signal.content == %{message: "Hello"}
+      assert signal.metadata == %{}
     end
 
     test "supports content validation" do
@@ -77,6 +91,26 @@ defmodule Lux.SignalTest do
       assert signal.content.message == "HELLO"
     end
 
+    test "supports metadata extraction" do
+      defmodule MetadataSignal do
+        use Lux.Signal,
+          schema: TestSchema
+
+        def extract_metadata(_content) do
+          {:ok,
+           %{
+             created_at: DateTime.utc_now(),
+             version: 1,
+             trace_id: Lux.UUID.generate()
+           }}
+        end
+      end
+
+      {:ok, signal} = MetadataSignal.new(%{message: "Hello"})
+      assert %{created_at: %DateTime{}, version: 1} = signal.metadata
+      assert is_binary(signal.metadata.trace_id)
+    end
+
     test "provides schema helpers" do
       defmodule SignalWithHelpers do
         use Lux.Signal,
@@ -87,7 +121,7 @@ defmodule Lux.SignalTest do
       assert SignalWithHelpers.schema_id() == TestSchema.schema_id()
     end
 
-    test "chains validation and transformation" do
+    test "chains validation, transformation, and metadata extraction" do
       defmodule ChainedSignal do
         use Lux.Signal,
           schema: TestSchema
@@ -101,10 +135,20 @@ defmodule Lux.SignalTest do
         def transform(content) do
           {:ok, Map.update!(content, :message, &"#{&1}!")}
         end
+
+        def extract_metadata(content) do
+          {:ok,
+           %{
+             message_length: String.length(content.message),
+             processed_at: DateTime.utc_now()
+           }}
+        end
       end
 
       assert {:ok, signal} = ChainedSignal.new(%{message: "Hi"})
       assert signal.content.message == "Hi!"
+      assert signal.metadata.message_length == 3
+      assert %DateTime{} = signal.metadata.processed_at
       assert {:error, "Invalid message"} = ChainedSignal.new(%{message: 123})
     end
   end

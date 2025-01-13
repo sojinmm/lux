@@ -8,12 +8,13 @@ defmodule Lux.Signal do
   """
 
   @enforce_keys [:id, :schema_id, :content]
-  defstruct [:id, :schema_id, :content]
+  defstruct [:id, :schema_id, :content, metadata: %{}]
 
   @type t :: %__MODULE__{
           id: String.t(),
           schema_id: String.t(),
-          content: map()
+          content: map(),
+          metadata: map()
         }
 
   @doc """
@@ -21,7 +22,7 @@ defmodule Lux.Signal do
   """
   @spec new(map()) :: t()
   def new(attrs) when is_map(attrs) do
-    struct!(__MODULE__, attrs)
+    struct!(__MODULE__, Map.put_new(attrs, :metadata, %{}))
   end
 
   @doc """
@@ -35,12 +36,14 @@ defmodule Lux.Signal do
 
       def new(content) do
         with {:ok, validated} <- validate(content),
-             {:ok, transformed} <- transform(validated) do
+             {:ok, transformed} <- transform(validated),
+             {:ok, metadata} <- extract_metadata(transformed) do
           signal =
             Lux.Signal.new(%{
               id: Lux.UUID.generate(),
               schema_id: schema_id(),
-              content: transformed
+              content: transformed,
+              metadata: metadata
             })
 
           {:ok, signal}
@@ -49,11 +52,12 @@ defmodule Lux.Signal do
 
       def validate(content), do: {:ok, content}
       def transform(content), do: {:ok, content}
+      def extract_metadata(_content), do: {:ok, %{}}
 
       def schema, do: @schema.schema()
       def schema_id, do: @schema.schema_id()
 
-      defoverridable validate: 1, transform: 1
+      defoverridable validate: 1, transform: 1, extract_metadata: 1
     end
   end
 end
