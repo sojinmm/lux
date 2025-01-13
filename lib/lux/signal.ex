@@ -31,8 +31,6 @@ defmodule Lux.Signal do
     schema_module = Keyword.fetch!(opts, :schema)
 
     quote do
-      @before_compile Lux.Signal
-
       @schema unquote(schema_module)
 
       def new(content) do
@@ -56,11 +54,6 @@ defmodule Lux.Signal do
       def schema_id, do: @schema.schema_id()
 
       defoverridable validate: 1, transform: 1
-    end
-  end
-
-  defmacro __before_compile__(_env) do
-    quote do
     end
   end
 end

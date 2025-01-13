@@ -6,7 +6,12 @@ defmodule Lux.BeamTest do
     use Lux.Beam,
       name: "Test Beam",
       description: "A test beam",
-      input_schema: [value: [type: :string]]
+      input_schema: %{type: :object, properties: %{value: %{type: :string}}, required: ["value"]},
+      output_schema: %{
+        type: :object,
+        properties: %{trade_id: %{type: :string}},
+        required: ["trade_id"]
+      }
 
     @impl true
     def steps do
@@ -74,7 +79,16 @@ defmodule Lux.BeamTest do
       assert %Beam{
                name: "Test Beam",
                description: "A test beam",
-               input_schema: [value: [type: :string]]
+               input_schema: %{
+                 type: :object,
+                 properties: %{value: %{type: :string}},
+                 required: ["value"]
+               },
+               output_schema: %{
+                 type: :object,
+                 properties: %{trade_id: %{type: :string}},
+                 required: ["trade_id"]
+               }
              } = TestBeam.beam()
     end
 

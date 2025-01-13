@@ -20,10 +20,20 @@ defmodule Lux.Beam do
     use Lux.Beam,
       name: "Trading Workflow",
       description: "Analyzes and executes trades",
-      input_schema: [
-        symbol: [type: :string, required: true],
-        amount: [type: :float, required: true]
-      ],
+      input_schema: %{
+        type: :object,
+        properties: %{
+          symbol: %{type: :string}
+        },
+        required: ["symbol"]
+      },
+      output_schema: %{
+        type: :object,
+        properties: %{
+          trade_id: %{type: :string}
+        },
+        required: ["trade_id"]
+      },
       generate_execution_log: true
 
     @impl true
