@@ -1,25 +1,113 @@
-# Lux Framework
+# Lux
 
-Lux is an open-source Elixir framework for building modular, adaptive, and collaborative multi-agent systems. Designed for developers and researchers alike, Lux enables autonomous entities (Specters) to communicate, plan, and execute workflows in dynamic environments. It integrates seamlessly with other languages and frameworks, offering flexibility and extensibility.
+Lux is an Elixir framework for building modular, adaptive, and collaborative multi-agent systems. It enables autonomous entities (Specters) to communicate, plan, and execute workflows in dynamic environments.
 
----
+## Core Concepts
 
-## Key Features
+### Beams
+Beams orchestrate workflows by combining multiple steps into sequential, parallel, or conditional execution paths. They support:
 
-- **Specters:** Stateful autonomous agents that can evolve, communicate, and execute tasks.
-- **Prisms:** Modular, composable units of functionality for defining actions.
-- **Beams:** Flexible workflows that orchestrate multiple actions.
-- **Lenses:** Event-driven sensors for data gathering and broadcasting.
-- **Signals:** A robust messaging system enabling agent collaboration.
-- **Reflections:** Dynamic Specter evolution, allowing agents to create new versions of themselves or generate workflows on the fly.
-- **Multi-Language Support:** Integrates Python, TypeScript, and other languages via Venomous.
-- **Observability:** Built-in telemetry and debugging tools for seamless monitoring.
+- Sequential execution
+- Parallel processing with automatic context merging
+- Conditional branching with dynamic evaluation
+- Parameter references between steps
+- Execution logging and error handling
 
----
+Example of a basic beam:
 
-## Installation
+```elixir
+defmodule MyApp.Beams.TradingWorkflow do
+  use Lux.Beam,
+    name: "Trading Workflow",
+    description: "Analyzes market data",
+    input_schema: [symbol: [type: :string]]
 
-Add `lux` to your dependencies in `mix.exs`:
+  @impl true
+  def steps do
+    sequence do
+      step(:market_data, MarketDataPrism, %{symbol: :symbol})
+
+      parallel do
+        step(:technical, TechnicalAnalysisPrism,
+          %{data: {:ref, "market_data"}},
+          retries: 3)
+        step(:sentiment, SentimentAnalysisPrism,
+          %{symbol: :symbol},
+          store_io: true)
+      end
+
+      branch {__MODULE__, :should_trade?} do
+        true -> step(:execute, TradePrism, %{
+          symbol: :symbol,
+          signals: {:ref, "technical"}
+        })
+        false -> step(:skip, LogPrism, %{
+          reason: "Unfavorable conditions"
+        })
+      end
+    end
+  end
+
+  def should_trade?(ctx) do
+    get_in(ctx, ["technical", :score]) > 0.7 && 
+    get_in(ctx, ["sentiment", :confidence]) > 0.8
+  end
+end
+```
+
+### Features
+
+- **Step Configuration**
+  - Timeouts (default: 5 minutes)
+  - Retries with configurable backoff
+  - Dependency management
+  - Execution logging
+  - Input/Output validation
+
+- **Parameter References**
+  - Reference previous step outputs using `{:ref, "step_id"}`
+  - Nested references with dot notation
+  - Automatic context management
+
+### Complex Example: Agent Management
+
+Here's an example of a beam that manages other agents:
+
+```elixir
+defmodule MyApp.Beams.HiringManager do
+  use Lux.Beam, generate_execution_log: true
+    
+  def steps do
+    sequence do
+      step(:workforce_metrics, WorkforceAnalysisPrism, %{
+        team_size: {:ref, "current_team_size"},
+        performance_data: {:ref, "agent_performance_metrics"}
+      })
+      
+      branch {__MODULE__, :needs_scaling?} do
+        :scale_up ->
+          sequence do
+            step(:candidate_search, AgentSearchPrism, %{
+              required_skills: {:ref, "workforce_metrics.skill_gaps"}
+            })
+            
+            step(:candidate_evaluation, AgentEvaluationPrism, %{
+              candidates: {:ref, "candidate_search.results"}
+            })
+          end
+          
+        :scale_down ->
+          step(:termination, AgentTerminationPrism, %{
+            agents: {:ref, "workforce_metrics.underperforming_agents"},
+            reassign_tasks: true
+          })
+      end
+    end
+  end
+end
+```
+
+### Installation
 
 ```elixir
 def deps do
@@ -29,259 +117,13 @@ def deps do
 end
 ```
 
-Run `mix deps.get` to fetch the dependency.
+## Documentation
 
----
-
-## Getting Started
-
-### Defining a Prism
-A Prism represents a discrete action. For example, here’s a Prism that adds two numbers:
-
-```elixir
-defmodule MyApp.Prism.Add do
-  use Lux.Prism,
-    name: "add",
-    description: "Adds two numbers",
-    schema: [
-      value: [type: :number, required: true],
-      amount: [type: :number, required: true]
-    ]
-
-  @impl true
-  def run(%{value: value, amount: amount}, _context) do
-    {:ok, %{result: value + amount}}
-  end
-end
-```
-
-### Calling Python Code in a Prism
-Prisms can integrate external logic using Venomous to run Python code:
-
-```elixir
-defmodule MyApp.Prism.PythonAdd do
-  use Lux.Prism,
-    name: "python_add",
-    description: "Adds two numbers using Python",
-    schema: [
-      value: [type: :number, required: true],
-      amount: [type: :number, required: true]
-    ]
-
-  @impl true
-  def run(%{value: value, amount: amount}, _context) do
-    script = """
-    def add(a, b):
-        return a + b
-
-    result = add({value}, {amount})
-    """
-
-    Lux.Venomous.run(:python, script, %{value: value, amount: amount})
-  end
-end
-```
-
-### Creating a Specter
-A Specter combines workflows and communicates with other agents:
-
-```elixir
-defmodule MyApp.Specter.CEO do
-  use Lux.Specter,
-    name: "CEO Agent",
-    description: "Manages hedge fund strategy and coordinates agents"
-
-  @impl true
-  def plan(%__MODULE__{} = specter) do
-    {:ok, [
-      {MyApp.Beams.GatherInsights, %{}},
-      {MyApp.Beams.ExecuteTrades, %{}}
-    ]}
-  end
-
-  @impl true
-  def reflect(%__MODULE__{} = specter, new_capability) do
-    {:ok, Lux.Reflections.create_new_version(specter, new_capability)}
-  end
-end
-```
-
-### Defining a Beam
-Beams orchestrate workflows by combining multiple Prisms:
-
-```elixir
-defmodule MyApp.Beams.GatherInsights do
-  use Lux.Beam,
-    name: "Gather Insights",
-    description: "Aggregates trading signals and risk assessments"
-
-  @impl true
-  def steps do
-    [
-      {MyApp.Prism.AlphaSignals, %{symbol: "BTC", interval: "1h"}},
-      {MyApp.Prism.RiskAssessment, %{positions: [%{symbol: "BTC", value: 10000, volatility: 0.05}], max_risk: 0.15}}
-    ]
-  end
-end
-```
-
-### Defining a Lens
-Lenses are event-driven sensors for gathering and broadcasting data:
-
-```elixir
-defmodule MyApp.Lens.MarketData do
-  use Lux.Lens,
-    name: "Market Data Lens",
-    description: "Monitors market prices and broadcasts updates",
-    schema: [
-      symbol: [type: :string, required: true],
-      price: [type: :float, required: true]
-    ]
-
-  @impl true
-  def observe(%{symbol: symbol, price: price}) do
-    IO.puts("Market update: #{symbol} is now $#{price}")
-    {:ok, %{symbol: symbol, price: price}}
-  end
-end
-```
-
-### Defining a Signal
-Signals facilitate communication between Specters:
-
-```elixir
-defmodule MyApp.Signal.Message do
-  use Lux.Signal,
-    name: "Message Signal",
-    description: "Facilitates inter-agent communication",
-    schema: [
-      sender: [type: :string, required: true],
-      room_id: [type: :string, required: true],
-      content: [type: :map, required: true]
-    ]
-
-  @impl true
-  def broadcast(%{sender: sender, room_id: room_id, content: content}) do
-    IO.puts("#{sender} in room #{room_id}: #{inspect(content)}")
-    {:ok, content}
-  end
-end
-```
-
-### YAML Workflow Example
-Lux supports defining workflows in YAML for non-Elixir developers. Here’s an example:
-
-```yaml
-specter:
-  name: CEO Agent
-  description: Manages the hedge fund
-  beams:
-    - name: GatherInsights
-      steps:
-        - action: AlphaSignals
-          params:
-            symbol: BTC
-            interval: 1h
-        - action: RiskAssessment
-          params:
-            positions:
-              - symbol: BTC
-                value: 10000
-                volatility: 0.05
-            max_risk: 0.15
-```
-
-### Advanced Example: Inter-Agent Collaboration
-This example shows agents collaborating via Signals and Lenses.
-
-#### Risk Agent
-```elixir
-defmodule MyApp.Specter.RiskAgent do
-  use Lux.Specter,
-    name: "Risk Agent",
-    description: "Evaluates trading risks and provides feedback"
-
-  @impl true
-  def plan(%__MODULE__{} = specter) do
-    {:ok, [
-      {MyApp.Prism.RiskAssessment, %{positions: [%{symbol: "BTC", value: 10000, volatility: 0.05}], max_risk: 0.15}}
-    ]}
-  end
-end
-```
-
-#### Alpha Signals Agent
-```elixir
-defmodule MyApp.Specter.AlphaSignalsAgent do
-  use Lux.Specter,
-    name: "Alpha Signals Agent",
-    description: "Generates trading signals based on market data"
-
-  @impl true
-  def plan(%__MODULE__{} = specter) do
-    {:ok, [
-      {MyApp.Prism.AlphaSignals, %{symbol: "BTC", interval: "1h"}}
-    ]}
-  end
-end
-```
-
-#### CEO Agent Utilizing Collaboration
-```elixir
-defmodule MyApp.Specter.CEO do
-  use Lux.Specter,
-    name: "CEO Agent",
-    description: "Manages hedge fund strategy and coordinates agents"
-
-  @impl true
-  def plan(%__MODULE__{} = specter) do
-    {:ok, [
-      {MyApp.Beams.GatherInsights, %{}},
-      {MyApp.Beams.ExecuteTrades, %{}}
-    ]}
-  end
-
-  @impl true
-  def handle_signal(%Lux.Signal.Message{content: %{risk: risk, alpha: alpha}}) do
-    if risk <= 0.15 and alpha > 0.8 do
-      IO.puts("Trade approved with alpha #{alpha} and risk #{risk}")
-      {:ok, :trade}
-    else
-      IO.puts("Trade rejected due to risk #{risk} or low alpha #{alpha}")
-      {:error, :reject}
-    end
-  end
-end
-```
-
----
-
-## Advanced Features
-
-- **Dynamic Reflections:** Specters can generate new versions or workflows on the fly.
-- **Telemetry and Debugging:** Built-in tools for monitoring and debugging workflows.
-- **Inter-Agent Communication:** Specters use Signals and Lenses to collaborate in real-time.
-
----
-
-## Example Use Case: Crypto Hedge Fund
-### Agents:
-1. **CEO Agent:** Coordinates tasks and makes trading decisions.
-2. **Alpha Signals Agent:** Analyzes market data to generate signals.
-3. **Risk Agent:** Evaluates risk and ensures compliance with constraints.
-4. **Marketing Agent:** Posts updates to social media based on fund activity.
-
-### Workflow:
-1. Gather trading signals from the Alpha Signals Agent.
-2. Evaluate risk with the Risk Agent.
-3. Execute trades and publish updates via the Marketing Agent.
-
----
-
-## Community and Contribution
-We welcome contributions to Lux! Feel free to submit issues, fork the repository, and create pull requests. Join the discussion to help improve Lux and build the next generation of multi-agent systems.
-
----
+For detailed documentation and examples, see:
+- [Beam Documentation](lib/lux/beam.ex)
+- [Runner Implementation](lib/lux/beam/runner.ex)
+- [Test Examples](test/lux/beam_test.exs)
 
 ## License
-Lux is open-source software licensed under the MIT License.
+
+Lux is released under the MIT License.
