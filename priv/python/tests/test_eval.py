@@ -95,22 +95,20 @@ def test_execute_with_variables():
 def test_execute_multiline():
     """Test execution of multi-line Python code."""
     code = """
-    def factorial(n):
-        if n <= 1:
-            return 1
-        return n * factorial(n - 1)
-    factorial(5)
-    """
+def factorial(n):
+    if n <= 1:
+        return 1
+    return n * factorial(n - 1)
+factorial(5)
+"""
     assert execute(code) == 120
 
 def test_execute_error_handling():
     """Test error handling in code execution."""
-    result = execute("undefined_variable")
-    assert isinstance(result, tuple)
-    assert result[0] == Atom(b"error")
-    assert "NameError" in result[1]
+    with pytest.raises(RuntimeError) as exc_info:
+        execute("undefined_variable")
+    assert "NameError: name 'undefined_variable' is not defined" in str(exc_info.value)
 
-    result = execute("1/0")
-    assert isinstance(result, tuple)
-    assert result[0] == Atom(b"error")
-    assert "ZeroDivisionError" in result[1]
+    with pytest.raises(RuntimeError) as exc_info:
+        execute("1/0")
+    assert "ZeroDivisionError: division by zero" in str(exc_info.value)
