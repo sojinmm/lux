@@ -19,16 +19,12 @@ Struct Conversion:
     system. It's the caller's responsibility to ensure that the struct modules are defined and
     available at runtime.
 
-    SECURITY NOTE: To prevent atom table exhaustion, only predefined atoms in SAFE_ATOMS are allowed
-    for struct field names. Attempting to use unsafe atoms will raise an UnsafeAtomError.
-
     Examples of class name conversion:
     - 'user' -> Elixir.User
     - 'data.types.point' -> Elixir.Data.Types.Point
 """
-from erlport.erlterms import Atom
+from lux.atoms import Atom
 import ast
-from .safe_atoms import safe_atom, safe_struct_keys, UnsafeAtomError
 
 def encode_term(term):
     """Convert Python types to Erlang terms."""
@@ -39,60 +35,32 @@ def encode_term(term):
     elif isinstance(term, (int, float, bool)):
         return term
     elif isinstance(term, (list, tuple)):
-        # Handle errors in list items
-        encoded_items = []
-        for item in term:
-            encoded = encode_term(item)
-            if isinstance(encoded, tuple) and encoded[0] == Atom(b'error'):
-                return encoded  # Propagate error up
-            encoded_items.append(encoded)
-        return encoded_items
+        return [encode_term(item) for item in term]
     elif isinstance(term, dict):
         if "__class__" in term:
-            try:
-                # Convert Python class name to Elixir module name format
-                class_name = term["__class__"]
-                module_parts = class_name.split('.')
-                # Convert first letter of each part to uppercase, rest lowercase
-                module_name = '.'.join(p[0].upper() + p[1:].lower() for p in module_parts)
-                # Prefix with Elixir. for proper module name
-                module_name = f"Elixir.{module_name}"
-                
-                # Create a new dict without the __class__ key
-                struct_dict = term.copy()
-                del struct_dict["__class__"]
-                
-                # Convert values first to catch any nested errors
-                encoded_values = {}
-                for k, v in struct_dict.items():
-                    encoded_v = encode_term(v)
-                    if isinstance(encoded_v, tuple) and encoded_v[0] == Atom(b'error'):
-                        return encoded_v  # Propagate nested error up
-                    encoded_values[k] = encoded_v
-                
-                # Now convert keys to atoms
-                encoded_dict = {}
-                for k, v in encoded_values.items():
-                    try:
-                        atom_key = safe_atom(k)
-                        encoded_dict[atom_key] = v
-                    except UnsafeAtomError as e:
-                        return (Atom(b'error'), f"UnsafeAtomError: {str(e)}")
-                
-                # Add the __struct__ field as an atom
-                encoded_dict[safe_atom('__struct__')] = Atom(module_name.encode('utf-8'))
-                return encoded_dict
-            except UnsafeAtomError as e:
-                return (Atom(b'error'), f"UnsafeAtomError: {str(e)}")
-        else:
-            # Regular dict - keep string keys but check for nested errors
+            # Convert Python class name to Elixir module name format
+            class_name = term["__class__"]
+            module_parts = class_name.split('.')
+            # Convert first letter of each part to uppercase, rest lowercase
+            module_name = '.'.join(p[0].upper() + p[1:].lower() for p in module_parts)
+            # Prefix with Elixir. for proper module name
+            module_name = f"Elixir.{module_name}"
+            
+            # Create a new dict without the __class__ key
+            struct_dict = term.copy()
+            del struct_dict["__class__"]
+            
+            # Convert all keys to atoms and values to Erlang terms
             encoded_dict = {}
-            for k, v in term.items():
-                encoded_v = encode_term(v)
-                if isinstance(encoded_v, tuple) and encoded_v[0] == Atom(b'error'):
-                    return encoded_v  # Propagate nested error up
-                encoded_dict[encode_term(k)] = encoded_v
+            for k, v in struct_dict.items():
+                encoded_dict[Atom(k.encode('utf-8'))] = encode_term(v)
+            
+            # Add the __struct__ field as an atom
+            encoded_dict[Atom(b'__struct__')] = Atom(module_name.encode('utf-8'))
             return encoded_dict
+        else:
+            # Regular dict - encode both keys and values
+            return {encode_term(k): encode_term(v) for k, v in term.items()}
     return term
 
 def decode_term(term):
@@ -153,6 +121,6 @@ def execute(code, variables=None):
             return None
             
     except Exception as e:
-        error_type = type(e).__name__
-        error_msg = str(e)
-        return (Atom(b'error'), f"{error_type}: {error_msg}") 
+        # Instead of returning an error dict, raise the exception
+        # This will be caught by Erlport and converted to an Elixir error
+        raise RuntimeError(f"{type(e).__name__}: {str(e)}") 

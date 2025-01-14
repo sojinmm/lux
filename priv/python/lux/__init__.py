@@ -1,1 +1,3 @@
-# Lux Python package for Elixir integration 
+"""Lux Python package for Elixir integration."""
+
+from .atoms import Atom 

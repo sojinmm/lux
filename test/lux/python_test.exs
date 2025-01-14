@@ -32,9 +32,11 @@ defmodule Lux.PythonTest do
     end
 
     test "raises error on failure" do
-      assert_raise RuntimeError, ~r/Python execution error:/, fn ->
-        Lux.Python.eval!("undefined_var")
-      end
+      assert_raise RuntimeError,
+                   ~r/Python error: NameError: name 'undefined_var' is not defined/,
+                   fn ->
+                     Lux.Python.eval!("undefined_var")
+                   end
     end
 
     test "supports variable bindings" do
@@ -92,13 +94,15 @@ defmodule Lux.PythonTest do
     end
 
     test "raises error for invalid Python code" do
-      assert_raise RuntimeError, ~r/Python execution error:/, fn ->
-        python do
-          ~PY"""
-          undefined_variable
-          """
-        end
-      end
+      assert_raise RuntimeError,
+                   ~r/Python error: NameError: name 'undefined_variable' is not defined/,
+                   fn ->
+                     python do
+                       ~PY"""
+                       undefined_variable
+                       """
+                     end
+                   end
     end
 
     test "handles string interpolation in Python" do

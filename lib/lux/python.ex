@@ -66,8 +66,9 @@ defmodule Lux.Python do
       end
 
     case Venomous.python(args, venomous_opts) do
+      %Venomous.SnakeError{error: error} -> {:error, to_string(error)}
+      %{error: error} when is_binary(error) -> {:error, error}
       {:error, error} -> {:error, to_string(error)}
-      {:error, :timeout} -> {:error, "timeout"}
       result when is_binary(result) -> {:ok, String.Chars.to_string(result)}
       result -> {:ok, result}
     end
@@ -87,8 +88,17 @@ defmodule Lux.Python do
   @spec eval!(String.t(), eval_options()) :: term() | no_return()
   def eval!(code, opts \\ []) do
     case eval(code, opts) do
-      {:ok, result} -> result
-      {:error, error} -> raise "Python execution error: #{error}"
+      {:ok, result} ->
+        result
+
+      {:error, error} ->
+        error_message =
+          error
+          |> String.split("\n")
+          |> List.first()
+          |> to_string()
+
+        raise RuntimeError, "Python error: #{error_message}"
     end
   end
 

@@ -33,3 +33,4 @@ lux-*.tar
 .project
 .pydevproject
 .settings/
+.venv/

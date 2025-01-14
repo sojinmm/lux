@@ -1,9 +1,8 @@
 """Tests for the eval module."""
 import pytest
-from erlport.erlterms import Atom
+from lux.atoms import Atom
 
 from lux.eval import encode_term, decode_term, execute
-from lux.safe_atoms import UnsafeAtomError
 
 def test_encode_basic_types():
     """Test encoding of basic Python types to Erlang terms."""
@@ -57,15 +56,6 @@ def test_encode_struct_conversion():
     assert result[Atom(b"__struct__")] == Atom(b"Elixir.Data.Types.Point")
     assert result[Atom(b"x")] == 1
     assert result[Atom(b"y")] == 2
-
-def test_unsafe_atom_error():
-    """Test that using unsafe atoms raises an error."""
-    with pytest.raises(UnsafeAtomError) as exc_info:
-        encode_term({
-            "__class__": "user",
-            "unsafe_field": "value"
-        })
-    assert "unsafe_field" in str(exc_info.value)
 
 def test_decode_basic_types():
     """Test decoding of Erlang terms to Python types."""
@@ -123,4 +113,4 @@ def test_execute_error_handling():
     result = execute("1/0")
     assert isinstance(result, tuple)
     assert result[0] == Atom(b"error")
-    assert "ZeroDivisionError" in result[1] 
+    assert "ZeroDivisionError" in result[1]
