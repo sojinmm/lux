@@ -22,14 +22,6 @@ defmodule Mix.Tasks.Setup do
     "/opt/homebrew/bin/poetry"
   ]
 
-  @shell_config_files [
-    "~/.zshenv",
-    "~/.zprofile",
-    "~/.zshrc",
-    "~/.bashrc",
-    "~/.bash_profile"
-  ]
-
   defp safe_cmd(cmd, args, opts) do
     try do
       System.cmd(cmd, args, opts)
@@ -129,6 +121,7 @@ defmodule Mix.Tasks.Setup do
     case safe_cmd(poetry_path, ["install"], cd: python_dir, stderr_to_stdout: true) do
       {:error, :not_found} ->
         Mix.shell().error("\nFailed to execute Poetry command")
+
         Mix.shell().error("""
 
         Try these steps to resolve the issue:
@@ -141,6 +134,7 @@ defmodule Mix.Tasks.Setup do
         4. Run setup again:
             mix setup
         """)
+
         exit({:shutdown, 1})
 
       {output, 0} ->
@@ -148,6 +142,7 @@ defmodule Mix.Tasks.Setup do
 
       {output, _} ->
         Mix.shell().error("\nFailed to install Python dependencies:\n\n#{output}")
+
         Mix.shell().error("""
 
         Try these steps to resolve the issue:
@@ -163,6 +158,7 @@ defmodule Mix.Tasks.Setup do
         If the issue persists, please check the error message above for specific dependency conflicts.
         You may need to manually resolve version conflicts in priv/python/pyproject.toml.
         """)
+
         exit({:shutdown, 1})
     end
   end
