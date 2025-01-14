@@ -25,6 +25,16 @@ defmodule Lux.Python do
 
   @type eval_options :: [eval_option()]
 
+  @type package_info :: %{
+          available: boolean(),
+          version: String.t() | nil
+        }
+
+  @type import_result :: %{
+          success: boolean(),
+          error: String.t() | nil
+        }
+
   @doc """
   Evaluates Python code with optional variable bindings and other options.
 
@@ -150,5 +160,88 @@ defmodule Lux.Python do
   @doc false
   defmacro sigil_PY({:<<>>, _meta, [string]}, _modifiers) do
     quote do: unquote(string)
+  end
+
+  @doc """
+  Lists all available Python packages and their versions.
+
+  Returns a map where keys are package names and values are version strings.
+
+  ## Examples
+
+      iex> Lux.Python.list_packages()
+      %{
+        "pytest" => "7.4.0",
+        "requests" => "2.31.0"
+      }
+  """
+  @spec list_packages() :: {:ok, %{String.t() => String.t()}} | {:error, String.t()}
+  def list_packages do
+    args = %SnakeArgs{
+      module: :"lux.eval",
+      func: :get_available_packages,
+      args: []
+    }
+
+    case Venomous.python(args) do
+      %Venomous.SnakeError{error: error} -> {:error, to_string(error)}
+      result when is_map(result) -> {:ok, result}
+      {:error, error} -> {:error, to_string(error)}
+    end
+  end
+
+  @doc """
+  Checks if a Python package is available and returns its version information.
+
+  ## Examples
+
+      iex> Lux.Python.check_package("pytest")
+      {:ok, %{available: true, version: "7.4.0"}}
+
+      iex> Lux.Python.check_package("nonexistent_package")
+      {:ok, %{available: false, version: nil}}
+  """
+  @spec check_package(String.t()) :: {:ok, package_info()} | {:error, String.t()}
+  def check_package(package_name) when is_binary(package_name) do
+    args = %SnakeArgs{
+      module: :"lux.eval",
+      func: :check_package,
+      args: [package_name]
+    }
+
+    case Venomous.python(args) do
+      %Venomous.SnakeError{error: error} -> {:error, to_string(error)}
+      result when is_map(result) -> {:ok, result}
+      {:error, error} -> {:error, to_string(error)}
+    end
+  end
+
+  @doc """
+  Attempts to import a Python package.
+
+  Returns information about whether the import was successful.
+  If the import fails, includes the error message.
+
+  ## Examples
+
+      iex> Lux.Python.import_package("json")
+      {:ok, %{success: true, error: nil}}
+
+      iex> Lux.Python.import_package("nonexistent_package")
+      {:ok, %{success: false, error: "No module named 'nonexistent_package'"}}
+  """
+  @spec import_package(String.t()) :: {:ok, import_result()} | {:error, String.t()}
+  def import_package(package_name) when is_binary(package_name) do
+    args = %SnakeArgs{
+      module: :"lux.eval",
+      func: :import_package,
+      args: [package_name]
+    }
+
+    case Venomous.python(args) do
+      %Venomous.SnakeError{error: error} -> {:error, to_string(error)}
+      result when is_map(result) -> {:ok, result}
+      {:error, error} -> {:error, to_string(error)}
+    end
   end
 end

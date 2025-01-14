@@ -24,6 +24,7 @@ Struct Conversion:
     - 'data.types.point' -> Elixir.Data.Types.Point
 """
 from lux.atoms import Atom
+from lux.packages import list_packages, get_package_version, safe_import
 import ast
 
 def encode_term(term):
@@ -124,3 +125,27 @@ def execute(code, variables=None):
         # Instead of returning an error dict, raise the exception
         # This will be caught by Erlport and converted to an Elixir error
         raise RuntimeError(f"{type(e).__name__}: {str(e)}") 
+
+def get_available_packages():
+    """Get a list of available packages and their versions."""
+    return encode_term(list_packages())
+
+def check_package(package_name):
+    """Check if a package is available and get its version."""
+    if isinstance(package_name, bytes):
+        package_name = package_name.decode('utf-8')
+    version = get_package_version(package_name)
+    return encode_term({
+        "available": version is not None,
+        "version": version if version else None
+    })
+
+def import_package(package_name):
+    """Attempt to import a package."""
+    if isinstance(package_name, bytes):
+        package_name = package_name.decode('utf-8')
+    success, error = safe_import(package_name)
+    return encode_term({
+        "success": success,
+        "error": error if error else None
+    }) 

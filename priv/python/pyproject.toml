@@ -2,7 +2,7 @@
 name = "lux-python"
 version = "0.1.0"
 description = "Python components for the Lux framework"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Robert Parcus <robertparcus@spectrallabs.xyz>"]
 readme = "README.md"
 packages = [{include = "lux"}]
 
