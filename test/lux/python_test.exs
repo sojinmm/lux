@@ -139,4 +139,63 @@ defmodule Lux.PythonTest do
       assert result == 20
     end
   end
+
+  describe "web3 integration" do
+    test "loads and uses web3 libraries" do
+      # Import required packages
+      assert {:ok, %{"success" => true}} = Lux.Python.import_package("web3")
+      assert {:ok, %{"success" => true}} = Lux.Python.import_package("eth_utils")
+
+      # Test creating a Web3 instance and using eth_utils
+      result =
+        python do
+          ~PY"""
+          from web3 import Web3
+          from eth_utils import to_checksum_address, is_address
+
+          # Test eth_utils functions
+          address = "0xd3cda913deb6f67967b99d67acdfa1712c293601"
+          checksum = to_checksum_address(address)
+          is_valid = is_address(checksum)
+
+          {"address": checksum, "is_valid": is_valid}
+          """
+        end
+
+      assert %{
+               "address" => "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
+               "is_valid" => true
+             } = result
+
+      # Test Web3 instance creation and basic functionality
+      result =
+        python do
+          ~PY"""
+          from web3 import Web3
+
+          # Create a Web3 instance using local provider (won't actually connect)
+          w3 = Web3(Web3.EthereumTesterProvider())
+
+          # Test some basic Web3 functionality
+          account = w3.eth.account.create()
+          address = account.address
+
+          # Return some basic info
+          {
+              "connected": w3.is_connected(),
+              "address_valid": Web3.is_address(address),
+              "checksum_address": Web3.to_checksum_address(address.lower())
+          }
+          """
+        end
+
+      assert %{
+               "connected" => true,
+               "address_valid" => true,
+               "checksum_address" => checksum_addr
+             } = result
+
+      assert String.starts_with?(checksum_addr, "0x")
+    end
+  end
 end
