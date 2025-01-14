@@ -61,18 +61,36 @@ SAFE_ATOMS = {
     'code',
     
     # Common attributes
-    'tags',
     'category',
-    'priority',
-    'state',
-    'result',
-    'source',
-    'target',
+    'customer',
     'format',
-    'version',
+    'items',
     'language',
     'locale',
+    'priority',
+    'result',
+    'score',
+    'scores',
+    'source',
+    'state',
+    'tags',
+    'target',
     'timezone',
+    'version',
+    'amount',
+    'currency',
+    'price',
+    'quantity',
+    'total',
+    'subtotal',
+    'tax',
+    'discount',
+    'shipping',
+    'handling',
+
+    # Letters
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 
     # Web3 and Crypto
     # Blockchain

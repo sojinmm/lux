@@ -39,15 +39,22 @@ def encode_term(term):
     elif isinstance(term, (int, float, bool)):
         return term
     elif isinstance(term, (list, tuple)):
-        return [encode_term(item) for item in term]
+        # Handle errors in list items
+        encoded_items = []
+        for item in term:
+            encoded = encode_term(item)
+            if isinstance(encoded, tuple) and encoded[0] == Atom(b'error'):
+                return encoded  # Propagate error up
+            encoded_items.append(encoded)
+        return encoded_items
     elif isinstance(term, dict):
         if "__class__" in term:
             try:
                 # Convert Python class name to Elixir module name format
                 class_name = term["__class__"]
                 module_parts = class_name.split('.')
-                # Convert to PascalCase and join with dots
-                module_name = '.'.join(p.capitalize() for p in module_parts)
+                # Convert first letter of each part to uppercase, rest lowercase
+                module_name = '.'.join(p[0].upper() + p[1:].lower() for p in module_parts)
                 # Prefix with Elixir. for proper module name
                 module_name = f"Elixir.{module_name}"
                 
@@ -55,11 +62,22 @@ def encode_term(term):
                 struct_dict = term.copy()
                 del struct_dict["__class__"]
                 
-                # Convert keys to atoms, will raise UnsafeAtomError if any key is unsafe
-                encoded_dict = {
-                    safe_atom(k): encode_term(v)
-                    for k, v in struct_dict.items()
-                }
+                # Convert values first to catch any nested errors
+                encoded_values = {}
+                for k, v in struct_dict.items():
+                    encoded_v = encode_term(v)
+                    if isinstance(encoded_v, tuple) and encoded_v[0] == Atom(b'error'):
+                        return encoded_v  # Propagate nested error up
+                    encoded_values[k] = encoded_v
+                
+                # Now convert keys to atoms
+                encoded_dict = {}
+                for k, v in encoded_values.items():
+                    try:
+                        atom_key = safe_atom(k)
+                        encoded_dict[atom_key] = v
+                    except UnsafeAtomError as e:
+                        return (Atom(b'error'), f"UnsafeAtomError: {str(e)}")
                 
                 # Add the __struct__ field as an atom
                 encoded_dict[safe_atom('__struct__')] = Atom(module_name.encode('utf-8'))
@@ -67,8 +85,14 @@ def encode_term(term):
             except UnsafeAtomError as e:
                 return (Atom(b'error'), f"UnsafeAtomError: {str(e)}")
         else:
-            # Regular dict - keep string keys
-            return {encode_term(k): encode_term(v) for k, v in term.items()}
+            # Regular dict - keep string keys but check for nested errors
+            encoded_dict = {}
+            for k, v in term.items():
+                encoded_v = encode_term(v)
+                if isinstance(encoded_v, tuple) and encoded_v[0] == Atom(b'error'):
+                    return encoded_v  # Propagate nested error up
+                encoded_dict[encode_term(k)] = encoded_v
+            return encoded_dict
     return term
 
 def decode_term(term):

@@ -288,7 +288,7 @@ defmodule Lux.PythonTest do
       # NFT with metadata
       assert {:ok,
               %{
-                __struct__: NFT,
+                __struct__: Nft,
                 token_id: 123,
                 token_uri: "ipfs://...",
                 metadata: %{

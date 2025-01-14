@@ -24,3 +24,12 @@ lux-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# IDE settings (project-wide)
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.pydevproject
+.settings/
