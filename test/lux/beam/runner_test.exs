@@ -80,43 +80,56 @@ defmodule Lux.Beam.RunnerTest do
       # first, second, third, branch check, low
       assert length(log.steps) == 4
 
-      assert [
-               %{
-                 error: nil,
-                 id: "first",
-                 input: %{value: "test"},
-                 output: %{value: "test"},
-                 status: :completed,
-                 started_at: _,
-                 completed_at: _
-               },
-               %{
-                 error: nil,
-                 id: "second",
-                 input: %{value: "fixed"},
-                 output: %{value: "fixed"},
-                 status: :completed,
-                 started_at: _,
-                 completed_at: _
-               },
-               %{
-                 error: nil,
-                 id: "third",
-                 input: %{value: "test"},
-                 output: %{value: "test"},
-                 status: :completed,
-                 started_at: _,
-                 completed_at: _
-               },
-               %{
-                 id: "low",
-                 input: %{value: "low"},
-                 output: %{value: "low"},
-                 status: :completed,
-                 started_at: _,
-                 completed_at: _
-               }
-             ] = log.steps
+      # Verify each step individually without relying on order
+      steps_by_id = Map.new(log.steps, &{&1.id, &1})
+
+      # Verify first step
+      assert %{
+               error: nil,
+               id: "first",
+               input: %{value: "test"},
+               output: %{value: "test"},
+               status: :completed,
+               started_at: _,
+               completed_at: _
+             } = steps_by_id["first"]
+
+      # Verify second step
+      assert %{
+               error: nil,
+               id: "second",
+               input: %{value: "fixed"},
+               output: %{value: "fixed"},
+               status: :completed,
+               started_at: _,
+               completed_at: _
+             } = steps_by_id["second"]
+
+      # Verify third step
+      assert %{
+               error: nil,
+               id: "third",
+               input: %{value: "test"},
+               output: %{value: "test"},
+               status: :completed,
+               started_at: _,
+               completed_at: _
+             } = steps_by_id["third"]
+
+      # Verify low step
+      assert %{
+               id: "low",
+               input: %{value: "low"},
+               output: %{value: "low"},
+               status: :completed,
+               started_at: _,
+               completed_at: _
+             } = steps_by_id["low"]
+
+      # Verify parallel steps completed in any order
+      parallel_steps = Enum.filter(log.steps, &(&1.id in ["second", "third"]))
+      assert length(parallel_steps) == 2
+      assert Enum.all?(parallel_steps, &(&1.status == :completed))
     end
 
     test "handles parallel execution" do

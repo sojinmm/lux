@@ -206,6 +206,8 @@ Built-in monitoring capabilities:
 
 ## Installation
 
+The package can be installed by adding `lux` to your list of dependencies in `mix.exs`:
+
 ```elixir
 def deps do
   [
@@ -214,15 +216,72 @@ def deps do
 end
 ```
 
+## Development Setup
+
+### Elixir Setup
+
+```bash
+# Install dependencies
+mix deps.get
+
+# Run Elixir tests
+mix test
+```
+
+### Python Setup
+
+The project includes Python components in the `priv/python` directory. These are managed using Poetry.
+
+1. Install Poetry (if not already installed):
+   ```bash
+   curl -sSL https://install.python-poetry.org | python3 -
+   ```
+
+2. Install Python dependencies:
+   ```bash
+   cd priv/python
+   poetry install
+   ```
+
+## Running Tests
+
+### Elixir Tests
+```bash
+# Run all Elixir tests
+mix test
+
+# Run specific test file
+mix test test/lux/python_test.exs
+```
+
+### Python Tests
+```bash
+# Run all Python tests
+mix python.test
+
+# Run specific test file
+mix python.test tests/test_eval.py
+
+# Run tests with coverage
+mix python.test --cov
+
+# Run tests with specific marker
+mix python.test --marker="not slow"
+```
+
+You can also run Python tests directly using Poetry:
+```bash
+cd priv/python
+poetry run pytest
+```
+
 ## Documentation
 
-For detailed documentation and examples, see:
-- [Signal Guide](guides/signals.md)
-- [Prism Guide](guides/prisms.md)
-- [Lens Guide](guides/lenses.md)
-- [Beam Guide](guides/beams.md)
-- [Testing Guide](guides/testing.md)
-- [Schema Guide](guides/schemas.md)
+Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc):
+
+```bash
+mix docs
+```
 
 ## Contributing
 

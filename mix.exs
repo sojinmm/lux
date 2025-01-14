@@ -27,7 +27,8 @@ defmodule Lux.MixProject do
       {:req, "~> 0.5.0"},
       {:stream_data, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
-      {:venomous, "~> 0.7.5"}
+      {:venomous, "~> 0.7.5"},
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 end
