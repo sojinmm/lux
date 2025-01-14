@@ -31,8 +31,7 @@ defmodule Lux.Python do
         }
 
   @type import_result :: %{
-          success: boolean(),
-          error: String.t() | nil
+          required(String.t()) => boolean() | String.t()
         }
 
   @doc """
@@ -75,13 +74,9 @@ defmodule Lux.Python do
         venomous_opts
       end
 
-    case Venomous.python(args, venomous_opts) do
-      %Venomous.SnakeError{error: error} -> {:error, to_string(error)}
-      %{error: error} when is_binary(error) -> {:error, error}
-      {:error, error} -> {:error, to_string(error)}
-      result when is_binary(result) -> {:ok, String.Chars.to_string(result)}
-      result -> {:ok, result}
-    end
+    args
+    |> Venomous.python(venomous_opts)
+    |> handle_python_result()
   end
 
   @doc """
@@ -238,10 +233,17 @@ defmodule Lux.Python do
       args: [package_name]
     }
 
-    case Venomous.python(args) do
-      %Venomous.SnakeError{error: error} -> {:error, to_string(error)}
-      result when is_map(result) -> {:ok, result}
-      {:error, error} -> {:error, to_string(error)}
-    end
+    args
+    |> Venomous.python()
+    |> handle_python_result()
   end
+
+  defp handle_python_result(%Venomous.SnakeError{error: error}), do: {:error, to_string(error)}
+  defp handle_python_result(%{error: error}) when is_binary(error), do: {:error, error}
+  defp handle_python_result({:error, error}), do: {:error, to_string(error)}
+
+  defp handle_python_result(result) when is_binary(result),
+    do: {:ok, String.Chars.to_string(result)}
+
+  defp handle_python_result(result), do: {:ok, result}
 end
