@@ -8,13 +8,15 @@ defmodule Lux.Signal do
   """
 
   @enforce_keys [:id, :schema_id, :content]
-  defstruct [:id, :schema_id, :content, metadata: %{}]
+  defstruct [:id, :schema_id, :content, :sender, :target, metadata: %{}]
 
   @type t :: %__MODULE__{
           id: String.t(),
           schema_id: String.t(),
           content: map(),
-          metadata: map()
+          metadata: map(),
+          sender: String.t() | nil,
+          target: String.t() | nil
         }
 
   @doc """
@@ -43,7 +45,9 @@ defmodule Lux.Signal do
               id: Lux.UUID.generate(),
               schema_id: schema_id(),
               content: transformed,
-              metadata: metadata
+              metadata: Map.drop(metadata, [:sender, :target]),
+              sender: Map.get(metadata, :sender),
+              target: Map.get(metadata, :target)
             })
 
           {:ok, signal}

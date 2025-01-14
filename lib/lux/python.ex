@@ -2,19 +2,19 @@ defmodule Lux.Python do
   @moduledoc """
   Provides functions for executing Python code with variable bindings.
 
+  The ~PY sigil is used to write Python code directly in Elixir files.
+  The content inside ~PY sigils is preserved by the Elixir formatter
+  to maintain proper Python indentation and formatting.
+
   ## Examples
 
-      iex> Lux.Python.eval("x + y", variables: %{x: 1, y: 2})
-      {:ok, 3}
-
-      iex> Lux.Python.eval(\"\"\"
-      ...> def factorial(n):
-      ...>     if n <= 1:
-      ...>         return 1
-      ...>     return n * factorial(n - 1)
-      ...> factorial(n)
-      ...> \"\"\", variables: %{n: 5})
-      {:ok, 120}
+      iex> require Lux.Python
+      iex> Lux.Python.python variables: %{x: 40, y: 2} do
+      ...>   ~PY'''
+      ...>   x + y
+      ...>   '''
+      ...> end
+      42
   """
 
   alias Venomous.SnakeArgs

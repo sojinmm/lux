@@ -8,7 +8,9 @@ defmodule Lux.SignalTest do
         id: "test-1",
         schema_id: "schema-1",
         content: %{message: "Hello"},
-        metadata: %{created_at: "2024-01-01"}
+        metadata: %{created_at: "2024-01-01"},
+        sender: "agent-1",
+        target: "agent-2"
       }
 
       signal = Signal.new(attrs)
@@ -18,6 +20,8 @@ defmodule Lux.SignalTest do
       assert signal.schema_id == "schema-1"
       assert signal.content == %{message: "Hello"}
       assert signal.metadata == %{created_at: "2024-01-01"}
+      assert signal.sender == "agent-1"
+      assert signal.target == "agent-2"
     end
 
     test "initializes empty metadata when not provided" do
@@ -29,6 +33,8 @@ defmodule Lux.SignalTest do
 
       signal = Signal.new(attrs)
       assert signal.metadata == %{}
+      assert signal.sender == nil
+      assert signal.target == nil
     end
   end
 
@@ -57,6 +63,28 @@ defmodule Lux.SignalTest do
       assert signal.schema_id == TestSchema.schema_id()
       assert signal.content == %{message: "Hello"}
       assert signal.metadata == %{}
+      assert signal.sender == nil
+      assert signal.target == nil
+    end
+
+    test "creates a signal with sender and target" do
+      defmodule RoutedSignal do
+        use Lux.Signal,
+          schema: TestSchema
+
+        def transform(content) do
+          {:ok, Map.put(content, :message, String.upcase(content.message))}
+        end
+
+        def extract_metadata(_content) do
+          {:ok, %{sender: "agent-1", target: "agent-2"}}
+        end
+      end
+
+      {:ok, signal} = RoutedSignal.new(%{message: "hello"})
+      assert signal.content.message == "HELLO"
+      assert signal.sender == "agent-1"
+      assert signal.target == "agent-2"
     end
 
     test "supports content validation" do
