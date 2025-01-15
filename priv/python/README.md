@@ -17,6 +17,7 @@ This directory contains the Python components of the Lux framework. It's structu
 
 3. Activate the virtual environment:
    ```bash
+   poetry self add poetry-plugin-shell
    poetry shell
    ```
 
