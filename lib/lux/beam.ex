@@ -372,9 +372,8 @@ defmodule Lux.Beam do
         definition: definition
       }) do
     with :ok <- validate_schema(input_schema),
-         :ok <- validate_schema(output_schema),
-         :ok <- validate_definition(definition) do
-      :ok
+         :ok <- validate_schema(output_schema) do
+      validate_definition(definition)
     end
   end
 

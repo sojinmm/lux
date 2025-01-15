@@ -18,6 +18,9 @@ defmodule Lux.LLM.OpenAI do
   @endpoint "https://api.openai.com/v1/chat/completions"
 
   defmodule Config do
+    @moduledoc """
+    Configuration module for OpenAI.
+    """
     @type t :: %__MODULE__{
             api_key: String.t(),
             model: String.t(),
