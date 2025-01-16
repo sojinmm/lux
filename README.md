@@ -362,6 +362,38 @@ mix setup
 mix test
 ```
 
+### Setup Python environment
+
+```sh
+cd priv/python
+poetry shell
+poetry install
+```
+
+### Setup environment variables
+
+The application uses environment-specific configuration files:
+- `dev.envrc` for development
+- `test.envrc` for testing
+- `prod.envrc` for production
+
+1. Create the appropriate `.envrc` file for your environment.
+
+```sh
+# For development
+cp dev.envrc dev.override.envrc
+
+# For testing
+cp test.envrc test.override.envrc
+```
+
+These files are optional and can be used for local-specific configurations that shouldn't be committed to version control.
+- `dev.override.envrc`
+- `test.override.envrc`
+- `prod.override.envrc`
+
+3. Fill in required API keys in your environment file
+
 ## Contributing
 
 We welcome contributions! Here's how you can help:
