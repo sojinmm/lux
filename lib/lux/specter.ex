@@ -162,42 +162,31 @@ defmodule Lux.Specter do
   Creates a new specter from the given attributes
   """
   def new(attrs) when is_map(attrs) do
+    llm_config = build_llm_config(attrs[:llm_config])
+
     reflection =
       Lux.Reflection.new(%{
         name: attrs[:name] || "Anonymous Reflection",
         description: attrs[:description] || "Default reflection process",
-        llm_config: Map.merge(default_llm_config(), attrs[:llm_config] || %{})
+        llm_config: llm_config
       })
 
     struct(__MODULE__, %{
-      id: attrs[:id] || Lux.UUID.generate(),
-      name: attrs[:name] || "Anonymous Specter",
-      description: attrs[:description] || "",
-      goal: attrs[:goal] || "",
-      llm_config: Map.merge(default_llm_config(), attrs[:llm_config] || %{}),
-      prisms: attrs[:prisms] || [],
-      beams: attrs[:beams] || [],
-      lenses: attrs[:lenses] || [],
-      accepts_signals: attrs[:accepts_signals] || [],
+      id: Map.get(attrs, :id, Lux.UUID.generate()),
+      name: Map.get(attrs, :name, "Anonymous Specter"),
+      description: Map.get(attrs, :description, ""),
+      goal: Map.get(attrs, :goal, ""),
+      llm_config: llm_config,
+      prisms: Map.get(attrs, :prisms, []),
+      beams: Map.get(attrs, :beams, []),
+      lenses: Map.get(attrs, :lenses, []),
+      accepts_signals: Map.get(attrs, :accepts_signals, []),
       memory: [],
-      scheduled_beams: attrs[:scheduled_beams] || [],
-      reflection_interval: attrs[:reflection_interval] || 60_000,
+      scheduled_beams: Map.get(attrs, :scheduled_beams, []),
+      reflection_interval: Map.get(attrs, :reflection_interval, 60_000),
       reflection: reflection,
-      reflection_config:
-        Map.merge(
-          %{max_actions_per_reflection: 5, max_parallel_actions: 2, action_timeout: 30_000},
-          attrs[:reflection_config] || %{}
-        ),
-      collaboration_config:
-        Map.merge(
-          %{
-            can_delegate: true,
-            can_request_help: true,
-            trusted_specters: [],
-            collaboration_protocols: [:ask, :tell, :delegate, :request_review]
-          },
-          attrs[:collaboration_config] || %{}
-        )
+      reflection_config: build_reflection_config(attrs[:reflection_config]),
+      collaboration_config: build_collaboration_config(attrs[:collaboration_config])
     })
   end
 
@@ -241,6 +230,29 @@ defmodule Lux.Specter do
       :exit, {:timeout, _} -> {:error, :timeout}
       kind, reason -> {:error, {kind, reason}}
     end
+  end
+
+  defp build_llm_config(config) do
+    Map.merge(default_llm_config(), config || %{})
+  end
+
+  defp build_reflection_config(config) do
+    Map.merge(
+      %{max_actions_per_reflection: 5, max_parallel_actions: 2, action_timeout: 30_000},
+      config || %{}
+    )
+  end
+
+  defp build_collaboration_config(config) do
+    Map.merge(
+      %{
+        can_delegate: true,
+        can_request_help: true,
+        trusted_specters: [],
+        collaboration_protocols: [:ask, :tell, :delegate, :request_review]
+      },
+      config || %{}
+    )
   end
 
   @doc """

@@ -58,35 +58,34 @@ defmodule Lux.Reflection do
   @doc """
   Performs a reflection cycle for a specter, deciding on next actions.
   """
-  def reflect(%__MODULE__{} = reflection, %Lux.Specter{} = specter, context) do
+  def reflect(%__MODULE__{} = reflection, %Lux.Specter{} = specter, context)
+      when is_map(context) do
     reflection = %{reflection | state: :reflecting}
 
-    if not is_map(context) do
-      {:error, :invalid_context, %{reflection | state: :idle}}
-    else
-      prompt = build_reflection_prompt(reflection, specter, context)
+    prompt = build_reflection_prompt(reflection, specter, context)
 
-      case call_llm(prompt, reflection.llm_config) do
-        {:ok, response} ->
-          try do
-            {actions, new_patterns} = parse_reflection_response(response)
+    case call_llm(prompt, reflection.llm_config) do
+      {:ok, response} ->
+        try do
+          {actions, new_patterns} = parse_reflection_response(response)
 
-            updated_reflection =
-              reflection
-              |> update_history(response)
-              |> update_patterns(new_patterns)
-              |> update_metrics(actions)
-              |> Map.put(:last_reflection_time, DateTime.utc_now())
-              |> Map.put(:state, :idle)
+          updated_reflection =
+            reflection
+            |> update_history(response)
+            |> update_patterns(new_patterns)
+            |> update_metrics(actions)
+            |> Map.put(:last_reflection_time, DateTime.utc_now())
+            |> Map.put(:state, :idle)
 
-            {:ok, actions, updated_reflection}
-          rescue
-            error -> {:error, error, %{reflection | state: :idle}}
-          end
-
-          # This case is removed since call_llm always returns {:ok, response}
-      end
+          {:ok, actions, updated_reflection}
+        rescue
+          error -> {:error, error, %{reflection | state: :idle}}
+        end
     end
+  end
+
+  def reflect(%__MODULE__{} = reflection, _specter, _context) do
+    {:error, :invalid_context, %{reflection | state: :idle}}
   end
 
   @doc """

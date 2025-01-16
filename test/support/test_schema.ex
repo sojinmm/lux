@@ -1,4 +1,8 @@
 defmodule TestSignalSchema do
+  @moduledoc """
+  This module defines a schema for testing.
+  """
+
   use Lux.SignalSchema,
     id: "test-schema",
     name: "Test Schema",
