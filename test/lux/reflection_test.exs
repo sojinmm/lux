@@ -142,7 +142,6 @@ defmodule Lux.ReflectionTest do
 
   describe "private functions" do
     test "format_history/1 formats history entries correctly" do
-      reflection = Reflection.new()
       now = DateTime.utc_now()
 
       history = [

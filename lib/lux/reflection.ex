@@ -84,8 +84,7 @@ defmodule Lux.Reflection do
             error -> {:error, error, %{reflection | state: :idle}}
           end
 
-        {:error, reason} ->
-          {:error, reason, %{reflection | state: :idle}}
+          # This case is removed since call_llm always returns {:ok, response}
       end
     end
   end
@@ -156,7 +155,7 @@ defmodule Lux.Reflection do
   # not being an existing atom. It will be replaced once we implemt call_llm
   SamplePrism
 
-  defp call_llm(prompt, config) do
+  defp call_llm(_prompt, _config) do
     # TODO: Implement actual LLM call
     {:ok,
      %{
