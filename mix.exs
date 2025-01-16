@@ -8,7 +8,8 @@ defmodule Lux.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      dialyzer: [plt_add_apps: [:mix]]
+      dialyzer: [plt_add_apps: [:mix]],
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -20,6 +21,9 @@ defmodule Lux.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -28,7 +32,8 @@ defmodule Lux.MixProject do
       {:stream_data, "~> 1.0", only: :test},
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
       {:venomous, "~> 0.7.5"},
-      {:mock, "~> 0.3.0", only: :test}
+      {:mock, "~> 0.3.0", only: :test},
+      {:crontab, "~> 1.1"}
     ]
   end
 end

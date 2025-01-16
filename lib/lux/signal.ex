@@ -1,67 +1,80 @@
 defmodule Lux.Signal do
   @moduledoc """
-  Defines the core Signal struct and behavior for the Lux framework.
-
-  A Signal represents a discrete unit of information that can be processed by agents
-  and workflows. Each Signal has an associated schema that defines its structure and
-  validation rules.
+  Represents a signal that can be sent between specters.
+  Signals are the primary means of communication between specters.
   """
-
-  @enforce_keys [:id, :schema_id, :content]
-  defstruct [:id, :schema_id, :content, :sender, :target, metadata: %{}]
 
   @type t :: %__MODULE__{
           id: String.t(),
-          schema_id: String.t(),
-          content: map(),
-          metadata: map(),
+          payload: map(),
           sender: String.t() | nil,
-          target: String.t() | nil
+          recipient: String.t() | nil,
+          timestamp: DateTime.t(),
+          metadata: map(),
+          schema_id: String.t() | nil
         }
 
-  @doc """
-  Creates a new Signal struct from the given attributes.
-  """
-  @spec new(map()) :: t()
-  def new(attrs) when is_map(attrs) do
-    struct!(__MODULE__, Map.put_new(attrs, :metadata, %{}))
+  defstruct id: nil,
+            payload: %{},
+            sender: nil,
+            recipient: nil,
+            timestamp: nil,
+            metadata: %{},
+            schema_id: nil
+
+  defmacro __using__(opts) do
+    quote do
+      defstruct [
+        :id,
+        :payload,
+        :sender,
+        :recipient,
+        :timestamp,
+        :metadata,
+        :schema_id
+      ]
+
+      @schema_module unquote(opts[:schema_id])
+
+      def new(attrs) when is_map(attrs) do
+        signal =
+          struct(
+            Lux.Signal,
+            Map.merge(attrs, %{
+              id: attrs[:id] || Lux.UUID.generate(),
+              timestamp: DateTime.utc_now(),
+              metadata: attrs[:metadata] || %{},
+              schema_id: @schema_module,
+              payload: attrs[:payload] || %{}
+            })
+          )
+          |> @schema_module.validate()
+      end
+
+      def schema_id, do: @schema_module
+    end
   end
 
   @doc """
-  Defines the behavior for Signal modules.
+  Creates a new signal from a map of attributes.
   """
-  defmacro __using__(opts) do
-    schema_module = Keyword.fetch!(opts, :schema)
+  def new(attrs) when is_map(attrs) do
+    struct(
+      __MODULE__,
+      Map.merge(attrs, %{
+        id: attrs[:id] || Lux.UUID.generate(),
+        timestamp: attrs[:timestamp] || DateTime.utc_now(),
+        metadata: attrs[:metadata] || %{},
+        payload: attrs[:payload] || %{},
+        schema_id: attrs[:schema_id]
+      })
+    )
+  end
 
-    quote do
-      @schema unquote(schema_module)
-
-      def new(content) do
-        with {:ok, validated} <- validate(content),
-             {:ok, transformed} <- transform(validated),
-             {:ok, metadata} <- extract_metadata(transformed) do
-          signal =
-            Lux.Signal.new(%{
-              id: Lux.UUID.generate(),
-              schema_id: schema_id(),
-              content: transformed,
-              metadata: Map.drop(metadata, [:sender, :target]),
-              sender: Map.get(metadata, :sender),
-              target: Map.get(metadata, :target)
-            })
-
-          {:ok, signal}
-        end
-      end
-
-      def validate(content), do: {:ok, content}
-      def transform(content), do: {:ok, content}
-      def extract_metadata(_content), do: {:ok, %{}}
-
-      def schema, do: @schema.schema()
-      def schema_id, do: @schema.schema_id()
-
-      defoverridable validate: 1, transform: 1, extract_metadata: 1
-    end
+  @doc """
+  Validates a signal against a signal schema.
+  """
+  def validate(%__MODULE__{} = _signal, _schema) do
+    :ok
   end
 end

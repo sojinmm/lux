@@ -48,8 +48,7 @@ defmodule Lux.Prism do
     :description,
     :examples,
     :input_schema,
-    :output_schema,
-    :schema
+    :output_schema
   ]
 
   @type t :: %__MODULE__{
@@ -59,8 +58,7 @@ defmodule Lux.Prism do
           description: nullable(String.t()),
           examples: nullable([String.t()]),
           input_schema: nullable(schema()),
-          output_schema: nullable(schema()),
-          schema: nullable(schema())
+          output_schema: nullable(schema())
         }
 
   @doc """
@@ -75,8 +73,7 @@ defmodule Lux.Prism do
       description: attrs[:description] || "",
       examples: attrs[:examples] || [],
       input_schema: attrs[:input_schema] || nil,
-      output_schema: attrs[:output_schema] || nil,
-      schema: attrs[:schema] || nil
+      output_schema: attrs[:output_schema] || nil
     }
   end
 
@@ -104,7 +101,8 @@ defmodule Lux.Prism do
         description: Keyword.get(unquote(opts), :description, ""),
         input_schema: Keyword.get(unquote(opts), :input_schema),
         output_schema: Keyword.get(unquote(opts), :output_schema),
-        examples: Keyword.get(unquote(opts), :examples, [])
+        examples: Keyword.get(unquote(opts), :examples, []),
+        id: Keyword.get(unquote(opts), :id, Lux.UUID.generate())
       }
 
       # Create the struct at compile time
