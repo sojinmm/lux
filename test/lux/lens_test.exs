@@ -131,7 +131,8 @@ defmodule Lux.LensTest do
         Req.Test.json(conn, %{"temp" => 25})
       end)
 
-      assert {:ok, %{temperature: 25, unit: "C"}} = TransformLens.focus()
+      assert {:ok, %{temperature: 25, unit: "C"}} =
+               TransformLens.focus(%{}, with_after_focus: true)
     end
 
     test "works without after_focus function" do
@@ -148,7 +149,7 @@ defmodule Lux.LensTest do
         Req.Test.json(conn, %{"temp" => 25})
       end)
 
-      assert {:ok, %{"temp" => 25}} = BasicLens.focus()
+      assert {:ok, %{"temp" => 25}} = BasicLens.focus(%{}, with_after_focus: false)
     end
 
     test "handles authentication" do

@@ -70,7 +70,7 @@ defmodule Lux.Lenses.MyServiceLens do
     description: "Integrates with external service",
     schema: %{...}
 
-  def focus(input, ctx) do
+  def focus(input, opts) do
     # Implementation
   end
 end

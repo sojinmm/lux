@@ -89,10 +89,10 @@ defmodule Lux.Lens do
       @doc """
       Focuses the lens with the given input.
       """
-      def focus(input \\ %{}) do
+      def focus(input, opts \\ []) do
         __MODULE__.view()
         |> Map.update!(:params, &Map.merge(&1, input))
-        |> Lux.Lens.focus()
+        |> Lux.Lens.focus(opts)
       end
     end
   end
@@ -117,15 +117,20 @@ defmodule Lux.Lens do
     attrs |> Map.new() |> new()
   end
 
-  def focus(%__MODULE__{
-        auth: nil,
-        url: url,
-        method: method,
-        params: params,
-        headers: headers,
-        after_focus: after_focus
-      }) do
-    after_focus = after_focus || fn body -> {:ok, body} end
+  def focus(lens, opts \\ [])
+
+  def focus(
+        %__MODULE__{
+          auth: nil,
+          url: url,
+          method: method,
+          params: params,
+          headers: headers,
+          after_focus: after_focus
+        },
+        opts
+      ) do
+    after_focus = if opts[:with_after_focus], do: after_focus, else: fn body -> {:ok, body} end
 
     [url: url, headers: headers, max_retries: 2]
     |> Keyword.merge(Application.get_env(:lux, :req_options, []))
@@ -146,10 +151,10 @@ defmodule Lux.Lens do
     end
   end
 
-  def focus(%__MODULE__{auth: auth} = lens) when not is_nil(auth) do
+  def focus(%__MODULE__{auth: auth} = lens, opts) when not is_nil(auth) do
     lens
     |> authenticate()
-    |> focus()
+    |> focus(opts)
   end
 
   def authenticate(%__MODULE__{auth: %{type: :api_key, key: key}} = lens),
