@@ -4,92 +4,144 @@ defmodule Lux.Specter do
   The actual execution and supervision is handled by the Lux runtime.
   """
 
-  require Record
+  @type scheduled_beam :: {module(), String.t(), keyword()}
+  @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
 
-  Record.defrecord(:specter, __MODULE__,
-    id: nil,
-    name: "",
-    description: "",
-    goal: "",
-    prisms: [],
-    beams: [],
-    lenses: [],
-    accepts_signals: [],
-    llm_config: %{
-      provider: :openai,
-      model: "gpt-4",
-      temperature: 0.7,
-      max_tokens: 1000
-    },
-    memory: []
-  )
+  @type t :: %__MODULE__{
+          id: String.t(),
+          name: String.t(),
+          description: String.t(),
+          goal: String.t(),
+          prisms: [Lux.Prism.t()],
+          beams: [Lux.Beam.t()],
+          lenses: [Lux.Lens.t()],
+          accepts_signals: [Lux.SignalSchema.t()],
+          llm_config: map(),
+          memory: list(),
+          scheduled_beams: [scheduled_beam()],
+          reflection_interval: non_neg_integer(),
+          reflection: Lux.Reflection.t(),
+          reflection_config: %{
+            max_actions_per_reflection: pos_integer(),
+            max_parallel_actions: pos_integer(),
+            action_timeout: pos_integer()
+          },
+          collaboration_config: %{
+            can_delegate: boolean(),
+            can_request_help: boolean(),
+            trusted_specters: [String.t()],
+            collaboration_protocols: [collaboration_protocol()]
+          }
+        }
 
-  @type t ::
-          record(:specter,
-            id: String.t(),
-            name: String.t(),
-            description: String.t(),
-            goal: String.t(),
-            prisms: [Lux.Prism.t()],
-            beams: [Lux.Beam.t()],
-            lenses: [Lux.Lens.t()],
-            accepts_signals: [Lux.Signal.t()],
-            llm_config: map(),
-            memory: list()
-          )
+  defstruct id: nil,
+            name: "",
+            description: "",
+            goal: "",
+            prisms: [],
+            beams: [],
+            lenses: [],
+            accepts_signals: [],
+            llm_config: %{
+              provider: :openai,
+              model: "gpt-4",
+              temperature: 0.7,
+              max_tokens: 1000
+            },
+            memory: [],
+            scheduled_beams: [],
+            reflection_interval: 60_000,
+            reflection: nil,
+            reflection_config: %{
+              max_actions_per_reflection: 5,
+              max_parallel_actions: 2,
+              action_timeout: 30_000
+            },
+            collaboration_config: %{
+              can_delegate: true,
+              can_request_help: true,
+              trusted_specters: [],
+              collaboration_protocols: [:ask, :tell, :delegate, :request_review]
+            }
 
-  @callback think(t(), context :: map()) :: {:ok, [action]} | {:error, term()}
+  @callback reflect(t(), context :: map()) :: {:ok, [action]} | {:error, term()}
             when action: {module(), map()}
 
   @callback handle_signal(t(), Lux.Signal.t()) :: {:ok, [action]} | :ignore | {:error, term()}
             when action: {module(), map()}
 
-  @callback reflect(t(), capability :: term()) :: {:ok, t()} | {:error, term()}
+  @callback learn(t(), capability :: term()) :: {:ok, t()} | {:error, term()}
 
   @doc """
-  Default implementation of think that uses LLM-based reasoning.
+  Performs a reflection cycle for the specter.
+  This is called periodically based on reflection_interval.
   """
-  def think(specter(name: name, goal: goal, memory: memory) = specter, context) do
-    prompt = """
-    You are #{name}, an autonomous agent with the following goal:
-    #{goal}
-
-    Recent memory:
-    #{format_memory(memory)}
-
-    Current context:
-    #{inspect(context)}
-
-    Based on your goal and the current context, what actions should you take?
-    Respond in the following JSON format:
-    {
-      "thoughts": "your reasoning process",
-      "actions": [
-        {
-          "type": "prism|beam|lens",
-          "name": "action_name",
-          "params": {}
-        }
-      ]
-    }
-    """
-
-    with {:ok, response} <- call_llm(prompt, specter) do
-      parse_llm_response(response)
+  def reflect(%__MODULE__{reflection_config: config} = specter, context) do
+    with {:ok, actions, updated_reflection} <-
+           Lux.Reflection.reflect(specter.reflection, specter, context),
+         limited_actions <- Enum.take(actions, config.max_actions_per_reflection),
+         chunked_actions <- chunk_actions(limited_actions, config.max_parallel_actions) do
+      updated_specter = %{specter | reflection: updated_reflection}
+      {:ok, execute_action_chunks(chunked_actions, config.action_timeout), updated_specter}
     end
+  end
+
+  @doc """
+  Schedules a beam to run periodically using cron expression.
+  The cron expression follows the standard cron format:
+
+  * * * * *
+  │ │ │ │ │
+  │ │ │ │ └── day of week (0 - 6) (0 is Sunday)
+  │ │ │ └──── month (1 - 12)
+  │ │ └────── day of month (1 - 31)
+  │ └──────── hour (0 - 23)
+  └────────── minute (0 - 59)
+  """
+  def schedule_beam(
+        %__MODULE__{scheduled_beams: beams} = specter,
+        beam_module,
+        cron_expression,
+        opts \\ []
+      ) do
+    case Crontab.CronExpression.Parser.parse(cron_expression) do
+      {:ok, _} ->
+        {:ok, %{specter | scheduled_beams: [{beam_module, cron_expression, opts} | beams]}}
+
+      {:error, reason} ->
+        {:error, {:invalid_cron_expression, reason}}
+    end
+  end
+
+  @doc """
+  Removes a scheduled beam.
+  """
+  def unschedule_beam(%__MODULE__{scheduled_beams: beams} = specter, beam_module) do
+    updated_beams = Enum.reject(beams, fn {module, _, _} -> module == beam_module end)
+    {:ok, %{specter | scheduled_beams: updated_beams}}
+  end
+
+  @doc """
+  Checks which beams should run based on their cron expressions.
+  Returns a list of beam modules that should be executed.
+  """
+  def get_due_beams(%__MODULE__{scheduled_beams: beams}) do
+    now = DateTime.utc_now()
+
+    Enum.filter(beams, fn {_module, cron_expression, _opts} ->
+      {:ok, cron} = Crontab.CronExpression.Parser.parse(cron_expression)
+      Crontab.DateChecker.matches_date?(cron, now)
+    end)
   end
 
   defmacro __using__(_opts) do
     quote do
       @behaviour Lux.Specter
-      import Lux.Specter
-      require Record
 
       # Default implementations that can be overridden
-
       @impl true
-      def think(specter, context) do
-        Lux.Specter.think(specter, context)
+      def reflect(specter, context) do
+        Lux.Specter.reflect(specter, context)
       end
 
       @impl true
@@ -98,11 +150,11 @@ defmodule Lux.Specter do
       end
 
       @impl true
-      def reflect(specter, _capability) do
+      def learn(specter, _capability) do
         {:ok, specter}
       end
 
-      defoverridable think: 2, handle_signal: 2, reflect: 2
+      defoverridable reflect: 2, handle_signal: 2, learn: 2
     end
   end
 
@@ -110,7 +162,14 @@ defmodule Lux.Specter do
   Creates a new specter from the given attributes
   """
   def new(attrs) when is_map(attrs) do
-    specter(
+    reflection =
+      Lux.Reflection.new(%{
+        name: attrs[:name] || "Anonymous Reflection",
+        description: attrs[:description] || "Default reflection process",
+        llm_config: Map.merge(default_llm_config(), attrs[:llm_config] || %{})
+      })
+
+    struct(__MODULE__, %{
       id: attrs[:id] || Lux.UUID.generate(),
       name: attrs[:name] || "Anonymous Specter",
       description: attrs[:description] || "",
@@ -120,8 +179,26 @@ defmodule Lux.Specter do
       beams: attrs[:beams] || [],
       lenses: attrs[:lenses] || [],
       accepts_signals: attrs[:accepts_signals] || [],
-      memory: []
-    )
+      memory: [],
+      scheduled_beams: attrs[:scheduled_beams] || [],
+      reflection_interval: attrs[:reflection_interval] || 60_000,
+      reflection: reflection,
+      reflection_config:
+        Map.merge(
+          %{max_actions_per_reflection: 5, max_parallel_actions: 2, action_timeout: 30_000},
+          attrs[:reflection_config] || %{}
+        ),
+      collaboration_config:
+        Map.merge(
+          %{
+            can_delegate: true,
+            can_request_help: true,
+            trusted_specters: [],
+            collaboration_protocols: [:ask, :tell, :delegate, :request_review]
+          },
+          attrs[:collaboration_config] || %{}
+        )
+    })
   end
 
   def new(attrs) when is_list(attrs) do
@@ -139,43 +216,73 @@ defmodule Lux.Specter do
     }
   end
 
-  defp format_memory(memory) do
-    memory
-    |> Enum.map(&inspect/1)
-    |> Enum.join("\n")
+  defp chunk_actions(actions, chunk_size) do
+    actions
+    |> Enum.chunk_every(chunk_size)
   end
 
-  defp call_llm(_prompt, specter(llm_config: _config)) do
-    # TODO: Implement actual LLM call
-    # This is a placeholder that should be replaced with actual LLM integration
-    {:ok,
-     %{
-       "thoughts" => "I should gather data before making a decision",
-       "actions" => [
-         %{
-           "type" => "lens",
-           "name" => "gather_data",
-           "params" => %{}
-         }
-       ]
-     }}
-  end
-
-  defp parse_llm_response(%{"actions" => actions}) do
-    parsed_actions =
-      Enum.map(actions, fn
-        %{"type" => "prism", "name" => name, "params" => params} ->
-          {String.to_existing_atom("Elixir.#{name}"), params}
-
-        %{"type" => "beam", "name" => name, "params" => params} ->
-          {String.to_existing_atom("Elixir.#{name}"), params}
-
-        %{"type" => "lens", "name" => name, "params" => params} ->
-          {String.to_existing_atom("Elixir.#{name}"), params}
+  defp execute_action_chunks(chunks, timeout) do
+    results =
+      chunks
+      |> Enum.map(fn chunk ->
+        chunk
+        |> Enum.map(&Task.async(fn -> execute_action(&1, timeout) end))
+        |> Task.await_many(timeout)
       end)
+      |> List.flatten()
 
-    {:ok, parsed_actions}
+    {:ok, results}
   end
 
-  defp parse_llm_response(_), do: {:error, :invalid_llm_response}
+  defp execute_action({module, params}, timeout) do
+    try do
+      Task.await(Task.async(fn -> apply(module, :run, [params]) end), timeout)
+    catch
+      :exit, {:timeout, _} -> {:error, :timeout}
+      kind, reason -> {:error, {kind, reason}}
+    end
+  end
+
+  @doc """
+  Handles collaboration between specters.
+  """
+  def collaborate(
+        %__MODULE__{collaboration_config: config} = specter,
+        target_specter,
+        protocol,
+        payload
+      ) do
+    with true <- config.can_delegate || protocol != :delegate,
+         true <- config.can_request_help || protocol != :request_review,
+         true <- protocol in config.collaboration_protocols,
+         true <- target_specter.id in config.trusted_specters do
+      do_collaborate(protocol, specter, target_specter, payload)
+    else
+      false -> {:error, :unauthorized}
+    end
+  end
+
+  defp do_collaborate(:ask, _specter, _target_specter, _question) do
+    # Implement question-answer protocol
+    {:ok, :not_implemented}
+  end
+
+  defp do_collaborate(:tell, _specter, _target_specter, _information) do
+    # Implement information sharing protocol
+    {:ok, :not_implemented}
+  end
+
+  defp do_collaborate(:delegate, _specter, _target_specter, _task) do
+    # Implement task delegation protocol
+    {:ok, :not_implemented}
+  end
+
+  defp do_collaborate(:request_review, _specter, _target_specter, _work) do
+    # Implement peer review protocol
+    {:ok, :not_implemented}
+  end
+
+  def handle_signal(specter, signal) do
+    apply(specter, :handle_signal, [specter, signal])
+  end
 end

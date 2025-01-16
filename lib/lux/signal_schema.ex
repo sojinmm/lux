@@ -9,6 +9,8 @@ defmodule Lux.SignalSchema do
 
   alias Lux.UUID
 
+  require Logger
+
   @type compatibility :: :full | :backward | :forward | :none
   @type format :: :json | :yaml | :binary | :text
   @type status :: :draft | :active | :deprecated | :retired
@@ -54,6 +56,8 @@ defmodule Lux.SignalSchema do
     struct!(__MODULE__, attrs)
   end
 
+  @callback validate(map(), any()) :: {:ok, Lux.Signal.t()} | {:error, any()}
+
   @doc """
   Defines a new Signal schema.
 
@@ -92,6 +96,14 @@ defmodule Lux.SignalSchema do
       def schema, do: @schema_struct.schema
       def schema_id, do: @schema_struct.id
       def view, do: @schema_struct
+      def id, do: @schema_struct.id
+
+      # check if the module implements the validate function, otherwise use the default implementation
+      if not function_exported?(__MODULE__, :validate, 1) do
+        def validate(signal), do: Lux.SignalSchema.validate(signal, schema())
+      end
+
+      defoverridable validate: 1
     end
   end
 
@@ -117,5 +129,11 @@ defmodule Lux.SignalSchema do
       properties: %{},
       required: []
     }
+  end
+
+  def validate(signal, schema) do
+    # TODO: Implement schema validation
+    Logger.warning("Schema validation not implemented for #{inspect(schema)}. Defaulting to :ok")
+    {:ok, signal}
   end
 end

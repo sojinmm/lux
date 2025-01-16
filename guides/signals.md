@@ -46,30 +46,6 @@ Signals are created by modules that use the `Lux.Signal` behaviour:
 defmodule MyApp.Signals.Task do
   use Lux.Signal,
     schema: MyApp.Schemas.TaskSchema
-
-  # Optional: Validate the content before creating the signal
-  def validate(%{title: title} = content) when byte_size(title) > 0 do
-    {:ok, content}
-  end
-  def validate(_), do: {:error, "Title cannot be empty"}
-
-  # Optional: Transform the content before creating the signal
-  def transform(content) do
-    {:ok,
-     content
-     |> Map.put_new_lazy(:due_date, &DateTime.utc_now/0)
-     |> Map.update(:tags, [], &Enum.uniq/1)}
-  end
-
-  # Optional: Extract metadata from the content
-  def extract_metadata(content) do
-    {:ok, %{
-      created_at: DateTime.utc_now(),
-      created_by: get_current_user(),
-      version: 1,
-      trace_id: get_trace_id()
-    }}
-  end
 end
 ```
 
@@ -89,7 +65,7 @@ Signals can be created and used in various ways:
 # Access signal properties
 signal.id          # Unique identifier
 signal.schema_id   # Schema identifier
-signal.content     # Validated and transformed content
+signal.payload     # Validated payload
 signal.metadata    # Signal metadata
 ```
 
@@ -142,22 +118,9 @@ end
    - Keep validations focused and specific
    - Return clear error messages
 
-3. **Transformation**
-   - Use `transform/1` for data normalization
-   - Add computed or default values
-   - Clean up or format data
-
-4. **Metadata**
-   - Use `extract_metadata/1` for signal context
-   - Keep metadata separate from content
-   - Include processing information
-   - Add tracing and debugging data
-
-5. **Testing**
+4. **Testing**
    - Test schema validation
    - Test business rule validation
-   - Test transformations
-   - Test metadata extraction
    - Test compatibility between versions
 
 Example test:
@@ -173,11 +136,9 @@ defmodule MyApp.Signals.TaskTest do
         assignee: "bob"
       })
 
-      assert signal.content.title == "Test Task"
-      assert signal.content.priority == "high"
-      assert signal.content.assignee == "bob"
-      assert signal.content.due_date # Auto-added by transform
-      assert %DateTime{} = signal.metadata.created_at # Added by extract_metadata
+      assert signal.payload.title == "Test Task"
+      assert signal.payload.priority == "high"
+      assert signal.payload.assignee == "bob"
     end
 
     test "validates title presence" do
@@ -266,23 +227,5 @@ Metadata provides context about the signal's creation and processing:
 defmodule MyApp.Signals.MetadataTask do
   use Lux.Signal,
     schema: MyApp.Schemas.TaskSchema
-
-  def extract_metadata(content) do
-    {:ok, %{
-      # Signal creation context
-      created_at: DateTime.utc_now(),
-      created_by: get_current_user(),
-      source_system: System.get_env("SERVICE_NAME"),
-      
-      # Processing information
-      version: 1,
-      trace_id: get_trace_id(),
-      correlation_id: get_correlation_id(),
-      
-      # Content-derived metadata
-      content_size: byte_size(Jason.encode!(content)),
-      field_count: map_size(content)
-    }}
-  end
 end
 ``` 

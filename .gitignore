@@ -33,7 +33,6 @@ lux-*.tar
 .project
 .pydevproject
 .settings/
-.venv/
 
 # Environment variables
 .env

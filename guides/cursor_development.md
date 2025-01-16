@@ -6,7 +6,7 @@ Cursor is a powerful AI-enabled IDE that can significantly enhance your developm
 
 1. **Install Cursor**: Download and install Cursor from [cursor.sh](https://cursor.sh)
 2. **Open Your Lux Project**: Open your Lux project directory in Cursor
-3. **Enable Composer**: Press `Cmd/Ctrl + K` to open the Composer panel
+3. **Enable Composer**: Press `Cmd/Ctrl + L` to open the Composer panel
 
 ## Key Cursor Features for Lux Development
 

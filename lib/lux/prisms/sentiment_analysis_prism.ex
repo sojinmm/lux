@@ -96,7 +96,7 @@ defmodule Lux.Prisms.SentimentAnalysisPrism do
          {:ok, result} <- analyze_sentiment(text, language) do
       {:ok, result}
     else
-      {:ok, %{success: false, error: error}} ->
+      {:ok, %{"success" => false, "error" => error}} ->
         {:error, "Failed to import NLTK: #{error}"}
 
       {:error, reason} ->
@@ -115,7 +115,7 @@ defmodule Lux.Prisms.SentimentAnalysisPrism do
         try:
             nltk.data.find('vader_lexicon')
         except LookupError:
-            nltk.download('vader_lexicon')
+            nltk.download('vader_lexicon', quiet=True)
 
         # Initialize the VADER sentiment analyzer
         sia = SentimentIntensityAnalyzer()
