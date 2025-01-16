@@ -115,7 +115,7 @@ defmodule Lux.Prisms.SentimentAnalysisPrism do
         try:
             nltk.data.find('vader_lexicon')
         except LookupError:
-            nltk.download('vader_lexicon')
+            nltk.download('vader_lexicon', quiet=True)
 
         # Initialize the VADER sentiment analyzer
         sia = SentimentIntensityAnalyzer()
