@@ -4,6 +4,9 @@ defmodule Lux.LLM do
   """
 
   defmodule Response do
+    @moduledoc """
+    A response from an LLM.
+    """
     require Record
 
     Record.defrecord(:response, __MODULE__,

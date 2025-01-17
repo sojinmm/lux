@@ -1,4 +1,7 @@
 defmodule SamplePrism do
+  @moduledoc """
+  A sample prism module used for testing.
+  """
   use Lux.Prism,
     id: "sample-prism",
     name: "Sample Prism",
