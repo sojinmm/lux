@@ -33,8 +33,9 @@ defmodule Lux.MixProject do
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
       {:venomous, "~> 0.7.5"},
       {:mock, "~> 0.3.0", only: :test},
-      {:crontab, "~> 1.1"},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
+      {:crontab, "~> 1.1"}
     ]
   end
 end

@@ -1,10 +1,10 @@
 # Lux
 
-[![Build Status](https://github.com/spectrallabs/lux/workflows/CI/badge.svg)](https://github.com/spectrallabs/lux/actions)
-[![Hex.pm](https://img.shields.io/hexpm/v/lux.svg)](https://hex.pm/packages/lux)
-[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/lux)
+<!-- [![Build Status](https://github.com/spectrallabs/lux/workflows/CI/badge.svg)](https://github.com/spectrallabs/lux/actions) -->
+<!-- [![Hex.pm](https://img.shields.io/hexpm/v/lux.svg)](https://hex.pm/packages/lux)
+[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/lux) -->
 
-> ⚠️ **Note**: Lux is currently under heavy development and should be considered pre-alpha software. The API and architecture are subject to significant changes. We welcome feedback and contributions but recommend against using it in production at this time.
+> ⚠️ **Note**: Lux is currently under heavy development and should be considered pre-alpha software. The API and architecture are subject to significant changes. We welcome feedback and contributions.
 
 Lux is a powerful Elixir framework for building intelligent, adaptive, and collaborative multi-agent systems. It enables autonomous entities (Specters) to communicate, learn, and execute complex workflows while continuously improving through reflection.
 
@@ -361,6 +361,38 @@ mix setup
 # Optionally, run tests
 mix test
 ```
+
+### Setup Python environment
+
+```sh
+cd priv/python
+poetry shell
+poetry install
+```
+
+### Setup environment variables
+
+The application uses environment-specific configuration files:
+- `dev.envrc` for development
+- `test.envrc` for testing
+- `prod.envrc` for production
+
+1. Create the appropriate `.envrc` file for your environment.
+
+```sh
+# For development
+cp dev.envrc dev.override.envrc
+
+# For testing
+cp test.envrc test.override.envrc
+```
+
+These files are optional and can be used for local-specific configurations that shouldn't be committed to version control.
+- `dev.override.envrc`
+- `test.override.envrc`
+- `prod.override.envrc`
+
+3. Fill in required API keys in your environment file
 
 ## Contributing
 
