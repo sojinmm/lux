@@ -203,5 +203,122 @@ defmodule Lux.SignalSchemaTest do
                  payload: %{message: "test", index: 1, meta: %{bar: ["foo"]}}
                })
     end
+
+    test "validates enums" do
+      assert {:error, _} =
+               TaskSchema.validate(%Lux.Signal{
+                 payload: %{title: "Test", priority: "invalid", assignee: "alice"}
+               })
+    end
+  end
+
+  describe "format validation" do
+    test "validates date-time format" do
+      defmodule DateTimeSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :string, format: "date-time"}
+      end
+
+      valid_signal = %Lux.Signal{payload: "2024-03-21T17:32:28Z"}
+
+      invalid_signals = [
+        # Missing time
+        %Lux.Signal{payload: "2024-03-21"},
+        # Missing date
+        %Lux.Signal{payload: "17:32:28Z"},
+        # Invalid format
+        %Lux.Signal{payload: "not a date"},
+        # Invalid month
+        %Lux.Signal{payload: "2024-13-21T17:32:28Z"}
+      ]
+
+      assert {:ok, ^valid_signal} = DateTimeSchema.validate(valid_signal)
+
+      for invalid_signal <- invalid_signals do
+        assert {:error, _} = DateTimeSchema.validate(invalid_signal)
+      end
+    end
+
+    test "validates email format" do
+      defmodule EmailSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :string, format: "email"}
+      end
+
+      valid_signal = %Lux.Signal{payload: "user@example.com"}
+
+      invalid_signals = [
+        %Lux.Signal{payload: "not-an-email"},
+        %Lux.Signal{payload: "@example.com"},
+        %Lux.Signal{payload: "user@"},
+        %Lux.Signal{payload: "user@.com"},
+        %Lux.Signal{payload: "user@example."}
+      ]
+
+      assert {:ok, ^valid_signal} = EmailSchema.validate(valid_signal)
+
+      for invalid_signal <- invalid_signals do
+        assert {:error, _} = EmailSchema.validate(invalid_signal)
+      end
+    end
+
+    test "validates hostname format" do
+      defmodule HostnameSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :string, format: "hostname"}
+      end
+
+      valid_signal = %Lux.Signal{payload: "example.com"}
+
+      invalid_signals = [
+        %Lux.Signal{payload: "not a hostname!"},
+        %Lux.Signal{payload: "-invalid.com"},
+        %Lux.Signal{payload: "example-.com"},
+        %Lux.Signal{payload: "example..com"}
+      ]
+
+      assert {:ok, ^valid_signal} = HostnameSchema.validate(valid_signal)
+
+      for invalid_signal <- invalid_signals do
+        assert {:error, _} = HostnameSchema.validate(invalid_signal)
+      end
+    end
+
+    test "validates IP address formats" do
+      defmodule IpSchema do
+        use Lux.SignalSchema,
+          schema: %{
+            type: :object,
+            properties: %{
+              ipv4: %{type: :string, format: "ipv4"},
+              ipv6: %{type: :string, format: "ipv6"}
+            }
+          }
+      end
+
+      valid_signal = %Lux.Signal{
+        payload: %{
+          ipv4: "192.168.1.1",
+          ipv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+        }
+      }
+
+      invalid_signals = [
+        %Lux.Signal{
+          payload: %{ipv4: "256.1.2.3", ipv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}
+        },
+        %Lux.Signal{payload: %{ipv4: "1.2.3", ipv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"}},
+        %Lux.Signal{payload: %{ipv4: "192.168.1.1", ipv6: "not-an-ipv6"}},
+        %Lux.Signal{
+          payload: %{ipv4: "192.168.1.1", ipv6: "2001:0db8:85a3:0000:0000:8a2e:0370:xxxx"}
+        }
+      ]
+
+      assert {:ok, ^valid_signal} = IpSchema.validate(valid_signal)
+
+      for invalid_signal <- invalid_signals do
+        assert {:error, _} = IpSchema.validate(invalid_signal)
+      end
+    end
   end
 end
