@@ -61,5 +61,11 @@
   
   Follow the official Phoenix guides for best practices in routing, controllers, contexts, views, and other Phoenix components.
 
-  Read the readme to understand how the frame
-  
+  Documentation Access
+  The `mix deps.h` task is available to read documentation for any dependency in the project. Do not assume functionality from function names or previous usage. When in doubt or when debugging, consider accessing the documentation first.
+  - Use `mix deps.h Req` to read documentation for the `Req` module
+  - Use `mix deps.h Req.Request` to read documentation for specific modules
+  - Use `mix deps.h Req.Request.append_error_steps/2` to read documentation for specific functions. Remember to add the arity!
+  - This will help you understand how to use any dependency in the project
+  - If the documentation is not available or not stisfactory, you should directly read the source code of the dependency by browsing it inside the `\deps` folder.
+
