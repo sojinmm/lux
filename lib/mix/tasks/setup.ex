@@ -5,7 +5,8 @@ defmodule Mix.Tasks.Setup do
   This task:
   1. Installs Elixir dependencies
   2. Ensures Poetry is installed and configured
-  3. Installs Python dependencies
+  3. Create virtual env
+  4. Installs Python dependencies
 
   ## Usage
 
@@ -21,6 +22,8 @@ defmodule Mix.Tasks.Setup do
     "/usr/local/bin/poetry",
     "/opt/homebrew/bin/poetry"
   ]
+
+  @priv_python_dir "priv/python"
 
   defp safe_cmd(cmd, args, opts) do
     try do
@@ -38,65 +41,40 @@ defmodule Mix.Tasks.Setup do
   def run(opts \\ []) do
     poetry_paths = Keyword.get(opts, :poetry_paths, @default_poetry_paths)
 
-    Mix.shell().info("\n==> Setting up Lux for development\n")
+    with _ <- Mix.shell().info("\n==> Setting up Lux for development\n"),
+         # Step 1: Install Elixir dependencies
+         _ <- Mix.shell().info("==> Installing Elixir dependencies..."),
+         :ok <- install_deps(),
+         # Step 2: Check and setup Poetry
+         _ <- Mix.shell().info("\n==> Checking Poetry installation..."),
+         {:ok, poetry_path} <- find_poetry(poetry_paths),
+         # Step 3: Setup Python virtual environment
+         _ <- Mix.shell().info("\n==> Setting up Python virtual environment..."),
+         :ok <- setup_virtualenv(),
+         # Step 4: Install Python dependencies
+         _ <- Mix.shell().info("\n==> Installing Python dependencies..."),
+         :ok <- install_python_deps(poetry_path) do
+      Mix.shell().info("""
+      \n==> Setup completed successfully! 🎉
 
-    # Step 1: Install Elixir dependencies
-    Mix.shell().info("==> Installing Elixir dependencies...")
+      You can now:
+      • Activate the Python virtual environment:
+          source priv/python/.venv/bin/activate
 
-    case safe_cmd("mix", ["deps.get"], into: IO.stream()) do
-      {:error, :not_found} ->
-        Mix.raise("Could not find 'mix' command")
+      • Run tests:
+          mix test              # Run Elixir tests
+          mix python.test       # Run Python tests
 
-      {_, 0} ->
-        :ok
+      • Generate documentation:
+          mix docs
 
-      {output, _} ->
-        Mix.raise("Failed to install dependencies: #{output}")
+      • Start development:
+          iex -S mix
+      """)
+    else
+      _ ->
+        exit({:shutdown, 1})
     end
-
-    # Step 2: Check and setup Poetry
-    Mix.shell().info("\n==> Checking Poetry installation...")
-
-    case find_poetry(poetry_paths) do
-      {:ok, poetry_path} ->
-        Mix.shell().info("Found Poetry at: #{poetry_path}")
-        install_python_deps(poetry_path)
-
-      :error ->
-        Mix.shell().error("Poetry not found")
-
-        Mix.shell().error("""
-        Please try manually:
-
-        1. Install Poetry:
-            curl -sSL https://install.python-poetry.org | python3 -
-
-        2. Add to your PATH by adding this line to ~/.zshrc or ~/.bashrc:
-            export PATH="$HOME/.local/bin:$PATH"
-
-        3. Reload your shell:
-            source ~/.zshrc  # or source ~/.bashrc
-
-        Then run `mix setup` again.
-        """)
-
-        exit({:shutdown, 0})
-    end
-
-    Mix.shell().info("""
-    \n==> Setup completed successfully! 🎉
-
-    You can now:
-    • Run tests:
-        mix test              # Run Elixir tests
-        mix python.test       # Run Python tests
-
-    • Generate documentation:
-        mix docs
-
-    • Start development:
-        iex -S mix
-    """)
   end
 
   defp find_poetry(paths) do
@@ -108,15 +86,67 @@ defmodule Mix.Tasks.Setup do
       end)
 
     if poetry_path do
+      Mix.shell().info("Found Poetry at: #{poetry_path}")
       {:ok, Path.expand(poetry_path)}
     else
-      :error
+      Mix.shell().error("Poetry not found")
+
+      Mix.shell().error("""
+      Please try manually:
+
+      1. Install Poetry:
+          curl -sSL https://install.python-poetry.org | python3 -
+
+      2. Add to your PATH by adding this line to ~/.zshrc or ~/.bashrc:
+          export PATH="$HOME/.local/bin:$PATH"
+
+      3. Reload your shell:
+          source ~/.zshrc  # or source ~/.bashrc
+
+      Then run `mix setup` again.
+      """)
+
+      exit({:shutdown, 0})
+    end
+  end
+
+  defp install_deps() do
+    case safe_cmd("mix", ["deps.get"], into: IO.stream()) do
+      {:error, :not_found} ->
+        Mix.raise("Could not find 'mix' command")
+
+      {_, 0} ->
+        :ok
+
+      {output, _} ->
+        Mix.raise("Failed to install dependencies: #{output}")
+    end
+  end
+
+  defp setup_virtualenv() do
+    venv_path = [@priv_python_dir, ".venv"] |> Path.join() |> Path.expand()
+
+    with false <- File.exists?(venv_path),
+         {output, 0} <- safe_cmd("python3", ["-m", "venv", venv_path], stderr_to_stdout: true) do
+      Mix.shell().info(output)
+      :ok
+    else
+      true ->
+        Mix.shell().info("Python virtual environment at: #{venv_path}")
+        :ok
+
+      {:error, :not_found} ->
+        Mix.shell().error("Python is required to setup the virtual environment")
+        exit({:shutdown, 1})
+
+      {output, _} ->
+        Mix.shell().error("Failed to setup Python virtual environment: #{output}")
+        exit({:shutdown, 1})
     end
   end
 
   defp install_python_deps(poetry_path) do
-    python_dir = Path.join(File.cwd!(), "priv/python")
-    Mix.shell().info("\n==> Installing Python dependencies...")
+    python_dir = Path.join(File.cwd!(), @priv_python_dir)
 
     case safe_cmd(poetry_path, ["install"], cd: python_dir, stderr_to_stdout: true) do
       {:error, :not_found} ->
@@ -139,6 +169,7 @@ defmodule Mix.Tasks.Setup do
 
       {output, 0} ->
         Mix.shell().info(output)
+        :ok
 
       {output, _} ->
         Mix.shell().error("\nFailed to install Python dependencies:\n\n#{output}")
