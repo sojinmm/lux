@@ -49,6 +49,203 @@ defmodule MyApp.Signals.Task do
 end
 ```
 
+## Signal Validation
+
+Lux uses JSON Schema (Draft 4) for validating signal payloads. This provides a robust, standardized way to ensure your signals conform to their expected structure.
+
+### Basic Types
+
+The following basic types are supported:
+
+```elixir
+# Null validation
+defmodule NullSchema do
+  use Lux.SignalSchema,
+    schema: %{type: :null}
+end
+
+# Boolean validation
+defmodule BooleanSchema do
+  use Lux.SignalSchema,
+    schema: %{type: :boolean}
+end
+
+# Integer validation
+defmodule IntegerSchema do
+  use Lux.SignalSchema,
+    schema: %{type: :integer}
+end
+
+# String validation
+defmodule StringSchema do
+  use Lux.SignalSchema,
+    schema: %{type: :string}
+end
+
+# Array validation
+defmodule ArraySchema do
+  use Lux.SignalSchema,
+    schema: %{
+      type: :array,
+      items: %{type: :string}  # Validates each array item
+    }
+end
+```
+
+### Object Validation
+
+Objects can have nested properties and required fields:
+
+```elixir
+defmodule ComplexObjectSchema do
+  use Lux.SignalSchema,
+    schema: %{
+      type: :object,
+      properties: %{
+        name: %{type: :string},
+        age: %{type: :integer},
+        tags: %{
+          type: :array,
+          items: %{type: :string}
+        },
+        metadata: %{
+          type: :object,
+          properties: %{
+            created_at: %{type: :string, format: "date-time"},
+            priority: %{type: :string, enum: ["low", "medium", "high"]}
+          },
+          required: ["created_at"]
+        }
+      },
+      required: ["name", "age"]  # Top-level required fields
+    }
+end
+```
+
+### Format Validation
+
+Lux supports the following formats out of the box:
+- `date-time`: ISO 8601 dates (e.g., "2024-03-21T17:32:28Z")
+- `email`: Email addresses
+- `hostname`: Valid hostnames
+- `ipv4`: IPv4 addresses
+- `ipv6`: IPv6 addresses
+
+Example:
+
+```elixir
+defmodule UserSchema do
+  use Lux.SignalSchema,
+    schema: %{
+      type: :object,
+      properties: %{
+        email: %{type: :string, format: "email"},
+        last_login: %{type: :string, format: "date-time"},
+        server: %{type: :string, format: "hostname"}
+      }
+    }
+end
+```
+
+### Custom Format Validation
+
+You can add custom format validators in your configuration:
+
+```elixir
+# In config/config.exs
+config :ex_json_schema,
+  :custom_format_validator,
+  fn
+    # Validate a custom UUID format
+    "uuid", value ->
+      case UUID.info(value) do
+        {:ok, _} -> true
+        {:error, _} -> false
+      end
+    
+    # Return true for unknown formats (as per JSON Schema spec)
+    _, _ -> true
+  end
+```
+
+<!-- TODO: Add support for runtime custom formatters via resolve callbacks at schema definition. ref: https://github.com/jonasschmidt/ex_json_schema?tab=readme-ov-file#custom-formats -->
+
+### Validation Errors
+
+When validation fails, you get detailed error messages:
+
+```elixir
+# Missing required field
+{:error, [{"Required property name was not present.", "#"}]}
+
+# Type mismatch
+{:error, [{"Type mismatch. Expected Integer but got String.", "#/age"}]}
+
+# Invalid format
+{:error, [{"Format validation failed.", "#/email"}]}
+
+# Invalid enum value
+{:error, [{"Value not allowed.", "#/metadata/priority"}]}
+```
+
+### Best Practices for Schema Validation
+
+1. **Type Safety**
+   - Always specify types for properties
+   - Use appropriate types (e.g., `:integer` vs `:number`)
+   - Consider using enums for constrained string values
+
+2. **Required Fields**
+   - Mark essential fields as required
+   - Consider the impact on backward compatibility
+   - Document why fields are required
+
+3. **Nested Validation**
+   - Break down complex objects into logical groups
+   - Use nested required fields for sub-objects
+   - Keep nesting depth reasonable
+
+4. **Format Validation**
+   - Use built-in formats when possible
+   - Create custom formats for domain-specific values
+   - Document format requirements
+
+5. **Error Handling**
+   - Handle validation errors gracefully
+   - Provide clear error messages
+   - Consider aggregating multiple validation errors
+
+6. **Testing**
+   - Test both valid and invalid cases
+   - Test edge cases and boundary values
+   - Test format validation thoroughly
+
+```elixir
+defmodule MyApp.Schemas.TaskSchemaTest do
+  use ExUnit.Case, async: true
+
+  test "validates required fields" do
+    assert {:error, _} = TaskSchema.validate(%Lux.Signal{payload: %{}})
+    assert {:error, _} = TaskSchema.validate(%Lux.Signal{payload: %{title: "Test"}})
+    assert {:ok, _} = TaskSchema.validate(
+      %Lux.Signal{payload: %{title: "Test", priority: "high", assignee: "alice"}}
+    )
+  end
+
+  test "validates field types" do
+    assert {:error, _} = TaskSchema.validate(
+      %Lux.Signal{payload: %{title: 123, priority: "high", assignee: "alice"}}
+    )
+  end
+
+  test "validates enums" do
+    assert {:error, _} = TaskSchema.validate(
+      %Lux.Signal{payload: %{title: "Test", priority: "invalid", assignee: "alice"}}
+    )
+  end
+end
+```
+
 ## Using Signals
 
 Signals can be created and used in various ways:
