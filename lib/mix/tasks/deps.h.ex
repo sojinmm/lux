@@ -10,7 +10,8 @@ defmodule Mix.Tasks.Deps.H do
 
   def run(args) do
     # runs mix run --eval 'require IEx.Helpers; IEx.Helpers.h(Req)'
-    {result, 0} = System.cmd("mix", ["run", "--eval", "require IEx.Helpers; IEx.Helpers.h(#{args})"])
+    {result, 0} =
+      System.cmd("mix", ["run", "--eval", "require IEx.Helpers; IEx.Helpers.h(#{args})"])
 
     result
     |> String.split("\n")
