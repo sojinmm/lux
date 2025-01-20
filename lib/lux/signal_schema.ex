@@ -80,6 +80,8 @@ defmodule Lux.SignalSchema do
       @schema_tags unquote(opts[:tags])
       @schema_compatibility unquote(opts[:compatibility])
       @schema_format unquote(opts[:format])
+      @normalized_schema unquote(opts)[:schema] |> Lux.SignalSchema.normalize()
+      @compiled_schema ExJsonSchema.Schema.resolve(@normalized_schema)
 
       @schema_struct %Lux.SignalSchema{
         id: UUID.generate(),
@@ -89,7 +91,7 @@ defmodule Lux.SignalSchema do
         tags: @schema_tags || [],
         compatibility: @schema_compatibility || :full,
         format: @schema_format || :json,
-        schema: Lux.SignalSchema.normalize_schema(unquote(opts)[:schema])
+        schema: @normalized_schema
       }
 
       def name, do: @schema_struct.name
@@ -100,40 +102,37 @@ defmodule Lux.SignalSchema do
 
       # check if the module implements the validate function, otherwise use the default implementation
       if not function_exported?(__MODULE__, :validate, 1) do
-        def validate(signal), do: Lux.SignalSchema.validate(signal, schema())
+        def validate(signal), do: Lux.SignalSchema.validate(signal, @compiled_schema)
       end
 
       defoverridable validate: 1
     end
   end
 
-  def normalize_schema(%{type: type, properties: {:%{}, _, props}, required: required}) do
-    %{
-      type: type,
-      properties: props |> Enum.map(fn {k, v} -> {k, Enum.into(v, %{})} end) |> Enum.into(%{}),
-      required: required
-    }
+  @doc """
+  Recursively converts all map keys to strings in a schema definition.
+  """
+  def normalize(map) when is_map(map) do
+    Map.new(map, fn
+      {key, value} -> {to_string(key), normalize(value)}
+    end)
   end
 
-  def normalize_schema(%{type: type, properties: props} = schema) do
-    %{
-      type: type,
-      properties: props,
-      required: Map.get(schema, :required, [])
-    }
+  def normalize([]), do: []
+
+  def normalize([head | tail]) do
+    [normalize(head) | normalize(tail)]
   end
 
-  def normalize_schema(%{type: type}) do
-    %{
-      type: type,
-      properties: %{},
-      required: []
-    }
-  end
+  def normalize(nil), do: nil
+  def normalize(value) when is_boolean(value), do: value
+  def normalize(value) when is_atom(value), do: to_string(value)
+  def normalize(value), do: value
 
   def validate(signal, schema) do
-    # TODO: Implement schema validation
-    Logger.warning("Schema validation not implemented for #{inspect(schema)}. Defaulting to :ok")
-    {:ok, signal}
+    case ExJsonSchema.Validator.validate(schema, normalize(signal.payload)) do
+      :ok -> {:ok, signal}
+      {:error, error} -> {:error, error}
+    end
   end
 end

@@ -46,13 +46,13 @@ defmodule Lux.SignalSchemaTest do
       schema = schema_definition.schema
 
       assert %{
-               type: :object,
-               properties: %{
-                 message: %{type: :string},
-                 from: %{type: :string},
-                 to: %{type: :string}
+               "type" => "object",
+               "properties" => %{
+                 "message" => %{"type" => "string"},
+                 "from" => %{"type" => "string"},
+                 "to" => %{"type" => "string"}
                },
-               required: ["message", "from", "to"]
+               "required" => ["message", "from", "to"]
              } = schema
 
       assert schema_definition.name == "chat_message"
@@ -66,13 +66,19 @@ defmodule Lux.SignalSchemaTest do
     test "uses module name as default name" do
       defmodule DefaultNameSchema do
         use Lux.SignalSchema,
-          schema: %{type: :object}
+          schema: %{type: :object, properties: %{message: %{type: :string}}, required: []}
       end
 
       schema = DefaultNameSchema.view()
       assert schema.name == "DefaultNameSchema"
       assert schema.id == DefaultNameSchema.schema_id()
-      assert schema.schema == %{type: :object, properties: %{}, required: []}
+
+      assert schema.schema == %{
+               "type" => "object",
+               "properties" => %{"message" => %{"type" => "string"}},
+               "required" => []
+             }
+
       assert schema.description == nil
       assert schema.version == nil
       assert schema.tags == []
@@ -88,6 +94,114 @@ defmodule Lux.SignalSchemaTest do
 
       assert is_binary(SchemaWithId.schema_id())
       assert SchemaWithId.schema_id() == SchemaWithId.view().id
+    end
+  end
+
+  describe "SignalSchema validation" do
+    test "null" do
+      defmodule NullSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :null}
+      end
+
+      assert {:ok, %Lux.Signal{payload: nil}} = NullSchema.validate(%Lux.Signal{payload: nil})
+      assert {:error, _} = NullSchema.validate(%Lux.Signal{payload: 1})
+    end
+
+    test "boolean" do
+      defmodule BooleanSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :boolean}
+      end
+
+      assert {:ok, %Lux.Signal{payload: true}} =
+               BooleanSchema.validate(%Lux.Signal{payload: true})
+
+      assert {:ok, %Lux.Signal{payload: false}} =
+               BooleanSchema.validate(%Lux.Signal{payload: false})
+
+      assert {:error, _} = BooleanSchema.validate(%Lux.Signal{payload: "true"})
+      assert {:error, _} = BooleanSchema.validate(%Lux.Signal{payload: "false"})
+      assert {:error, _} = BooleanSchema.validate(%Lux.Signal{payload: 1})
+    end
+
+    test "integer" do
+      defmodule IntegerSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :integer}
+      end
+
+      expected_signal = %Lux.Signal{payload: 1}
+      invalid_signal = %Lux.Signal{payload: "1"}
+
+      assert {:ok, ^expected_signal} = IntegerSchema.validate(expected_signal)
+      assert {:error, _} = IntegerSchema.validate(invalid_signal)
+    end
+
+    test "string" do
+      defmodule StringSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :string}
+      end
+
+      expected_signal = %Lux.Signal{payload: "test"}
+      invalid_signal = %Lux.Signal{payload: 1}
+
+      assert {:ok, ^expected_signal} = StringSchema.validate(expected_signal)
+      assert {:error, _} = StringSchema.validate(invalid_signal)
+    end
+
+    test "array" do
+      defmodule ArraySchema do
+        use Lux.SignalSchema,
+          schema: %{type: :array, items: %{type: :string}}
+      end
+
+      expected_signal = %Lux.Signal{payload: ["test", "test2"]}
+      expected_signal_2 = %Lux.Signal{payload: []}
+
+      assert {:ok, ^expected_signal} = ArraySchema.validate(expected_signal)
+      assert {:ok, ^expected_signal_2} = ArraySchema.validate(expected_signal_2)
+      # invalid signals
+      assert {:error, _} = ArraySchema.validate(%Lux.Signal{payload: ["test", 1]})
+      assert {:error, _} = ArraySchema.validate(%Lux.Signal{payload: ["test", "test2", nil]})
+      assert {:error, _} = ArraySchema.validate(%Lux.Signal{payload: [nil]})
+    end
+
+    test "object" do
+      defmodule ObjectSchema do
+        use Lux.SignalSchema,
+          schema: %{
+            type: :object,
+            properties: %{
+              message: %{type: :string},
+              index: %{type: :integer},
+              meta: %{
+                type: :object,
+                properties: %{
+                  foo: %{type: :string},
+                  bar: %{type: :array, items: %{type: :string}}
+                },
+                required: ["foo"]
+              }
+            },
+            required: ["message"]
+          }
+      end
+
+      expected_signal = %Lux.Signal{payload: %{message: "test", index: 1, meta: %{foo: "bar"}}}
+      expected_signal_2 = %Lux.Signal{payload: %{message: "test", index: 1}}
+
+      assert {:ok, ^expected_signal} = ObjectSchema.validate(expected_signal)
+      assert {:ok, ^expected_signal_2} = ObjectSchema.validate(expected_signal_2)
+      # missing required fields
+      assert {:error, [{"Required property message was not present.", _}]} =
+               ObjectSchema.validate(%Lux.Signal{payload: %{index: 1}})
+
+      assert {:error, [{"Required property foo was not present.", "#/meta"}]} =
+               ObjectSchema.validate(%Lux.Signal{
+                 payload: %{message: "test", index: 1, meta: %{bar: ["foo"]}}
+               })
     end
   end
 end
