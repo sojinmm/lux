@@ -205,10 +205,19 @@ defmodule Lux.SignalSchemaTest do
     end
 
     test "validates enums" do
-      assert {:error, _} =
-               TaskSchema.validate(%Lux.Signal{
-                 payload: %{title: "Test", priority: "invalid", assignee: "alice"}
-               })
+      defmodule EnumSchema do
+        use Lux.SignalSchema,
+          schema: %{type: :string, enum: ["foo", "bar", "baz"]}
+      end
+
+      valid_signal = %Lux.Signal{payload: "foo"}
+      valid_signal_2 = %Lux.Signal{payload: "bar"}
+
+      assert {:ok, ^valid_signal} = EnumSchema.validate(valid_signal)
+      assert {:ok, ^valid_signal_2} = EnumSchema.validate(valid_signal_2)
+
+      assert {:error, _} = EnumSchema.validate(%Lux.Signal{payload: "invalid"})
+      assert {:error, _} = EnumSchema.validate(%Lux.Signal{payload: "FOO"})
     end
   end
 
