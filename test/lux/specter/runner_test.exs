@@ -1,9 +1,11 @@
 defmodule Lux.Specter.RunnerTest do
   use ExUnit.Case, async: true
+
   alias Lux.Specter.Runner
 
   # Test modules
   defmodule TestPrism do
+    @moduledoc false
     use Lux.Prism,
       name: "Test Prism",
       description: "A test prism"
@@ -12,6 +14,7 @@ defmodule Lux.Specter.RunnerTest do
   end
 
   defmodule TestBeam do
+    @moduledoc false
     use Lux.Beam,
       name: "Test Beam",
       description: "A test beam"

@@ -53,6 +53,7 @@ defmodule Lux.Lens do
   defmacro __using__(opts) do
     quote do
       @behaviour Lux.Lens
+
       alias Lux.Lens
 
       # Register compile-time attributes
@@ -80,9 +81,10 @@ defmodule Lux.Lens do
       Returns the Lens struct for this module.
       """
       def view do
-        case function_exported?(__MODULE__, :after_focus, 1) do
-          true -> %{@lens_struct | after_focus: &__MODULE__.after_focus/1}
-          false -> @lens_struct
+        if function_exported?(__MODULE__, :after_focus, 1) do
+          %{@lens_struct | after_focus: &__MODULE__.after_focus/1}
+        else
+          @lens_struct
         end
       end
 

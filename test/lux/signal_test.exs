@@ -1,5 +1,6 @@
 defmodule Lux.SignalTest do
   use ExUnit.Case, async: true
+
   alias Lux.Signal
 
   describe "new/1" do
@@ -41,6 +42,7 @@ defmodule Lux.SignalTest do
   describe "when using Signal" do
     test "creates a signal with schema reference" do
       defmodule BasicSignal do
+        @moduledoc false
         use Lux.Signal,
           schema_id: TestSignalSchema
       end
@@ -58,6 +60,7 @@ defmodule Lux.SignalTest do
 
     test "creates a signal with sender and recipient" do
       defmodule RoutedSignal do
+        @moduledoc false
         use Lux.Signal,
           schema_id: TestSignalSchema
       end
@@ -71,6 +74,7 @@ defmodule Lux.SignalTest do
     end
 
     defmodule ValidatedSignal do
+      @moduledoc false
       use Lux.Signal,
         schema_id: TestSignalSchema
     end
@@ -87,6 +91,7 @@ defmodule Lux.SignalTest do
 
     test "provides schema helpers" do
       defmodule SignalWithHelpers do
+        @moduledoc false
         use Lux.Signal,
           schema_id: TestSignalSchema
       end

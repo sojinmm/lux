@@ -1,5 +1,6 @@
 defmodule Lux.Prisms.SentimentAnalysisPrismTest do
   use ExUnit.Case, async: true
+
   alias Lux.Prisms.SentimentAnalysisPrism
 
   describe "handler/2" do

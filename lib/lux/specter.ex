@@ -4,6 +4,8 @@ defmodule Lux.Specter do
   The actual execution and supervision is handled by the Lux runtime.
   """
 
+  alias Crontab.CronExpression.Parser
+
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
 
@@ -78,9 +80,9 @@ defmodule Lux.Specter do
   """
   def reflect(%__MODULE__{reflection_config: config} = specter, context) do
     with {:ok, actions, updated_reflection} <-
-           Lux.Reflection.reflect(specter.reflection, specter, context),
-         limited_actions <- Enum.take(actions, config.max_actions_per_reflection),
-         chunked_actions <- chunk_actions(limited_actions, config.max_parallel_actions) do
+           Lux.Reflection.reflect(specter.reflection, specter, context) do
+      limited_actions = Enum.take(actions, config.max_actions_per_reflection)
+      chunked_actions = chunk_actions(limited_actions, config.max_parallel_actions)
       updated_specter = %{specter | reflection: updated_reflection}
       {:ok, execute_action_chunks(chunked_actions, config.action_timeout), updated_specter}
     end
@@ -104,7 +106,7 @@ defmodule Lux.Specter do
         cron_expression,
         opts \\ []
       ) do
-    case Crontab.CronExpression.Parser.parse(cron_expression) do
+    case Parser.parse(cron_expression) do
       {:ok, _} ->
         {:ok, %{specter | scheduled_beams: [{beam_module, cron_expression, opts} | beams]}}
 
@@ -129,7 +131,7 @@ defmodule Lux.Specter do
     now = DateTime.utc_now()
 
     Enum.filter(beams, fn {_module, cron_expression, _opts} ->
-      {:ok, cron} = Crontab.CronExpression.Parser.parse(cron_expression)
+      {:ok, cron} = Parser.parse(cron_expression)
       Crontab.DateChecker.matches_date?(cron, now)
     end)
   end
@@ -206,8 +208,7 @@ defmodule Lux.Specter do
   end
 
   defp chunk_actions(actions, chunk_size) do
-    actions
-    |> Enum.chunk_every(chunk_size)
+    Enum.chunk_every(actions, chunk_size)
   end
 
   defp execute_action_chunks(chunks, timeout) do
@@ -224,12 +225,10 @@ defmodule Lux.Specter do
   end
 
   defp execute_action({module, params}, timeout) do
-    try do
-      Task.await(Task.async(fn -> apply(module, :run, [params]) end), timeout)
-    catch
-      :exit, {:timeout, _} -> {:error, :timeout}
-      kind, reason -> {:error, {kind, reason}}
-    end
+    Task.await(Task.async(fn -> apply(module, :run, [params]) end), timeout)
+  catch
+    :exit, {:timeout, _} -> {:error, :timeout}
+    kind, reason -> {:error, {kind, reason}}
   end
 
   defp build_llm_config(config) do

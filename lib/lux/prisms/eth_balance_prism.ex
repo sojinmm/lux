@@ -53,10 +53,11 @@ defmodule Lux.Prisms.EthBalancePrism do
       required: ["balance_eth", "balance_wei", "network"]
     }
 
-  require Lux.Python
   import Lux.Python
 
   alias Lux.Config
+
+  require Lux.Python
 
   def handler(%{address: address} = input, _ctx) do
     network = Map.get(input, :network, "mainnet")

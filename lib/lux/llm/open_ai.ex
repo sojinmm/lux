@@ -6,13 +6,13 @@ defmodule Lux.LLM.OpenAI do
   @behaviour Lux.LLM
 
   alias Lux.Beam
-  alias Lux.Prism
   alias Lux.Lens
   alias Lux.LLM.Response
+  alias Lux.Prism
 
   require Beam
-  require Prism
   require Lens
+  require Prism
   require Response
 
   @endpoint "https://api.openai.com/v1/chat/completions"
@@ -155,14 +155,12 @@ defmodule Lux.LLM.OpenAI do
   end
 
   defp schema_to_properties(schema) when is_list(schema) do
-    schema
-    |> Enum.map(fn {key, opts} ->
+    Map.new(schema, fn {key, opts} ->
       {Atom.to_string(key),
        %{
          type: Atom.to_string(opts[:type] || :string),
          description: opts[:description] || ""
        }}
     end)
-    |> Enum.into(%{})
   end
 end

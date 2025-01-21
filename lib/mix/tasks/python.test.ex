@@ -1,4 +1,5 @@
 defmodule Mix.Tasks.Python.Test do
+  @shortdoc "Runs Python tests"
   @moduledoc """
   Runs Python tests using pytest.
 
@@ -23,19 +24,16 @@ defmodule Mix.Tasks.Python.Test do
 
   use Mix.Task
 
-  @shortdoc "Runs Python tests"
   @requirements ["app.start"]
 
   defp safe_cmd(cmd, args, opts) do
-    try do
-      System.cmd(cmd, args, opts)
-    rescue
-      e in ErlangError ->
-        case e do
-          %ErlangError{original: :enoent} -> {:error, :not_found}
-          _ -> reraise e, __STACKTRACE__
-        end
-    end
+    System.cmd(cmd, args, opts)
+  rescue
+    e in ErlangError ->
+      case e do
+        %ErlangError{original: :enoent} -> {:error, :not_found}
+        _ -> reraise e, __STACKTRACE__
+      end
   end
 
   @impl Mix.Task
@@ -70,7 +68,7 @@ defmodule Mix.Tasks.Python.Test do
 
   defp run_tests(python_dir, args) do
     # Install dependencies if poetry.lock doesn't exist
-    unless File.exists?(Path.join(python_dir, "poetry.lock")) do
+    if !File.exists?(Path.join(python_dir, "poetry.lock")) do
       Mix.shell().info("Installing Python dependencies...")
 
       case safe_cmd("poetry", ["install"], cd: python_dir, stderr_to_stdout: true) do
