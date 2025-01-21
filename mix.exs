@@ -17,9 +17,12 @@ defmodule Lux.MixProject do
   def application do
     [
       mod: {Lux.Application, []},
-      extra_applications: [:logger]
+      extra_applications: extra_applications(Mix.env())
     ]
   end
+
+  defp extra_applications(:dev), do: [:logger, :crypto, :wx, :observer, :runtime_tools]
+  defp extra_applications(_), do: [:logger, :crypto]
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
