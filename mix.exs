@@ -36,7 +36,8 @@ defmodule Lux.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
       {:crontab, "~> 1.1"},
-      {:ex_json_schema, "~> 0.10.2"}
+      {:ex_json_schema, "~> 0.10.2"},
+      {:nodejs, "~> 2.0"}
     ]
   end
 end
