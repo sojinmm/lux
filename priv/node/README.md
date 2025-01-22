@@ -13,3 +13,15 @@ mix setup
 ```bash
 npm test
 ```
+
+## Adding Dependencies
+
+To add a new dependency:
+
+```bash
+npm install package-name
+```
+
+## Integration with Elixir
+
+TBD
