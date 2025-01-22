@@ -10,10 +10,10 @@ defmodule Lux.LLM.OpenAI do
   alias Lux.Lens
   alias Lux.LLM.Response
 
+  require Logger
   require Beam
   require Prism
   require Lens
-  require Response
 
   @endpoint "https://api.openai.com/v1/chat/completions"
 
@@ -22,48 +22,61 @@ defmodule Lux.LLM.OpenAI do
     Configuration module for OpenAI.
     """
     @type t :: %__MODULE__{
-            api_key: String.t(),
+            endpoint: String.t(),
             model: String.t(),
+            api_key: String.t(),
             temperature: float(),
-            top_p: float(),
             frequency_penalty: float(),
-            presence_penalty: float(),
-            max_tokens: integer()
+            reasoning_mode: boolean(),
+            reasoning_effort: String.t(),
+            receive_timeout: integer(),
+            seed: integer(),
+            n: integer(),
+            json_response: boolean(),
+            json_schema: map(),
+            max_tokens: integer(),
+            tool_choice: map(),
+            user: String.t(),
+            messages: [map()]
           }
 
-    defstruct api_key: nil,
-              model: "gpt-3.5-turbo",
+    defstruct endpoint: "https://api.openai.com/v1/chat/completions",
+              model: "gpt-4",
+              api_key: nil,
               temperature: 0.7,
-              top_p: 1.0,
               frequency_penalty: 0.0,
-              presence_penalty: 0.0,
-              max_tokens: 1000
+              reasoning_mode: false,
+              reasoning_effort: "medium",
+              receive_timeout: 60_000,
+              seed: nil,
+              n: 1,
+              json_response: true,
+              json_schema: nil,
+              max_tokens: nil,
+              tool_choice: nil,
+              user: nil,
+              messages: []
   end
 
   @impl true
-  def call(prompt, tools, options) do
-    %Config{} = config = Keyword.fetch!(options, :config)
+  def call(prompt, tools, %Config{} = config) do
+    messages = config.messages ++ build_messages(prompt)
+    tools_config = build_tools_config(tools)
 
-    messages = [
-      %{role: "user", content: prompt}
-    ]
-
-    tools_config = Enum.map(tools, &tool_to_function/1)
-
-    body = %{
-      model: config.model,
-      messages: messages,
-      tools: tools_config,
-      tool_choice: "auto",
-      temperature: config.temperature,
-      top_p: config.top_p,
-      frequency_penalty: config.frequency_penalty,
-      presence_penalty: config.presence_penalty,
-      max_tokens: config.max_tokens
-    }
+    body =
+      %{
+        model: config.model,
+        messages: messages,
+        temperature: config.temperature,
+        frequency_penalty: config.frequency_penalty,
+        max_tokens: config.max_tokens
+      }
+      |> maybe_add_tools(tools_config, config.tool_choice)
+      |> maybe_add_response_format(config)
 
     [
       url: @endpoint,
+      json: body,
       headers: [
         {"Authorization", "Bearer #{config.api_key}"},
         {"Content-Type", "application/json"}
@@ -71,37 +84,90 @@ defmodule Lux.LLM.OpenAI do
     ]
     |> Keyword.merge(Application.get_env(:lux, __MODULE__, []))
     |> Req.new()
-    |> Req.post(json: body)
+    |> Req.post()
     |> case do
-      {:ok, %{status: 200} = response} -> handle_response(response)
-      {:error, error} -> {:error, "OpenAI API error: #{inspect(error)}"}
+      {:ok, %{status: 200} = response} -> handle_response(response, config)
+      {:error, error} -> handle_error(error)
     end
   end
 
-  def tool_to_function(%Beam{name: name, description: description, input_schema: schema}) do
+  defp build_messages(prompt) do
+    [%{role: "user", content: prompt}]
+  end
+
+  defp build_tools_config([]), do: []
+  defp build_tools_config(tools), do: Enum.map(tools, &tool_to_function/1)
+
+  defp maybe_add_tools(body, [], _tool_choice), do: body
+
+  defp maybe_add_tools(body, tools, tool_choice) do
+    body
+    |> Map.put(:tools, tools)
+    |> Map.put(:tool_choice, format_tool_choice(tool_choice))
+  end
+
+  defp format_tool_choice(:none), do: "none"
+  defp format_tool_choice(:auto), do: "auto"
+
+  defp format_tool_choice(name) when is_binary(name),
+    do: %{"type" => "function", "function" => %{"name" => name |> String.replace(".", "_")}}
+
+  defp format_tool_choice(_), do: "auto"
+
+  defp maybe_add_response_format(body, %Config{json_response: false}) do
+    Map.put(body, :response_format, %{type: "text"})
+  end
+
+  defp maybe_add_response_format(body, %Config{json_response: true, json_schema: schema})
+       when is_map(schema) do
+    Map.put(body, :response_format, %{
+      type: "json_schema",
+      json_schema: schema
+    })
+  end
+
+  defp maybe_add_response_format(body, %Config{json_response: true, json_schema: nil}) do
+    %{
+      body
+      | messages:
+          Enum.map(body.messages, &%{&1 | content: &1.content <> "\n Reply in json format"})
+    }
+    |> Map.put(:response_format, %{type: "json_object"})
+  end
+
+  defp maybe_add_response_format(body, %Config{json_response: true, json_schema: schema})
+       when is_atom(schema) do
+    Map.put(body, :response_format, %{
+      type: "json_schema",
+      json_schema: %{name: schema.name, schema: schema.schema}
+    })
+  end
+
+  defp maybe_add_response_format(body, _), do: Map.put(body, :response_format, %{type: "text"})
+
+  def tool_to_function(tool_module) when is_atom(tool_module) and not is_nil(tool_module) do
+    tool_to_function(tool_module.view())
+  end
+
+  def tool_to_function(%Beam{name: name, description: description, input_schema: input_schema}) do
     %{
       type: "function",
       function: %{
         name: name || "unnamed_beam",
         description: description || "",
-        parameters: %{
-          type: "object",
-          properties: schema_to_properties(schema)
-        }
+        parameters: input_schema
       }
     }
   end
 
-  def tool_to_function(%Prism{name: name, description: description, input_schema: schema}) do
+  def tool_to_function(%Prism{name: name, description: description, input_schema: input_schema}) do
     %{
       type: "function",
       function: %{
-        name: name,
+        # OpenAI function names must be [a-zA-Z0-9_-]
+        name: name |> String.replace(".", "_"),
         description: description || "",
-        parameters: %{
-          type: "object",
-          properties: schema_to_properties(schema)
-        }
+        parameters: input_schema
       }
     }
   end
@@ -117,34 +183,107 @@ defmodule Lux.LLM.OpenAI do
     }
   end
 
-  defp handle_response(%{body: body}) do
-    case body do
-      %{"choices" => [%{"message" => message, "finish_reason" => finish_reason} | _]} ->
-        {:ok, format_message(message, finish_reason)}
+  defp handle_response(%{body: body}, config) do
+    with %{"choices" => [choice | _]} <- body,
+         %{"message" => message, "finish_reason" => finish_reason} <- choice,
+         {:ok, content} <- parse_content(message["content"]),
+         {:ok, tool_calls_results} <- execute_tool_calls(message["tool_calls"]) do
+      payload = %{
+        content: content,
+        model: body["model"],
+        finish_reason: finish_reason,
+        tool_calls: message["tool_calls"],
+        tool_calls_results: tool_calls_results
+      }
 
-      %{"choices" => [%{"message" => message} | _]} ->
-        {:ok, format_message(message, "stop")}
+      metadata = %{
+        id: body["id"],
+        created: body["created"],
+        usage: body["usage"],
+        system_fingerprint: body["system_fingerprint"]
+      }
 
-      _ ->
-        {:error, "Unexpected response format"}
+      Lux.Signal.new(%{
+        schema_id: Lux.LLM.ResponseSignal,
+        payload: payload,
+        metadata: metadata
+      })
+      |> Lux.LLM.ResponseSignal.validate()
+    else
+      error ->
+        {:error, "Invalid response format from OpenAI"}
     end
   end
 
-  defp format_message(%{"content" => content}, finish_reason) when not is_nil(content) do
-    Response.response(content: content, finish_reason: finish_reason)
+  def parse_content(content) when is_binary(content) do
+    case Jason.decode(content) do
+      {:ok, structured_output} ->
+        {:ok, structured_output}
+
+      {:error, _} ->
+        {:error, "failed to parse content: #{inspect(content)}"}
+    end
   end
 
-  defp format_message(%{"tool_calls" => tool_calls}, finish_reason) do
-    tool_calls =
-      Enum.map(tool_calls, fn call ->
-        %{
-          type: call["type"],
-          name: call["function"]["name"],
-          params: Jason.decode!(call["function"]["arguments"])
-        }
-      end)
+  def parse_content(_), do: {:ok, nil}
 
-    Response.response(tool_calls: tool_calls, finish_reason: finish_reason)
+  def execute_tool_calls(tool_calls) when is_list(tool_calls) do
+    tool_calls
+    |> Enum.map(&execute_tool_call/1)
+    |> Enum.reduce({:ok, []}, fn
+      {:ok, result}, {:ok, results} -> {:ok, [result | results]}
+      error, _ -> error
+    end)
+  end
+
+  def execute_tool_calls(nil), do: {:ok, nil}
+
+  def execute_tool_call(%{"function" => %{"name" => name, "arguments" => args}}) do
+    args = Jason.decode!(args)
+
+    module =
+      name
+      # Names sent to OpenAI function must follow [a-zA-Z0-9_-],
+      # so we revert back to the original name...
+      |> String.replace("_", ".")
+      |> List.wrap()
+      |> Module.concat()
+
+    with {_, ^module} <- {:module, Code.ensure_loaded!(module)},
+         {_, true} <- {:check_handler, function_exported?(module, :handler, 2)},
+         {:ok, result} <- module.handler(args, nil) do
+      {:ok, result}
+    else
+      {:check_handler, false} ->
+        {:error, "Tool #{module} does not have a registered handler"}
+
+      error ->
+        {:error, "Tool #{module} execution failed: #{inspect(error)}"}
+    end
+  end
+
+  defp format_tool_call(%{
+         "function" => %{"arguments" => args, "name" => name},
+         "id" => id,
+         "type" => type
+       }) do
+    %{
+      type: type,
+      # OpenAI function names must be [a-zA-Z0-9_-]...
+      name: name |> String.replace(".", "_"),
+      call_id: id,
+      params: Jason.decode!(args)
+    }
+  end
+
+  defp handle_error(%{"error" => %{"message" => message, "type" => type}}) do
+    Logger.error("OpenAI API error: #{type} - #{message}")
+    {:error, "OpenAI API error: #{type} - #{message}"}
+  end
+
+  defp handle_error(error) do
+    Logger.error("OpenAI API error: #{inspect(error)}")
+    {:error, "OpenAI API error: #{inspect(error)}"}
   end
 
   defp schema_to_properties(nil), do: %{}
@@ -165,4 +304,14 @@ defmodule Lux.LLM.OpenAI do
     end)
     |> Enum.into(%{})
   end
+
+  defp resolve_schema(schema) when is_atom(schema) do
+    if function_exported?(schema, :schema, 0) do
+      schema.schema()
+    else
+      schema
+    end
+  end
+
+  defp resolve_schema(schema), do: schema
 end

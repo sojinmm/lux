@@ -7,25 +7,27 @@ defmodule Lux.LLM do
     @moduledoc """
     A response from an LLM.
     """
-    require Record
 
-    Record.defrecord(:response, __MODULE__,
-      content: nil,
-      tool_calls: [],
-      finish_reason: nil
-    )
+    @type t :: %__MODULE__{
+            content: String.t() | nil,
+            tool_calls: [%{type: String.t(), name: String.t(), params: map()}],
+            finish_reason: String.t() | nil,
+            structured_output: map() | nil
+          }
 
-    @type t ::
-            record(:response,
-              content: String.t() | nil,
-              tool_calls: [%{type: String.t(), name: String.t(), params: map()}],
-              finish_reason: String.t() | nil
-            )
+    defstruct content: nil,
+              tool_calls: [],
+              finish_reason: nil,
+              structured_output: nil
   end
 
   @type prompt :: String.t()
   @type tools :: [Lux.Prism.t() | Lux.Beam.t() | Lux.Lens.t()]
-  @type options :: Keyword.t()
+  @type options :: [
+          config: map(),
+          response_schema: map() | module(),
+          response_format: :text | :json | :structured
+        ]
 
   @callback call(prompt(), tools(), options()) :: {:ok, Response.t()} | {:error, String.t()}
 
