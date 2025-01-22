@@ -1,3 +1,4 @@
 elixir 1.18.1-otp-27
 erlang 27.2
 python 3.12.3
+poetry 2.0.1
