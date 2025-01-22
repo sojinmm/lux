@@ -1,8 +1,8 @@
 defmodule LuxTest do
-  use ExUnit.Case
+  use UnitCase
   doctest Lux
 
-  test "greets the world" do
+  test "greets the world", ctx do
     assert Lux.hello() == :world
   end
 end

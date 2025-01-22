@@ -1,5 +1,5 @@
 defmodule Lux.PythonTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   require Lux.Python
   import Lux.Python

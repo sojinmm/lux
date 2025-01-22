@@ -72,7 +72,7 @@ jobs:
         run: mix dialyzer
 
       - name: Run Elixir Tests
-        run: mix test
+        run: mix test.unit
 
       - name: Run Python Tests
         run: mix python.test

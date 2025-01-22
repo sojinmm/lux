@@ -1,5 +1,5 @@
 defmodule Lux.LLM.OpenAITest do
-  use ExUnit.Case, async: true
+  use UnitAPICase, async: true
 
   alias Lux.LLM.OpenAI
   alias Lux.LLM.Response
@@ -220,7 +220,7 @@ defmodule Lux.LLM.OpenAITest do
         })
       end)
 
-      assert {:ok, response} = OpenAI.call("test prompt", [], config: config)
+      assert {:ok, response} = OpenAI.call("test prompt", [], config)
 
       assert ^response =
                Response.response(

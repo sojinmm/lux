@@ -359,7 +359,7 @@ asdf install
 mix setup
 
 # Optionally, run tests
-mix test
+mix test.suite
 ```
 
 ### Setup Python environment

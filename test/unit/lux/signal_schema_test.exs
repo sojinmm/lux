@@ -1,5 +1,5 @@
 defmodule Lux.SignalSchemaTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
   alias Lux.SignalSchema
 
   describe "new/1" do
