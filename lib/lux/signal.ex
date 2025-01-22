@@ -38,8 +38,8 @@ defmodule Lux.Signal do
 
       def new(attrs) when is_map(attrs) do
         signal =
-          struct(
-            Lux.Signal,
+          Lux.Signal
+          |> struct(
             Map.merge(attrs, %{
               id: attrs[:id] || Lux.UUID.generate(),
               timestamp: DateTime.utc_now(),

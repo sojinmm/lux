@@ -6,6 +6,8 @@ defmodule Lux.Specter.Supervisor do
 
   use DynamicSupervisor
 
+  alias Lux.Specter.Runner
+
   def start_link(init_arg) do
     DynamicSupervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
@@ -19,7 +21,7 @@ defmodule Lux.Specter.Supervisor do
   Starts a new specter process.
   """
   def start_specter(%Lux.Specter{} = specter) do
-    child_spec = {Lux.Specter.Runner, specter}
+    child_spec = {Runner, specter}
     DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
 
@@ -37,10 +39,11 @@ defmodule Lux.Specter.Supervisor do
   Lists all running specters.
   """
   def list_specters do
-    DynamicSupervisor.which_children(__MODULE__)
+    __MODULE__
+    |> DynamicSupervisor.which_children()
     |> Enum.map(fn {_, pid, _, _} -> pid end)
     |> Enum.filter(&is_pid/1)
-    |> Enum.map(&Lux.Specter.Runner.get_specter/1)
+    |> Enum.map(&Runner.get_specter/1)
   end
 
   @doc """

@@ -1,5 +1,6 @@
 defmodule Lux.ReflectionTest do
   use ExUnit.Case, async: true
+
   alias Lux.Reflection
 
   describe "new/1" do

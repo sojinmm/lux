@@ -25,7 +25,8 @@ defmodule Lux.Config do
 
   @doc false
   defp get_required_key(group, key) do
-    Application.fetch_env!(:lux, group)
+    :lux
+    |> Application.fetch_env!(group)
     |> Keyword.get(key)
     |> case do
       nil -> raise "#{key} is not configured in :#{group}!"
