@@ -46,6 +46,7 @@ defmodule Lux.LensTest do
   describe "When we `use` a Lens" do
     test "creates a lens with declarative attributes" do
       defmodule WeatherLens do
+        @moduledoc false
         use Lux.Lens,
           name: "Weather API",
           description: "Fetches weather data",
@@ -89,6 +90,7 @@ defmodule Lux.LensTest do
 
     test "uses module name as default name" do
       defmodule DefaultNameLens do
+        @moduledoc false
         use Lux.Lens,
           url: "https://api.example.com"
       end
@@ -99,6 +101,7 @@ defmodule Lux.LensTest do
 
     test "supports focus with input params" do
       defmodule TestLens do
+        @moduledoc false
         use Lux.Lens,
           url: "https://api.example.com",
           method: :get,
@@ -119,6 +122,7 @@ defmodule Lux.LensTest do
 
     test "supports custom after_focus transformation" do
       defmodule TransformLens do
+        @moduledoc false
         use Lux.Lens,
           url: "https://api.example.com"
 
@@ -137,6 +141,7 @@ defmodule Lux.LensTest do
 
     test "works without after_focus function" do
       defmodule BasicLens do
+        @moduledoc false
         use Lux.Lens,
           url: "https://api.example.com"
 
@@ -154,6 +159,7 @@ defmodule Lux.LensTest do
 
     test "handles authentication" do
       defmodule AuthLens do
+        @moduledoc false
         use Lux.Lens,
           url: "https://api.example.com",
           auth: %{type: :api_key, key: "secret-key"}

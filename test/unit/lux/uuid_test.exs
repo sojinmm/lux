@@ -1,6 +1,7 @@
 defmodule Lux.UUIDTest do
   use UnitCase, async: true
   use ExUnitProperties
+
   alias Lux.UUID
 
   describe "UUID generation" do

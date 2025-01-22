@@ -1,6 +1,7 @@
 defmodule Lux.PrismTest do
   use UnitCase, async: true
   alias Lux.Prism
+
   doctest Lux.Prism, import: true
 
   describe "new/1" do
@@ -48,6 +49,7 @@ defmodule Lux.PrismTest do
   describe "When we `use` a Prism" do
     test "then we can call the `run` directly" do
       defmodule MyExclamationPrism do
+        @moduledoc false
         use Lux.Prism
 
         def handler(input, _ctx) do
@@ -60,6 +62,7 @@ defmodule Lux.PrismTest do
 
     test "creates a prism with declarative attributes" do
       defmodule WeatherPrism do
+        @moduledoc false
         use Lux.Prism,
           name: "Weather Data",
           description: "Fetches weather data for a location",
@@ -103,6 +106,7 @@ defmodule Lux.PrismTest do
 
     test "uses module name as default name" do
       defmodule DefaultNamePrism do
+        @moduledoc false
         use Lux.Prism
 
         def handler(_input, _ctx), do: {:ok, :done}

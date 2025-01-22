@@ -4,6 +4,7 @@ defmodule Lux.SpecterTest do
 
   # Test modules
   defmodule TestPrism do
+    @moduledoc false
     use Lux.Prism,
       name: "Test Prism",
       description: "A test prism"
@@ -12,6 +13,7 @@ defmodule Lux.SpecterTest do
   end
 
   defmodule TestBeam do
+    @moduledoc false
     use Lux.Beam,
       name: "Test Beam",
       description: "A test beam"

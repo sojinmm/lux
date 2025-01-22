@@ -24,6 +24,7 @@ defmodule Lux.SignalSchemaTest do
   describe "when using SignalSchema" do
     test "creates a schema with declarative attributes" do
       defmodule ChatMessageSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           name: "chat_message",
           description: "Basic chat message schema",
@@ -65,6 +66,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "uses module name as default name" do
       defmodule DefaultNameSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :object, properties: %{message: %{type: :string}}, required: []}
       end
@@ -88,6 +90,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "provides schema_id helper" do
       defmodule SchemaWithId do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :object}
       end
@@ -100,6 +103,7 @@ defmodule Lux.SignalSchemaTest do
   describe "SignalSchema validation" do
     test "null" do
       defmodule NullSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :null}
       end
@@ -110,6 +114,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "boolean" do
       defmodule BooleanSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :boolean}
       end
@@ -127,6 +132,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "integer" do
       defmodule IntegerSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :integer}
       end
@@ -140,6 +146,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "string" do
       defmodule StringSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :string}
       end
@@ -153,6 +160,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "array" do
       defmodule ArraySchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :array, items: %{type: :string}}
       end
@@ -170,6 +178,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "object" do
       defmodule ObjectSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{
             type: :object,
@@ -206,6 +215,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "validates enums" do
       defmodule EnumSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :string, enum: ["foo", "bar", "baz"]}
       end
@@ -224,6 +234,7 @@ defmodule Lux.SignalSchemaTest do
   describe "format validation" do
     test "validates date-time format" do
       defmodule DateTimeSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :string, format: "date-time"}
       end
@@ -250,6 +261,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "validates email format" do
       defmodule EmailSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :string, format: "email"}
       end
@@ -273,6 +285,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "validates hostname format" do
       defmodule HostnameSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{type: :string, format: "hostname"}
       end
@@ -295,6 +308,7 @@ defmodule Lux.SignalSchemaTest do
 
     test "validates IP address formats" do
       defmodule IpSchema do
+        @moduledoc false
         use Lux.SignalSchema,
           schema: %{
             type: :object,

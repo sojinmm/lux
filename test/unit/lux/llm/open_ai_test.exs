@@ -5,8 +5,8 @@ defmodule Lux.LLM.OpenAITest do
   alias Lux.LLM.Response
 
   require Lux.Beam
-  require Lux.Prism
   require Lux.Lens
+  require Lux.Prism
   require Response
 
   setup do

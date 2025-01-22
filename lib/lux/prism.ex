@@ -90,6 +90,7 @@ defmodule Lux.Prism do
   defmacro __using__(opts) do
     quote do
       @behaviour Lux.Prism
+
       alias Lux.Prism
 
       # Register compile-time attributes

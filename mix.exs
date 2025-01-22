@@ -18,12 +18,14 @@ defmodule Lux.MixProject do
   def application do
     [
       mod: {Lux.Application, []},
-      extra_applications: [:logger]
+      extra_applications: extra_applications(Mix.env())
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/"]
+  defp extra_applications(:dev), do: [:logger, :crypto, :wx, :observer, :runtime_tools]
+  defp extra_applications(_), do: [:logger, :crypto]
 
+  defp elixirc_paths(:test), do: ["lib", "test/"]
   defp elixirc_paths(_), do: ["lib"]
 
   defp aliases do
@@ -44,11 +46,12 @@ defmodule Lux.MixProject do
       {:crontab, "~> 1.1"},
       {:ex_json_schema, "~> 0.10.2"},
       # test and dev dependencies
-      {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
-      {:mock, "~> 0.3.0", only: [:test]},
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
-      {:stream_data, "~> 1.0", only: [:test]}
+      {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
+      {:mock, "~> 0.3.0", only: [:test]},
+      {:stream_data, "~> 1.0", only: [:test]},
+      {:styler, "~> 1.3", only: [:dev, :test], runtime: false}
     ]
   end
 
