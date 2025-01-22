@@ -24,6 +24,7 @@ defmodule Mix.Tasks.Setup do
   ]
 
   @priv_python_dir "priv/python"
+  @priv_nodejs_dir "priv/node"
 
   defp safe_cmd(cmd, args, opts) do
     try do
@@ -53,7 +54,10 @@ defmodule Mix.Tasks.Setup do
          :ok <- setup_virtualenv(),
          # Step 4: Install Python dependencies
          _ <- Mix.shell().info("\n==> Installing Python dependencies..."),
-         :ok <- install_python_deps(poetry_path) do
+         :ok <- install_python_deps(poetry_path),
+           # Step 5: Install Node.js dependencies
+         Mix.shell().info("\n==> Installing Node.js dependencies..."),
+         :ok <- install_nodejs_deps() do
       Mix.shell().info("""
       \n==> Setup completed successfully! 🎉
 
@@ -188,6 +192,49 @@ defmodule Mix.Tasks.Setup do
 
         If the issue persists, please check the error message above for specific dependency conflicts.
         You may need to manually resolve version conflicts in priv/python/pyproject.toml.
+        """)
+
+        exit({:shutdown, 1})
+    end
+  end
+
+  defp install_nodejs_deps() do
+    nodejs_dir = Path.join(File.cwd!(), @priv_nodejs_dir)
+
+    case safe_cmd("npm", ["install"], cd: nodejs_dir, stderr_to_stdout: true) do
+      {:error, :not_found} ->
+        Mix.shell().error("\nFailed to execute npm command")
+
+        Mix.shell().error("""
+
+        Try these steps to resolve the issue:
+        1. Make sure npm is properly installed:
+            npm --version
+        2. If needed, update npm:
+            npm install -g npm
+        3. Run setup again:
+            mix setup
+        """)
+
+        exit({:shutdown, 1})
+
+      {output, 0} ->
+        Mix.shell().info(output)
+        :ok
+
+      {output, _} ->
+        Mix.shell().error("\nFailed to install Node.js dependencies:\n\n#{output}")
+
+        Mix.shell().error("""
+
+        Try these steps to resolve the issue:
+        1. Clear the node_modules directory:
+            rm -rf priv/node/node_modules
+        2. Run setup again:
+            mix setup
+
+        If the issue persists, please check the error message above for specific dependency conflicts.
+        You may need to manually resolve version conflicts in priv/node/package.json.
         """)
 
         exit({:shutdown, 1})
