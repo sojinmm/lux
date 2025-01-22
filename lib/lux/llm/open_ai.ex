@@ -187,7 +187,7 @@ defmodule Lux.LLM.OpenAI do
     }
   end
 
-  defp handle_response(%{body: body}, config) do
+  defp handle_response(%{body: body}, _config) do
     with %{"choices" => [choice | _]} <- body,
          %{"message" => message, "finish_reason" => finish_reason} <- choice,
          {:ok, content} <- parse_content(message["content"]),
@@ -267,30 +267,8 @@ defmodule Lux.LLM.OpenAI do
     end
   end
 
-  defp handle_error(%{"error" => %{"message" => message, "type" => type}}) do
-    Logger.error("OpenAI API error: #{type} - #{message}")
-    {:error, "OpenAI API error: #{type} - #{message}"}
-  end
-
   defp handle_error(error) do
     Logger.error("OpenAI API error: #{inspect(error)}")
     {:error, "OpenAI API error: #{inspect(error)}"}
-  end
-
-  defp schema_to_properties(nil), do: %{}
-  defp schema_to_properties(%{} = schema) when map_size(schema) == 0, do: %{}
-
-  defp schema_to_properties(%{type: "object", properties: properties}) do
-    properties
-  end
-
-  defp schema_to_properties(schema) when is_list(schema) do
-    Map.new(schema, fn {key, opts} ->
-      {Atom.to_string(key),
-       %{
-         type: Atom.to_string(opts[:type] || :string),
-         description: opts[:description] || ""
-       }}
-    end)
   end
 end

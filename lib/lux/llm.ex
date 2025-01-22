@@ -23,11 +23,7 @@ defmodule Lux.LLM do
 
   @type prompt :: String.t()
   @type tools :: [Lux.Prism.t() | Lux.Beam.t() | Lux.Lens.t()]
-  @type options :: [
-          config: map(),
-          response_schema: map() | module(),
-          response_format: :text | :json | :structured
-        ]
+  @type options :: any()
 
   @callback call(prompt(), tools(), options()) :: {:ok, Response.t()} | {:error, String.t()}
 

@@ -73,7 +73,8 @@ defmodule Lux.Prisms.HandleChat do
     Keep the response concise and relevant to the conversation.
     """
 
-    case LLM.call(prompt, specter.llm_config) do
+    # need to pass beams and prisms instead of empty list here.
+    case LLM.call(prompt, [], specter.llm_config) do
       {:ok, %{content: content}} ->
         {:ok, %{message: content}}
 
