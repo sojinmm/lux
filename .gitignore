@@ -37,4 +37,9 @@ lux-*.tar
 # Environment variables
 .env
 *.override.envrc
+
+# Python
 .venv/
+
+# Node.js
+node_modules/
