@@ -1,11 +1,12 @@
 defmodule Lux.LLM.Integration.OpenAI do
+  @moduledoc false
   use IntegrationCase, async: true
 
   alias Lux.LLM.OpenAI
   alias Lux.LLM.OpenAI.Config, as: LLMConfig
+  alias Lux.LLM.ResponseSignal
   alias Lux.Signal
   alias Lux.SignalSchema
-  alias Lux.LLM.ResponseSignal
 
   describe "simple text request and response, no tools or structure output" do
     setup do
@@ -59,6 +60,7 @@ defmodule Lux.LLM.Integration.OpenAI do
 
   describe "Requests with a response schema" do
     defmodule CapitalCitySchema do
+      @moduledoc false
       use SignalSchema,
         schema: %{
           type: :object,
@@ -92,6 +94,7 @@ defmodule Lux.LLM.Integration.OpenAI do
 
   describe "Requests with prisms and beams (tool calling)" do
     defmodule HashBeam do
+      @moduledoc false
       use Lux.Prism,
         name: "#{HashBeam}",
         id: HashBeam,

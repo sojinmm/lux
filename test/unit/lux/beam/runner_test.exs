@@ -1,5 +1,6 @@
 defmodule Lux.Beam.RunnerTest do
   use UnitCase, async: true
+
   alias Lux.Beam.Runner
 
   defmodule TestPrism do

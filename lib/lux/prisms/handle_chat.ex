@@ -10,7 +10,6 @@ defmodule Lux.Prisms.HandleChat do
     input_schema: Lux.Signal.Chat,
     output_schema: Lux.Signal.Chat
 
-  alias Lux.Signal.Chat
   alias Lux.LLM
 
   @doc """
@@ -74,7 +73,7 @@ defmodule Lux.Prisms.HandleChat do
     Keep the response concise and relevant to the conversation.
     """
 
-    case LLM.complete(prompt, specter.llm_config) do
+    case LLM.call(prompt, specter.llm_config) do
       {:ok, %{content: content}} ->
         {:ok, %{message: content}}
 

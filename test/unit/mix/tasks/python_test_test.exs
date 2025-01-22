@@ -1,5 +1,6 @@
 defmodule Mix.Tasks.Python.TestTest do
   use UnitCase, async: false
+
   import ExUnit.CaptureIO
 
   alias Mix.Tasks.Python.Test, as: PythonTest

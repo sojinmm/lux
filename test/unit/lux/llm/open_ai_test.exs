@@ -2,15 +2,40 @@ defmodule Lux.LLM.OpenAITest do
   use UnitAPICase, async: true
 
   alias Lux.LLM.OpenAI
-  alias Lux.LLM.Response
+  alias Lux.LLM.ResponseSignal
+  alias Lux.Signal
 
   require Lux.Beam
   require Lux.Lens
   require Lux.Prism
-  require Response
 
   setup do
     Req.Test.verify_on_exit!()
+  end
+
+  defmodule TestPrism do
+    @moduledoc false
+    use Lux.Prism,
+      name: "Test Prism",
+      input_schema: %{type: :object, properties: %{value: %{type: :string}}},
+      description: "A test prism"
+
+    def handler(%{value: "success"}, _context), do: {:ok, %{result: "success test"}}
+    def handler(%{value: "failure"}, _context), do: {:error, "failure test"}
+  end
+
+  defmodule TestBeam do
+    @moduledoc false
+    use Lux.Beam,
+      name: "Test Beam",
+      input_schema: %{type: :object, properties: %{value: %{type: :string}}},
+      description: "A test beam"
+
+    def steps do
+      sequence do
+        step(:test, TestPrism, %{})
+      end
+    end
   end
 
   describe "tool_to_function/1" do
@@ -172,7 +197,10 @@ defmodule Lux.LLM.OpenAITest do
         decoded_body = Jason.decode!(body)
 
         assert decoded_body["model"] == "gpt-3.5-turbo"
-        assert [%{"role" => "user", "content" => "test prompt"}] = decoded_body["messages"]
+
+        assert [%{"role" => "user", "content" => "test prompt" <> "\n Reply in json format"}] =
+                 decoded_body["messages"]
+
         assert [tool] = decoded_body["tools"]
         assert tool["type"] == "function"
         assert tool["function"]["name"] == "TestBeam"
@@ -189,11 +217,15 @@ defmodule Lux.LLM.OpenAITest do
         })
       end)
 
-      assert {:ok, response} = OpenAI.call("test prompt", [beam], config: config)
-      assert ^response = Response.response(content: "Test response", finish_reason: "stop")
+      assert {:ok, response} = OpenAI.call("test prompt", [beam], config)
+
+      assert ^response = %Signal{
+               schema_id: ResponseSignal,
+               payload: %{content: "Test response", finish_reason: "stop"}
+             }
     end
 
-    test "handles tool call responses" do
+    test "handles tool call responses with successful tool call (prism)" do
       config = %OpenAI.Config{
         api_key: "test_key",
         model: "gpt-3.5-turbo"
@@ -208,8 +240,8 @@ defmodule Lux.LLM.OpenAITest do
                   %{
                     "type" => "function",
                     "function" => %{
-                      "name" => "TestBeam",
-                      "arguments" => ~s({"value": "test"})
+                      "name" => "#{TestBeam}",
+                      "arguments" => ~s({"value": "success"})
                     }
                   }
                 ]
@@ -220,13 +252,16 @@ defmodule Lux.LLM.OpenAITest do
         })
       end)
 
-      assert {:ok, response} = OpenAI.call("test prompt", [], config)
+      assert {:ok, response} = OpenAI.call("test prompt", [TestPrism], config)
 
       assert ^response =
-               Response.response(
-                 tool_calls: [%{type: "function", name: "TestBeam", params: %{"value" => "test"}}],
-                 finish_reason: "tool_calls"
-               )
+               %Signal{
+                 schema_id: ResponseSignal,
+                 payload: %{
+                   content: "Test response",
+                   finish_reason: "tool_calls"
+                 }
+               }
     end
   end
 end

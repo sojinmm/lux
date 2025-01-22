@@ -1,5 +1,6 @@
 defmodule Lux.Specter.RunnerTest do
   use UnitCase, async: true
+
   alias Lux.Specter.Runner
 
   # Test modules

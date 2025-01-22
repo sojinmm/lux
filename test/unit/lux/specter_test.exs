@@ -1,5 +1,6 @@
 defmodule Lux.SpecterTest do
   use UnitCase, async: true
+
   alias Lux.Specter
 
   # Test modules

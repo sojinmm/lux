@@ -1,5 +1,6 @@
 defmodule Lux.LensTest do
-  use UnitCase, async: true
+  use UnitAPICase, async: true
+
   alias Lux.Lens
 
   setup do

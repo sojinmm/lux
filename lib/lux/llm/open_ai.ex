@@ -7,12 +7,12 @@ defmodule Lux.LLM.OpenAI do
 
   alias Lux.Beam
   alias Lux.Lens
-  alias Lux.LLM.Response
+  alias Lux.LLM.ResponseSignal
   alias Lux.Prism
 
-  require Logger
   require Beam
   require Lens
+  require Logger
 
   @endpoint "https://api.openai.com/v1/chat/completions"
 
@@ -109,7 +109,7 @@ defmodule Lux.LLM.OpenAI do
   defp format_tool_choice(:auto), do: "auto"
 
   defp format_tool_choice(name) when is_binary(name),
-    do: %{"type" => "function", "function" => %{"name" => name |> String.replace(".", "_")}}
+    do: %{"type" => "function", "function" => %{"name" => String.replace(name, ".", "_")}}
 
   defp format_tool_choice(_), do: "auto"
 
@@ -126,19 +126,24 @@ defmodule Lux.LLM.OpenAI do
   end
 
   defp maybe_add_response_format(body, %Config{json_response: true, json_schema: nil}) do
-    %{
-      body
-      | messages:
-          Enum.map(body.messages, &%{&1 | content: &1.content <> "\n Reply in json format"})
-    }
-    |> Map.put(:response_format, %{type: "json_object"})
+    # OpenAI requires the user to specify the format of the response in the prompt in
+    # case json_schema is nil. We must mention json "somewere", they say.
+    Map.put(
+      %{
+        body
+        | messages:
+            Enum.map(body.messages, &%{&1 | content: &1.content <> "\n Reply in json format"})
+      },
+      :response_format,
+      %{type: "json_object"}
+    )
   end
 
   defp maybe_add_response_format(body, %Config{json_response: true, json_schema: schema})
        when is_atom(schema) do
     Map.put(body, :response_format, %{
       type: "json_schema",
-      json_schema: %{name: schema.name, schema: schema.schema}
+      json_schema: %{name: schema.name(), schema: schema.schema()}
     })
   end
 
@@ -164,7 +169,7 @@ defmodule Lux.LLM.OpenAI do
       type: "function",
       function: %{
         # OpenAI function names must be [a-zA-Z0-9_-]
-        name: name |> String.replace(".", "_"),
+        name: String.replace(name, ".", "_"),
         description: description || "",
         parameters: input_schema
       }
@@ -202,15 +207,16 @@ defmodule Lux.LLM.OpenAI do
         system_fingerprint: body["system_fingerprint"]
       }
 
-      Lux.Signal.new(%{
-        schema_id: Lux.LLM.ResponseSignal,
+      %{
+        schema_id: ResponseSignal,
         payload: payload,
         metadata: metadata
-      })
-      |> Lux.LLM.ResponseSignal.validate()
+      }
+      |> Lux.Signal.new()
+      |> ResponseSignal.validate()
     else
       error ->
-        {:error, "Invalid response format from OpenAI"}
+        {:error, "Invalid response format: #{inspect(error)}"}
     end
   end
 
@@ -261,20 +267,6 @@ defmodule Lux.LLM.OpenAI do
     end
   end
 
-  defp format_tool_call(%{
-         "function" => %{"arguments" => args, "name" => name},
-         "id" => id,
-         "type" => type
-       }) do
-    %{
-      type: type,
-      # OpenAI function names must be [a-zA-Z0-9_-]...
-      name: name |> String.replace(".", "_"),
-      call_id: id,
-      params: Jason.decode!(args)
-    }
-  end
-
   defp handle_error(%{"error" => %{"message" => message, "type" => type}}) do
     Logger.error("OpenAI API error: #{type} - #{message}")
     {:error, "OpenAI API error: #{type} - #{message}"}
@@ -301,14 +293,4 @@ defmodule Lux.LLM.OpenAI do
        }}
     end)
   end
-
-  defp resolve_schema(schema) when is_atom(schema) do
-    if function_exported?(schema, :schema, 0) do
-      schema.schema()
-    else
-      schema
-    end
-  end
-
-  defp resolve_schema(schema), do: schema
 end

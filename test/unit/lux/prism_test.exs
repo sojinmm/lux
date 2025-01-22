@@ -1,5 +1,6 @@
 defmodule Lux.PrismTest do
   use UnitCase, async: true
+
   alias Lux.Prism
 
   doctest Lux.Prism, import: true

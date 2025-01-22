@@ -1,5 +1,6 @@
 defmodule Lux.SignalTest do
   use UnitCase, async: true
+
   alias Lux.Signal
 
   describe "new/1" do

@@ -1,5 +1,6 @@
 defmodule Lux.BeamTest do
   use UnitCase, async: true
+
   alias Lux.Beam
 
   defmodule TestBeam do
