@@ -70,11 +70,19 @@ defmodule Lux.Node do
   @doc """
   Attempts to import a Node.js package.
   Currently, it will modify `priv/node/package.json` and `priv/node/package_lock.json` files.
+
+  ## Options
+
+    * `:update_lock_file` - Whether to update the lock file after importing the package (default: true)
+    * `:timeout` - Timeout in milliseconds for Node.js execution
+
   """
   @spec import_package(String.t(), keyword()) :: {:ok, String.t()} | {:error, String.t()}
   def import_package(package_name, opts \\ []) when is_binary(package_name) do
+    {update_lock_file, opts} = Keyword.pop(opts, :update_lock_file, true)
+
     {"lux.mjs", "importPackage"}
-    |> NodeJS.call([package_name], opts)
+    |> NodeJS.call([package_name, %{update_lock_file: update_lock_file}], opts)
     |> case do
       {:ok, %{"success" => true}} ->
         {:ok, package_name}
