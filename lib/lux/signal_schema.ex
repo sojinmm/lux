@@ -50,7 +50,8 @@ defmodule Lux.SignalSchema do
   """
   def new(attrs) when is_map(attrs) do
     attrs =
-      Map.put_new_lazy(attrs, :id, &UUID.generate/0)
+      attrs
+      |> Map.put_new_lazy(:id, &UUID.generate/0)
       |> Map.put_new_lazy(:created_at, &DateTime.utc_now/0)
 
     struct!(__MODULE__, attrs)
@@ -80,7 +81,7 @@ defmodule Lux.SignalSchema do
       @schema_tags unquote(opts[:tags])
       @schema_compatibility unquote(opts[:compatibility])
       @schema_format unquote(opts[:format])
-      @normalized_schema unquote(opts)[:schema] |> Lux.SignalSchema.normalize()
+      @normalized_schema Lux.SignalSchema.normalize(unquote(opts)[:schema])
       @compiled_schema ExJsonSchema.Schema.resolve(@normalized_schema)
 
       @schema_struct %Lux.SignalSchema{

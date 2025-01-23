@@ -1,4 +1,5 @@
 defmodule Mix.Tasks.Setup do
+  @shortdoc "Sets up the project for local development"
   @moduledoc """
   Sets up the project for local development.
 
@@ -14,46 +15,36 @@ defmodule Mix.Tasks.Setup do
   """
   use Mix.Task
 
-  @shortdoc "Sets up the project for local development"
   @requirements []
-
-  @default_poetry_paths [
-    "~/.local/bin/poetry",
-    "/usr/local/bin/poetry",
-    "/opt/homebrew/bin/poetry"
-  ]
 
   @priv_python_dir "priv/python"
   @priv_nodejs_dir "priv/node"
 
   defp safe_cmd(cmd, args, opts) do
-    try do
-      System.cmd(cmd, args, opts)
-    rescue
-      e in ErlangError ->
-        case e do
-          %ErlangError{original: :enoent} -> {:error, :not_found}
-          _ -> reraise e, __STACKTRACE__
-        end
-    end
+    System.cmd(cmd, args, opts)
+  rescue
+    e in ErlangError ->
+      case e do
+        %ErlangError{original: :enoent} -> {:error, :not_found}
+        _ -> reraise e, __STACKTRACE__
+      end
   end
 
   @impl Mix.Task
-  def run(opts \\ []) do
-    poetry_paths = Keyword.get(opts, :poetry_paths, @default_poetry_paths)
+  def run(_opts \\ []) do
+    Mix.shell().info("\n==> Setting up Lux for development\n")
+    # Step 1: Install Elixir dependencies
+    Mix.shell().info("==> Installing Elixir dependencies...")
 
-    with _ <- Mix.shell().info("\n==> Setting up Lux for development\n"),
-         # Step 1: Install Elixir dependencies
-         _ <- Mix.shell().info("==> Installing Elixir dependencies..."),
-         :ok <- install_deps(),
+    with :ok <- install_deps(),
          # Step 2: Check and setup Poetry
-         _ <- Mix.shell().info("\n==> Checking Poetry installation..."),
-         {:ok, poetry_path} <- find_poetry(poetry_paths),
+         Mix.shell().info("\n==> Checking Poetry installation..."),
+         {:ok, poetry_path} <- find_poetry(),
          # Step 3: Setup Python virtual environment
-         _ <- Mix.shell().info("\n==> Setting up Python virtual environment..."),
+         Mix.shell().info("\n==> Setting up Python virtual environment..."),
          :ok <- setup_virtualenv(),
          # Step 4: Install Python dependencies
-         _ <- Mix.shell().info("\n==> Installing Python dependencies..."),
+         Mix.shell().info("\n==> Installing Python dependencies..."),
          :ok <- install_python_deps(poetry_path),
          # Step 5: Install Node.js dependencies
          Mix.shell().info("\n==> Installing Node.js dependencies..."),
@@ -66,7 +57,9 @@ defmodule Mix.Tasks.Setup do
           source priv/python/.venv/bin/activate
 
       • Run tests:
-          mix test              # Run Elixir tests
+          mix test.unit         # Run Elixir unit tests
+          mix test.integration  # Run Elixir integration tests
+          mix test.suite        # Run all Elixir tests
           mix python.test       # Run Python tests
 
       • Generate documentation:
@@ -81,40 +74,47 @@ defmodule Mix.Tasks.Setup do
     end
   end
 
-  defp find_poetry(paths) do
-    # Check common Poetry installation paths
-    poetry_path =
-      Enum.find(paths, fn path ->
-        path = Path.expand(path)
-        File.exists?(path)
-      end)
+  defp find_poetry do
+    case safe_cmd("which", ["poetry"], stderr_to_stdout: true) do
+      {poetry_path, 0} ->
+        poetry_path = String.trim(poetry_path)
+        Mix.shell().info("Found Poetry at: #{poetry_path}")
+        {:ok, poetry_path}
 
-    if poetry_path do
-      Mix.shell().info("Found Poetry at: #{poetry_path}")
-      {:ok, Path.expand(poetry_path)}
-    else
-      Mix.shell().error("Poetry not found")
+      {:error, :not_found} ->
+        Mix.shell().error("Poetry not found in system PATH")
+        display_poetry_install_instructions()
+        exit({:shutdown, 0})
 
-      Mix.shell().error("""
-      Please try manually:
-
-      1. Install Poetry:
-          curl -sSL https://install.python-poetry.org | python3 -
-
-      2. Add to your PATH by adding this line to ~/.zshrc or ~/.bashrc:
-          export PATH="$HOME/.local/bin:$PATH"
-
-      3. Reload your shell:
-          source ~/.zshrc  # or source ~/.bashrc
-
-      Then run `mix setup` again.
-      """)
-
-      exit({:shutdown, 0})
+      {_, _} ->
+        Mix.shell().error("Poetry not found in system PATH")
+        display_poetry_install_instructions()
+        exit({:shutdown, 0})
     end
   end
 
-  defp install_deps() do
+  defp display_poetry_install_instructions do
+    Mix.shell().error("""
+    Please run:
+      asdf plugin-add poetry
+      asdf install poetry
+
+    or try manually:
+
+    1. Install Poetry:
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    2. Add to your PATH by adding this line to ~/.zshrc or ~/.bashrc:
+        export PATH="$HOME/.local/bin:$PATH"
+
+    3. Reload your shell:
+        source ~/.zshrc  # or source ~/.bashrc
+
+    Then run `mix setup` again.
+    """)
+  end
+
+  defp install_deps do
     case safe_cmd("mix", ["deps.get"], into: IO.stream()) do
       {:error, :not_found} ->
         Mix.raise("Could not find 'mix' command")
@@ -127,7 +127,7 @@ defmodule Mix.Tasks.Setup do
     end
   end
 
-  defp setup_virtualenv() do
+  defp setup_virtualenv do
     venv_path = [@priv_python_dir, ".venv"] |> Path.join() |> Path.expand()
 
     with false <- File.exists?(venv_path),

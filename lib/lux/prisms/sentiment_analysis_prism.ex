@@ -74,8 +74,9 @@ defmodule Lux.Prisms.SentimentAnalysisPrism do
       required: ["sentiment", "confidence", "details"]
     }
 
-  require Lux.Python
   import Lux.Python
+
+  require Lux.Python
 
   @doc """
   Analyzes the sentiment of the given text.
@@ -92,7 +93,7 @@ defmodule Lux.Prisms.SentimentAnalysisPrism do
   """
   def handler(%{text: text} = input, _ctx) do
     with {:ok, %{"success" => true}} <- Lux.Python.import_package("nltk"),
-         language <- Map.get(input, :language, "en"),
+         language = Map.get(input, :language, "en"),
          {:ok, result} <- analyze_sentiment(text, language) do
       {:ok, result}
     else

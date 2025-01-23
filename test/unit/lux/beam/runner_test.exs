@@ -1,8 +1,10 @@
 defmodule Lux.Beam.RunnerTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
+
   alias Lux.Beam.Runner
 
   defmodule TestPrism do
+    @moduledoc false
     use Lux.Prism
 
     def handler(%{value: value} = params, ctx) do
@@ -21,7 +23,7 @@ defmodule Lux.Beam.RunnerTest do
 
       # Handle any other params that might have references
       result =
-        Enum.reduce(Map.drop(params, [:value]), result, fn {key, value}, acc ->
+        Enum.reduce(Map.delete(params, :value), result, fn {key, value}, acc ->
           resolved =
             case value do
               {:ref, ref_id} -> get_in(ctx, [ref_id, :value])
@@ -36,6 +38,7 @@ defmodule Lux.Beam.RunnerTest do
   end
 
   defmodule FailingPrism do
+    @moduledoc false
     use Lux.Prism
 
     def handler(_input, _ctx) do
@@ -44,6 +47,7 @@ defmodule Lux.Beam.RunnerTest do
   end
 
   defmodule TestBeam do
+    @moduledoc false
     use Lux.Beam,
       name: "Test Runner Beam",
       description: "A test beam for runner",
@@ -161,6 +165,7 @@ defmodule Lux.Beam.RunnerTest do
 
     test "respects retry configuration" do
       defmodule RetryBeam do
+        @moduledoc false
         use Lux.Beam, generate_execution_log: true
 
         def steps do
@@ -193,6 +198,7 @@ defmodule Lux.Beam.RunnerTest do
 
     test "handles step failures" do
       defmodule FailureBeam do
+        @moduledoc false
         use Lux.Beam, generate_execution_log: true
 
         def steps do
@@ -212,6 +218,7 @@ defmodule Lux.Beam.RunnerTest do
 
     test "handles nested branches" do
       defmodule NestedBeam do
+        @moduledoc false
         use Lux.Beam, generate_execution_log: true
 
         def steps do
@@ -250,6 +257,7 @@ defmodule Lux.Beam.RunnerTest do
 
     test "handles complex parameter references" do
       defmodule RefBeam do
+        @moduledoc false
         use Lux.Beam, generate_execution_log: true
 
         def steps do
@@ -276,6 +284,7 @@ defmodule Lux.Beam.RunnerTest do
 
     test "handles errors in parallel execution" do
       defmodule ParallelErrorBeam do
+        @moduledoc false
         use Lux.Beam, generate_execution_log: true
 
         def steps do

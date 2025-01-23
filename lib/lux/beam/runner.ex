@@ -263,7 +263,7 @@ defmodule Lux.Beam.Runner do
 
   defp get_last_step_output(context) do
     context
-    |> Map.drop([:input])
+    |> Map.delete(:input)
     |> Enum.filter(fn {key, _} -> is_binary(key) end)
     |> Enum.sort_by(fn {key, _} ->
       case Integer.parse(key) do

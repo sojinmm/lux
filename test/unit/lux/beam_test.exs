@@ -1,8 +1,10 @@
 defmodule Lux.BeamTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
+
   alias Lux.Beam
 
   defmodule TestBeam do
+    @moduledoc false
     use Lux.Beam,
       name: "Test Beam",
       description: "A test beam",
@@ -201,6 +203,7 @@ defmodule Lux.BeamTest do
   end
 
   defmodule TestPrism do
+    @moduledoc false
     use Lux.Prism
 
     def handler(input, _ctx) do
@@ -214,6 +217,7 @@ defmodule Lux.BeamTest do
   end
 
   defmodule TestFallback do
+    @moduledoc false
     def handle_error(%{error: %{type: :recoverable} = error, context: _ctx}) do
       {:continue, %{recovered: true, original_error: error}}
     end
@@ -226,6 +230,7 @@ defmodule Lux.BeamTest do
   describe "fallbacks" do
     test "handles module-level fallbacks" do
       defmodule ModuleFallbackBeam do
+        @moduledoc false
         use Lux.Beam
 
         def steps do
@@ -242,6 +247,7 @@ defmodule Lux.BeamTest do
 
     test "module fallback can stop execution" do
       defmodule ModuleFallbackStopBeam do
+        @moduledoc false
         use Lux.Beam
 
         def steps do
@@ -257,6 +263,7 @@ defmodule Lux.BeamTest do
 
     test "handles inline fallbacks with continue" do
       defmodule InlineFallbackBeam do
+        @moduledoc false
         use Lux.Beam
 
         def steps do
@@ -277,6 +284,7 @@ defmodule Lux.BeamTest do
 
     test "inline fallback can stop execution" do
       defmodule InlineFallbackStopBeam do
+        @moduledoc false
         use Lux.Beam
 
         def steps do
@@ -296,6 +304,7 @@ defmodule Lux.BeamTest do
 
     test "fallback has access to context" do
       defmodule ContextFallbackBeam do
+        @moduledoc false
         use Lux.Beam
 
         def steps do
@@ -317,6 +326,7 @@ defmodule Lux.BeamTest do
 
     test "retries are attempted before fallback" do
       defmodule RetryThenFallbackBeam do
+        @moduledoc false
         use Lux.Beam,
           generate_execution_log: true
 

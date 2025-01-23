@@ -1,8 +1,9 @@
 defmodule Lux.PythonTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
+
+  import Lux.Python
 
   require Lux.Python
-  import Lux.Python
 
   describe "eval/2" do
     test "evaluates simple Python expressions" do

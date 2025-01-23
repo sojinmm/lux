@@ -248,7 +248,9 @@ defmodule Lux.Beam do
   defmacro __using__(opts) do
     quote do
       @behaviour Lux.Beam
+
       import Lux.Beam, only: [step: 3, step: 4, parallel: 1, sequence: 1, branch: 2]
+
       alias Lux.Beam
 
       @beam %Beam{

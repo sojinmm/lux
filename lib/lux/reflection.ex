@@ -209,8 +209,7 @@ defmodule Lux.Reflection do
   end
 
   defp format_patterns(patterns) do
-    patterns
-    |> Enum.map_join("\n", &inspect/1)
+    Enum.map_join(patterns, "\n", &inspect/1)
   end
 
   # Make testable

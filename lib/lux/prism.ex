@@ -27,9 +27,10 @@ defmodule Lux.Prism do
   use Lux.Types
 
   @typedoc """
-  A schema is a map of key-value pairs that describe the structure of the data.
+  A schema is either a map of key-value pairs that describe the structure of the data,
+  or a module that implements the Lux.SignalSchema behaviour.
   """
-  @type schema :: map()
+  @type schema :: map() | module()
 
   @typedoc """
   A handler is a function or a module that handles the data.
@@ -72,8 +73,8 @@ defmodule Lux.Prism do
       handler: attrs[:handler] || nil,
       description: attrs[:description] || "",
       examples: attrs[:examples] || [],
-      input_schema: attrs[:input_schema] || nil,
-      output_schema: attrs[:output_schema] || nil
+      input_schema: resolve_schema(attrs[:input_schema]),
+      output_schema: resolve_schema(attrs[:output_schema])
     }
   end
 
@@ -89,6 +90,7 @@ defmodule Lux.Prism do
   defmacro __using__(opts) do
     quote do
       @behaviour Lux.Prism
+
       alias Lux.Prism
 
       # Register compile-time attributes
@@ -141,4 +143,19 @@ defmodule Lux.Prism do
   end
 
   @optional_callbacks []
+
+  @doc """
+  Resolves a schema reference to its actual schema definition.
+  If the schema is a module that implements Lux.SignalSchema, returns its schema.
+  Otherwise, returns the schema as is.
+  """
+  def resolve_schema(schema) when is_atom(schema) do
+    if function_exported?(schema, :schema, 0) do
+      schema.schema()
+    else
+      schema
+    end
+  end
+
+  def resolve_schema(schema), do: schema
 end
