@@ -214,9 +214,6 @@ defmodule Lux.LLM.OpenAI do
       }
       |> Lux.Signal.new()
       |> ResponseSignal.validate()
-    else
-      error ->
-        {:error, "Invalid response format: #{inspect(error)}"}
     end
   end
 
@@ -236,34 +233,56 @@ defmodule Lux.LLM.OpenAI do
     tool_calls
     |> Enum.map(&execute_tool_call/1)
     |> Enum.reduce({:ok, []}, fn
-      {:ok, result}, {:ok, results} -> {:ok, [result | results]}
-      error, _ -> error
+      {:ok, result}, {:ok, results} ->
+        {:ok, [result | results]}
+
+      error, _ ->
+        error
     end)
   end
 
   def execute_tool_calls(nil), do: {:ok, nil}
 
-  def execute_tool_call(%{"function" => %{"name" => name, "arguments" => args}}) do
+  def execute_tool_call(%{"function" => %{"name" => tool_name, "arguments" => args}}) do
     args = Jason.decode!(args)
 
-    module =
-      name
-      # Names sent to OpenAI function must follow [a-zA-Z0-9_-],
-      # so we revert back to the original name...
-      |> String.replace("_", ".")
-      |> List.wrap()
-      |> Module.concat()
+    execute_tool(tool_name, args, nil)
+  end
 
-    with {_, ^module} <- {:module, Code.ensure_loaded!(module)},
-         {_, true} <- {:check_handler, function_exported?(module, :handler, 2)},
-         {:ok, result} <- module.handler(args, nil) do
-      {:ok, result}
-    else
-      {:check_handler, false} ->
-        {:error, "Tool #{module} does not have a registered handler"}
+  def execute_tool(tool_name, args, ctx \\ nil)
 
-      error ->
-        {:error, "Tool #{module} execution failed: #{inspect(error)}"}
+  def execute_tool(tool_name, args, ctx) when is_binary(tool_name) do
+    # For now tools are only supported as modules.
+    # For Bros we should support a way to load tool definitions from some register as well
+    # and build them at runtime.
+    tool_name
+    |> String.replace("_", ".")
+    |> List.wrap()
+    |> Module.concat()
+    |> Code.ensure_loaded()
+    |> case do
+      {:module, module_name} ->
+        execute_tool(module_name, args, ctx)
+
+      {:error, error} ->
+        {:error, "Failed to load tool module #{tool_name}: #{inspect(error)}"}
+    end
+  end
+
+  def execute_tool(tool_module, args, ctx) when is_atom(tool_module) do
+    cond do
+      function_exported?(tool_module, :handler, 2) ->
+        tool_module.handler(args, ctx)
+
+      function_exported?(tool_module, :run, 2) ->
+        tool_module.run(args, ctx)
+
+      true ->
+        {:error,
+         """
+         Tool #{tool_module} does not seem to be a valid Beam or Prism
+         as it does not have a registered `handler` or `run` function.
+         """}
     end
   end
 

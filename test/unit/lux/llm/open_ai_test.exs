@@ -9,10 +9,6 @@ defmodule Lux.LLM.OpenAITest do
   require Lux.Lens
   require Lux.Prism
 
-  setup do
-    Req.Test.verify_on_exit!()
-  end
-
   defmodule TestPrism do
     @moduledoc false
     use Lux.Prism,
@@ -20,8 +16,8 @@ defmodule Lux.LLM.OpenAITest do
       input_schema: %{type: :object, properties: %{value: %{type: :string}}},
       description: "A test prism"
 
-    def handler(%{value: "success"}, _context), do: {:ok, %{result: "success test"}}
-    def handler(%{value: "failure"}, _context), do: {:error, "failure test"}
+    def handler(%{"value" => "success"}, _context), do: {:ok, %{result: "success test"}}
+    def handler(%{"value" => "failure"}, _context), do: {:error, "failure test"}
   end
 
   defmodule TestBeam do
@@ -36,6 +32,10 @@ defmodule Lux.LLM.OpenAITest do
         step(:test, TestPrism, %{})
       end
     end
+  end
+
+  setup do
+    Req.Test.verify_on_exit!()
   end
 
   describe "tool_to_function/1" do
@@ -206,10 +206,11 @@ defmodule Lux.LLM.OpenAITest do
         assert tool["function"]["name"] == "TestBeam"
 
         Req.Test.json(conn, %{
+          "model" => "gpt-3.5-turbo",
           "choices" => [
             %{
               "message" => %{
-                "content" => "Test response"
+                "content" => ~s({"result": "Test response"})
               },
               "finish_reason" => "stop"
             }
@@ -217,12 +218,26 @@ defmodule Lux.LLM.OpenAITest do
         })
       end)
 
-      assert {:ok, response} = OpenAI.call("test prompt", [beam], config)
-
-      assert ^response = %Signal{
-               schema_id: ResponseSignal,
-               payload: %{content: "Test response", finish_reason: "stop"}
-             }
+      assert {:ok,
+              %Signal{
+                schema_id: ResponseSignal,
+                payload: %{
+                  content: %{"result" => "Test response"},
+                  finish_reason: "stop",
+                  model: "gpt-3.5-turbo",
+                  tool_calls: nil,
+                  tool_calls_results: nil
+                },
+                sender: nil,
+                recipient: nil,
+                timestamp: _,
+                metadata: %{
+                  id: _,
+                  usage: _,
+                  created: _,
+                  system_fingerprint: _
+                }
+              }} = OpenAI.call("test prompt", [beam], config)
     end
 
     test "handles tool call responses with successful tool call (prism)" do
@@ -233,6 +248,7 @@ defmodule Lux.LLM.OpenAITest do
 
       Req.Test.expect(OpenAI, fn conn ->
         Req.Test.json(conn, %{
+          "model" => "gpt-3.5-turbo",
           "choices" => [
             %{
               "message" => %{
@@ -240,7 +256,7 @@ defmodule Lux.LLM.OpenAITest do
                   %{
                     "type" => "function",
                     "function" => %{
-                      "name" => "#{TestBeam}",
+                      "name" => "#{TestPrism}",
                       "arguments" => ~s({"value": "success"})
                     }
                   }
@@ -252,16 +268,29 @@ defmodule Lux.LLM.OpenAITest do
         })
       end)
 
-      assert {:ok, response} = OpenAI.call("test prompt", [TestPrism], config)
-
-      assert ^response =
-               %Signal{
-                 schema_id: ResponseSignal,
-                 payload: %{
-                   content: "Test response",
-                   finish_reason: "tool_calls"
-                 }
-               }
+      assert {:ok,
+              %Signal{
+                schema_id: ResponseSignal,
+                payload: %{
+                  content: nil,
+                  finish_reason: "tool_calls",
+                  model: "gpt-3.5-turbo",
+                  tool_calls: [
+                    %{
+                      "function" => %{
+                        "arguments" => ~s({"value": "success"}),
+                        "name" => "Elixir.Lux.LLM.OpenAITest.TestPrism"
+                      },
+                      "type" => "function"
+                    }
+                  ],
+                  tool_calls_results: [%{result: "success test"}]
+                },
+                sender: nil,
+                recipient: nil,
+                timestamp: _,
+                metadata: _
+              }} = OpenAI.call("test prompt", [TestPrism], config)
     end
   end
 end
