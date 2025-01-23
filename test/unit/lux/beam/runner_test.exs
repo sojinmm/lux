@@ -15,8 +15,7 @@ defmodule Lux.Beam.RunnerTest do
           result,
           :value,
           case value do
-            :value -> ctx.input.value
-            {:ref, ref_id} -> get_in(ctx, [ref_id, :value])
+            value when is_list(value) -> get_in(ctx, value)
             value -> value
           end
         )
@@ -26,7 +25,7 @@ defmodule Lux.Beam.RunnerTest do
         Enum.reduce(Map.delete(params, :value), result, fn {key, value}, acc ->
           resolved =
             case value do
-              {:ref, ref_id} -> get_in(ctx, [ref_id, :value])
+              value when is_list(value) -> get_in(ctx, value)
               value -> value
             end
 
@@ -57,11 +56,11 @@ defmodule Lux.Beam.RunnerTest do
     @impl true
     def steps do
       sequence do
-        step(:first, TestPrism, %{value: :value})
+        step(:first, TestPrism, [:input, :value])
 
         parallel do
           step(:second, TestPrism, %{value: "fixed"})
-          step(:third, TestPrism, %{value: {:ref, "first"}})
+          step(:third, TestPrism, %{value: [:steps, :first, :result, :value]})
         end
 
         branch {__MODULE__, :threshold_check?} do
@@ -72,7 +71,7 @@ defmodule Lux.Beam.RunnerTest do
     end
 
     def threshold_check?(ctx) do
-      get_in(ctx, ["first", :value]) == "high_value"
+      get_in(ctx, [:steps, :first, :result, :value]) == "high_value"
     end
   end
 
@@ -240,16 +239,16 @@ defmodule Lux.Beam.RunnerTest do
           end
         end
 
-        def first_check?(ctx), do: ctx.input.value == "nested"
-        def second_check?(ctx), do: get_in(ctx, ["a1", :value]) == "a1"
+        def first_check?(ctx), do: get_in(ctx, [:input, :value]) == "nested"
+        def second_check?(ctx), do: get_in(ctx, [:steps, :a1, :result, :value]) == "a1"
       end
 
-      {:ok, output, log} = Runner.run(NestedBeam.beam(), %{value: "nested"})
+      {:ok, output, log} = NestedBeam.run(%{value: "nested"})
       assert output.value == "b1"
       # a1, b1, and the final output
       assert length(log.steps) == 2
 
-      {:ok, output, log} = Runner.run(NestedBeam.beam(), %{value: "other"})
+      {:ok, output, log} = NestedBeam.run(%{value: "other"})
       assert output.value == "a2"
       # just a2
       assert length(log.steps) == 1
@@ -262,18 +261,17 @@ defmodule Lux.Beam.RunnerTest do
 
         def steps do
           sequence do
-            step(:first, TestPrism, %{value: :value})
-            step(:second, TestPrism, %{value: {:ref, "first"}})
-
+            step(:first, TestPrism, [:input, :value])
+            step(:second, TestPrism, %{value: [:steps, :first, :result, :value]})
             step(:third, TestPrism, %{
-              value: {:ref, "second"},
-              extra: {:ref, "first"}
+              value: [:steps, :second, :result, :value],
+              extra: [:steps, :first, :result, :value]
             })
           end
         end
       end
 
-      {:ok, output, log} = Runner.run(RefBeam.beam(), %{value: "test"})
+      {:ok, output, log} = RefBeam.run(%{value: "test"})
       assert output.value == "test"
       assert output.extra == "test"
 
@@ -310,8 +308,73 @@ defmodule Lux.Beam.RunnerTest do
       assert fail_step.status == :failed
       assert fail_step.error == "failed"
     end
+
+    test "handles both access paths and literal values" do
+      defmodule MixedValuesBeam do
+        @moduledoc false
+        use Lux.Beam, generate_execution_log: true
+
+        def steps do
+          sequence do
+            # Access path to input
+            step(:first, TestPrism, [:input, :value])
+
+            # Map with access path and literal list
+            step(:second, TestPrism, %{
+              value: [:steps, :first, :result, :value],
+              list: [1, 2, 3],
+              nested_list: [[:a, :b], [:c, :d]]
+            })
+
+            # Direct literal value
+            step(:third, TestPrism, [4, 5, 6])
+          end
+        end
+      end
+
+      {:ok, output, log} = MixedValuesBeam.run(%{value: "test"})
+
+      steps_by_id = Map.new(log.steps, &{&1.id, &1})
+
+      # First step gets input value
+      assert steps_by_id["first"].output.value == "test"
+
+      # Second step gets mix of values
+      assert steps_by_id["second"].output.value == "test"
+      assert steps_by_id["second"].output.list == [1, 2, 3]
+      assert steps_by_id["second"].output.nested_list == [[:a, :b], [:c, :d]]
+
+      # Third step gets literal list
+      assert steps_by_id["third"].output.value == [4, 5, 6]
+    end
   end
 
+  describe "branch validation" do
+    test "validates branch condition is properly serialized" do
+      steps = TestBeam.steps()
+      {:sequence, steps_list} = steps
+      branch = List.last(steps_list)
+
+      assert {:branch, {TestBeam, :threshold_check?}, branches} = branch
+      assert is_list(branches)
+      assert Keyword.has_key?(branches, true)
+      assert Keyword.has_key?(branches, false)
+    end
+
+    test "validates branch steps have correct structure" do
+      steps = TestBeam.steps()
+      {:sequence, steps_list} = steps
+      {:branch, _, branches} = List.last(steps_list)
+
+      high_step = branches[true]
+      low_step = branches[false]
+
+      assert high_step.id == "high"
+      assert high_step.params.value == "high"
+      assert low_step.id == "low"
+      assert low_step.params.value == "low"
+    end
+  end
 
   test "inputs to beam's steps are as expected" do
     defmodule A do
@@ -354,5 +417,64 @@ defmodule Lux.Beam.RunnerTest do
     end
 
     assert 123 = CBeam.run(%{a: "expected A input"})
+  end
+
+  describe "fallbacks" do
+    test "fallback has access to context" do
+      defmodule ContextFallbackBeam do
+        @moduledoc false
+        use Lux.Beam
+
+        def steps do
+          sequence do
+            step(:first, TestPrism, %{value: 123})
+
+            step(:second, TestPrism, %{fail: true},
+              fallback: fn %{context: ctx} ->
+                {:continue, %{previous_value: get_in(ctx, [:steps, :first, :result, :value])}}
+              end
+            )
+          end
+        end
+      end
+
+      {:ok, result, _log} = ContextFallbackBeam.run(%{})
+      assert result.previous_value == 123
+    end
+
+    test "retries are attempted before fallback" do
+      defmodule RetryThenFallbackBeam do
+        @moduledoc false
+        use Lux.Beam,
+          generate_execution_log: true
+
+        def steps do
+          sequence do
+            step(:test, TestPrism, %{fail: true},
+              retries: 2,
+              retry_backoff: 1,
+              fallback: fn %{error: _error} ->
+                {:continue, %{retried: true}}
+              end
+            )
+          end
+        end
+      end
+
+      {:ok, result, log} = RetryThenFallbackBeam.run(%{})
+      assert result.retried == true
+
+      assert [
+               %{
+                 error: nil,
+                 id: "test",
+                 input: %{fail: true},
+                 output: %{retried: true},
+                 status: :completed,
+                 started_at: _,
+                 completed_at: _
+               }
+             ] = log.steps
+    end
   end
 end

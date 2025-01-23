@@ -6,18 +6,18 @@ defmodule Lux.Beam.Runner do
 
   def run(beam, input, opts \\ []) do
     with :ok <- validate_input(beam, input) do
-      execution_log = init_execution_log(beam, input, opts[:specter])
-      steps = Lux.Beam.steps(beam) |> dbg()
+      initial_context = %{input: input}
+      steps = Lux.Beam.steps(beam)
 
-      case execute_steps(steps, %{input: input}, execution_log) do
-        {:ok, context, log} ->
+      case execute_steps(steps, initial_context) do
+        {:ok, context} ->
           output = get_last_step_output(context)
-          final_log = maybe_update_execution_log(log, :completed, output)
-          {:ok, output, final_log}
+          log = generate_execution_log(beam, context, opts[:specter], output)
+          {:ok, output.result, log}
 
-        {:error, error, log} ->
-          final_log = maybe_update_execution_log(log, :failed, nil)
-          {:error, error, final_log}
+        {:error, error, context} ->
+          log = generate_execution_log(beam, context, opts[:specter], nil)
+          {:error, error, log}
       end
     end
   end
@@ -29,53 +29,83 @@ defmodule Lux.Beam.Runner do
     end
   end
 
-  defp init_execution_log(%Lux.Beam{id: id, generate_execution_log: true}, input, specter) do
-    %{
-      beam_id: id,
-      started_by: specter || "system",
-      started_at: DateTime.utc_now(),
-      completed_at: nil,
-      status: :running,
-      input: input,
-      output: nil,
-      steps: []
-    }
+  # Handle composite steps
+  defp execute_steps({:sequence, steps}, context) do
+    steps
+    |> List.flatten()
+    |> Enum.reduce_while({:ok, context}, fn
+      step, {:ok, acc_context} ->
+        case execute_step(step, acc_context) do
+          {:ok, new_context} -> {:cont, {:ok, new_context}}
+          error -> {:halt, error}
+        end
+    end)
   end
 
-  defp init_execution_log(_, _, _), do: nil
+  defp execute_steps({:parallel, steps}, context) do
+    steps
+    |> Task.async_stream(
+      fn step -> execute_step(step, context) end,
+      ordered: false,
+      on_timeout: :kill_task
+    )
+    |> Enum.reduce_while({:ok, context}, fn
+      {:ok, {:ok, step_context}}, {:ok, acc_context} ->
+        # Merge contexts in order they complete
+        merged_context = Map.merge(acc_context, step_context)
+        {:cont, {:ok, merged_context}}
 
-  # Handle composite steps
-  defp execute_step({:sequence, steps}, context, log),
-    do: execute_steps({:sequence, steps}, context, log)
+      {:ok, {:error, error, step_context}}, _acc ->
+        {:halt, {:error, error, step_context}}
 
-  defp execute_step({:parallel, steps}, context, log),
-    do: execute_steps({:parallel, steps}, context, log)
+      # Skip crashed tasks
+      {:exit, _}, acc ->
+        {:cont, acc}
+    end)
+  end
 
-  defp execute_step({:branch, condition, branches}, context, log),
-    do: execute_steps({:branch, condition, branches}, context, log)
+  defp execute_steps({:branch, condition, branches}, context) do
+    condition_result =
+      case condition do
+        {module, function} -> apply(module, function, [context])
+        function when is_function(function, 1) -> function.(context)
+      end
 
-  # Handle individual step
-  defp execute_step(%{id: id, module: module, params: params, opts: opts}, context, log) do
-    start_time = DateTime.utc_now()
+    case Enum.find(branches, fn {condition, _step} -> condition == condition_result end) do
+      {_condition, steps} when is_list(steps) ->
+        # Handle multiple steps in branch
+        execute_steps({:sequence, steps}, context)
+
+      {_condition, step} ->
+        execute_step(step, context)
+
+      nil ->
+        {:error, :no_matching_branch, context}
+    end
+  end
+
+  defp execute_steps(step, context) when not is_nil(step) do
+    execute_step(step, context)
+  end
+
+  defp execute_step(%{id: id, module: module, params: params, opts: opts}, context) do
     resolved_params = resolve_params(params, context)
-    updated_log = maybe_add_step_log(log, init_step_log(id, resolved_params, start_time))
 
     try do
       case apply(module, :handler, [resolved_params, context]) do
         {:ok, result} ->
-          final_log = maybe_update_step_log(updated_log, id, :completed, result)
-          {:ok, Map.put(context, to_string(id), result), final_log}
+          {:ok, Map.put(context, id, %{input: resolved_params, result: result})}
 
         {:error, error} ->
-          handle_step_error(id, module, params, opts, error, context, updated_log)
+          handle_step_error(id, module, resolved_params, opts, error, context)
       end
     rescue
       error ->
-        handle_step_error(id, module, params, opts, error, context, updated_log)
+        handle_step_error(id, module, resolved_params, opts, error, context)
     end
   end
 
-  defp handle_step_error(id, module, params, %{retries: retries} = opts, _error, context, log)
+  defp handle_step_error(id, module, params, %{retries: retries} = opts, _error, context)
        when retries > 0 do
     Process.sleep(opts.retry_backoff)
 
@@ -86,192 +116,98 @@ defmodule Lux.Beam.Runner do
         params: params,
         opts: %{opts | retries: retries - 1}
       },
-      context,
-      log
+      context
     )
   end
 
-  defp handle_step_error(id, _module, _params, %{fallback: fallback} = _opts, error, context, log)
+  defp handle_step_error(id, _module, params, %{fallback: fallback} = _opts, error, context)
        when not is_nil(fallback) do
     case apply_fallback(fallback, %{error: error, context: context}) do
       {:continue, result} ->
-        final_log = maybe_update_step_log(log, id, :completed, result)
-        {:ok, Map.put(context, to_string(id), result), final_log}
-
+        {:ok, Map.put(context, id, %{input: params, result: result})}
       {:stop, result} ->
-        final_log = maybe_update_step_log(log, id, :failed, nil, error)
-        {:error, result, final_log}
+        {:error, result, context}
     end
   end
 
-  defp handle_step_error(id, _module, _params, _opts, error, _context, log) do
-    final_log = maybe_update_step_log(log, id, :failed, nil, error)
-    {:error, error, final_log}
+  defp handle_step_error(_id, _module, _params, _opts, error, context) do
+    {:error, error, context}
   end
 
   defp apply_fallback(fallback, params) when is_function(fallback, 1) do
     fallback.(params)
   end
 
+  defp apply_fallback({fallback_module, function}, params) when is_list(fallback_module) do
+    apply(fallback_module, function, [params])
+  end
+
   defp apply_fallback(fallback, params) when is_atom(fallback) do
     apply(fallback, :handle_error, [params])
   end
 
-  defp maybe_update_execution_log(nil, _status, _output), do: nil
-
-  defp maybe_update_execution_log(log, status, output) do
-    %{log | status: status, completed_at: DateTime.utc_now(), output: output}
-  end
-
-  defp resolve_params(params, context) do
-    Enum.reduce(params, %{}, fn
-      {key, {:ref, ref_id}}, acc ->
-        referenced_value = get_in(context, [ref_id, :value])
-        Map.put(acc, key, referenced_value)
-
-      {key, :value}, acc ->
-        Map.put(acc, key, context.input.value)
-
-      {key, value}, acc ->
-        Map.put(acc, key, value)
+  defp resolve_params(params, context) when is_map(params) do
+    # If params is a map, construct a new map with resolved values
+    Enum.reduce(params, %{}, fn {key, value}, acc ->
+      Map.put(acc, key, resolve_value(value, context))
     end)
   end
 
-  defp init_step_log(id, input, start_time) do
-    %{
-      id: id,
-      status: :running,
-      started_at: start_time,
-      completed_at: nil,
-      input: input,
-      output: nil,
-      error: nil
-    }
+  defp resolve_params(value, context) do
+    # If params is not a map, resolve it directly
+    resolve_value(value, context)
   end
 
-  defp maybe_add_step_log(nil, _step_log), do: nil
-
-  defp maybe_add_step_log(log, step_log) do
-    Map.update!(log, :steps, fn steps ->
-      if Enum.any?(steps, &(&1.id == step_log.id)) do
-        steps
-      else
-        steps ++ [step_log]
-      end
-    end)
+  # Handle access paths (must start with :input or :steps)
+  defp resolve_value([root | _] = path, context) when root in [:input, :steps] do
+    get_in(context, path)
   end
 
-  defp maybe_update_step_log(log, id, status, output, error \\ nil)
-  defp maybe_update_step_log(nil, _id, _status, _output, _error), do: nil
-
-  defp maybe_update_step_log(log, id, status, output, error) do
-    Map.update!(log, :steps, fn steps ->
-      Enum.map(steps, fn
-        %{id: ^id} = step ->
-          %{
-            step
-            | status: status,
-              completed_at: DateTime.utc_now(),
-              output: output,
-              error: error,
-              input: step.input
-          }
-
-        other ->
-          other
-      end)
-    end)
-  end
-
-  defp execute_steps({:sequence, steps}, context, log) do
-    steps
-    |> List.flatten()
-    |> Enum.reduce_while({:ok, context, log}, fn
-      step, {:ok, acc_context, acc_log} ->
-        case execute_step(step, acc_context, acc_log) do
-          {:ok, new_context, new_log} ->
-            {:cont, {:ok, new_context, new_log}}
-
-          error ->
-            {:halt, error}
-        end
-    end)
-  end
-
-  defp execute_steps({:parallel, steps}, context, log) do
-    steps
-    |> Task.async_stream(
-      fn step -> execute_step(step, context, log) end,
-      ordered: false,
-      on_timeout: :kill_task
-    )
-    |> Enum.reduce_while({:ok, context, log}, fn
-      {:ok, {:ok, step_context, step_log}}, {:ok, acc_context, acc_log} ->
-        # Merge contexts in order they complete
-        merged_context = Map.merge(acc_context, step_context)
-        merged_log = merge_logs(acc_log, step_log)
-        {:cont, {:ok, merged_context, merged_log}}
-
-      {:ok, {:error, error, step_log}}, _acc ->
-        {:halt, {:error, error, step_log}}
-
-      # Skip crashed tasks
-      {:exit, _}, acc ->
-        {:cont, acc}
-    end)
-  end
-
-  defp execute_steps({:branch, condition, branches}, context, log) do
-    condition_result =
-      case condition do
-        {module, function} -> apply(module, function, [context])
-        function when is_function(function, 1) -> function.(context)
-      end
-
-    case Enum.find(branches, fn {condition, _step} -> condition == condition_result end) do
-      {_condition, steps} when is_list(steps) ->
-        # Handle multiple steps in branch
-        execute_steps({:sequence, steps}, context, log)
-
-      {_condition, step} ->
-        execute_step(step, context, log)
-
-      nil ->
-        {:error, :no_matching_branch, log}
-    end
-  end
-
-  defp execute_steps(step, context, log) when not is_nil(step) do
-    execute_step(step, context, log)
-  end
-
-  defp merge_logs(nil, log), do: log
-  defp merge_logs(log, nil), do: log
-
-  defp merge_logs(log1, log2) do
-    # Merge steps, keeping only the first occurrence of each step ID
-    merged_steps =
-      Enum.reduce(log2.steps, log1.steps, fn step, acc ->
-        case Enum.find_index(acc, &(&1.id == step.id)) do
-          nil -> acc ++ [step]
-          _ -> acc
-        end
-      end)
-
-    %{log1 | steps: merged_steps}
-  end
+  # Handle all other values as literals
+  defp resolve_value(value, _context), do: value
 
   defp get_last_step_output(context) do
     context
     |> Map.delete(:input)
-    |> Enum.filter(fn {key, _} -> is_binary(key) end)
+    |> dbg()
     |> Enum.sort_by(fn {key, _} ->
-      case Integer.parse(key) do
+      case Integer.parse(to_string(key)) do
         {num, _} -> num
         _ -> key
       end
     end)
     |> List.last()
     |> elem(1)
+  end
+
+  defp generate_execution_log(beam, context, specter, output) do
+    case beam.generate_execution_log do
+      true ->
+        %{
+          beam_id: beam.id,
+          started_by: specter || "system",
+          started_at: DateTime.utc_now(),
+          completed_at: DateTime.utc_now(),
+          status: if(output, do: :completed, else: :failed),
+          input: context.input,
+          output: output,
+          steps: context
+                 |> Map.delete(:input)
+                 |> Enum.map(fn {id, %{input: input, result: result}} ->
+                   %{
+                     id: id,
+                     status: :completed,
+                     started_at: DateTime.utc_now(),
+                     completed_at: DateTime.utc_now(),
+                     input: input,
+                     output: result,
+                     error: nil
+                   }
+                 end)
+        }
+
+      false ->
+        nil
+    end
   end
 end

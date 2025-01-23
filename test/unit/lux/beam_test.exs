@@ -218,11 +218,11 @@ defmodule Lux.BeamTest do
 
   defmodule TestFallback do
     @moduledoc false
-    def handle_error(%{error: %{type: :recoverable} = error, context: _ctx}) do
+    def handle_error(%{error: %{type: :recoverable} = error}) do
       {:continue, %{recovered: true, original_error: error}}
     end
 
-    def handle_error(%{error: error, context: _ctx}) do
+    def handle_error(%{error: error}) do
       {:stop, "Stopped by fallback: #{inspect(error)}"}
     end
   end
@@ -240,7 +240,7 @@ defmodule Lux.BeamTest do
         end
       end
 
-      {:ok, result, _log} = ModuleFallbackBeam.run(%{})
+      {:ok, result, _log} = ModuleFallbackBeam.run(%{}) |> dbg()
       assert result.recovered == true
       assert result.original_error.type == :recoverable
     end
@@ -313,7 +313,7 @@ defmodule Lux.BeamTest do
 
             step(:second, TestPrism, %{fail: true},
               fallback: fn %{context: ctx} ->
-                {:continue, %{previous_value: ctx["first"].value}}
+                {:continue, %{previous_value: ctx["first"].result.value}}
               end
             )
           end
