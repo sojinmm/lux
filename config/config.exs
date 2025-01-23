@@ -1,4 +1,3 @@
-# Interval for killing python processes past their ttl while inactive
 import Config
 
 # Erlport python options
@@ -10,6 +9,7 @@ config :lux, :open_ai_models,
 config :venomous, :snake_manager, %{
   snake_ttl_minutes: 10,
   perpetual_workers: 2,
+  # Interval for killing python processes past their ttl while inactive
   cleaner_interval: 60_000,
   python_opts: [
     module_paths: ["priv/python"],
