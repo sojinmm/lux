@@ -10,5 +10,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "web3": "^4.16.0"
   }
 }
