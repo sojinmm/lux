@@ -69,11 +69,25 @@ defmodule Lux.Node do
 
   @doc """
   Attempts to import a Node.js package.
+  Currently, it will modify `priv/node/package.json` and `priv/node/package_lock.json` files.
   """
   @spec import_package(String.t(), keyword()) :: {:ok, String.t()} | {:error, String.t()}
-  def import_package(package_name, _opts \\ []) when is_binary(package_name) do
-    # TBD
-    {:ok, package_name}
+  def import_package(package_name, opts \\ []) when is_binary(package_name) do
+    {"lux.mjs", "importPackage"}
+    |> NodeJS.call([package_name], opts)
+    |> case do
+      {:ok, %{"success" => true}} ->
+        {:ok, package_name}
+
+      {:ok, %{"error" => "ERR_MODULE_NOT_FOUND"}} ->
+        {:error, "Cannot import package: #{package_name}"}
+
+      {:ok, %{"error" => error}} ->
+        {:error, error}
+
+      {:error, error} ->
+        {:error, error}
+    end
   end
 
   @doc """
