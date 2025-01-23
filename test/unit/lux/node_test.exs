@@ -94,7 +94,7 @@ defmodule Lux.NodeTest do
 
     test "respects timeout option" do
       result =
-        nodejs timeout: 100 do
+        nodejs timeout: 10 do
           ~JS"""
           export const main = async () => {
              await new Promise(resolve => setTimeout(() => resolve(), 1000))
