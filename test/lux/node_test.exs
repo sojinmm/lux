@@ -58,7 +58,7 @@ defmodule Lux.NodeTest do
           """
         end
 
-      assert result == 4
+      assert {:ok, 4} = result
     end
 
     test "supports variable bindings" do
@@ -69,7 +69,7 @@ defmodule Lux.NodeTest do
           """
         end
 
-      assert result == 42
+      assert {:ok, 42} = result
     end
 
     test "handle multi-line Node.js code" do
@@ -88,21 +88,20 @@ defmodule Lux.NodeTest do
           """
         end
 
-      assert result == 120
+      assert {:ok, 120} = result
     end
 
     test "respects timeout option" do
-      assert_raise NodeJS.Error,
-                   ~r/Call timed out/,
-                   fn ->
-                     nodejs timeout: 100 do
-                       ~JS"""
-                       export const main = async () => {
-                          await new Promise(resolve => setTimeout(() => resolve(), 1000))
-                       }
-                       """
-                     end
-                   end
+      result =
+        nodejs timeout: 100 do
+          ~JS"""
+          export const main = async () => {
+             await new Promise(resolve => setTimeout(() => resolve(), 1000))
+          }
+          """
+        end
+
+      assert {:error, "Call timed out."} = result
     end
   end
 

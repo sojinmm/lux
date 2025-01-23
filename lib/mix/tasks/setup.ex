@@ -55,7 +55,7 @@ defmodule Mix.Tasks.Setup do
          # Step 4: Install Python dependencies
          _ <- Mix.shell().info("\n==> Installing Python dependencies..."),
          :ok <- install_python_deps(poetry_path),
-           # Step 5: Install Node.js dependencies
+         # Step 5: Install Node.js dependencies
          Mix.shell().info("\n==> Installing Node.js dependencies..."),
          :ok <- install_nodejs_deps() do
       Mix.shell().info("""
