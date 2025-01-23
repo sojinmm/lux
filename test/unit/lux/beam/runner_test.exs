@@ -311,4 +311,48 @@ defmodule Lux.Beam.RunnerTest do
       assert fail_step.error == "failed"
     end
   end
+
+
+  test "inputs to beam's steps are as expected" do
+    defmodule A do
+      use Lux.Prism,
+        name: "#{A}",
+        id: A,
+        input_schema: %{type: "string"}
+
+      def handler(input, _ctx) do
+        dbg()
+        assert input == "expected A input"
+        {:ok, "expected B input"}
+      end
+    end
+
+    defmodule B do
+      use Lux.Prism,
+        name: "#{B}",
+        id: B,
+        input_schema: %{type: "string"}
+
+      def handler(input, _ctx) do
+        assert input == "expected B input"
+        {:ok, "B output"}
+      end
+    end
+
+    defmodule CBeam do
+      use Lux.Beam,
+        name: "#{CBeam}",
+        id: CBeam,
+        input_schema: %{type: "object", properties: %{a: %{type: "string"}}}
+
+      def steps do
+        sequence do
+          step(:a, A, %{input: :a})
+          step(:b, B, %{input: :b})
+        end
+      end
+    end
+
+    assert 123 = CBeam.run(%{a: "expected A input"})
+  end
 end

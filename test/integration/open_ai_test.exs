@@ -93,11 +93,31 @@ defmodule Lux.LLM.Integration.OpenAI do
   end
 
   describe "Requests with prisms and beams (tool calling)" do
-    defmodule HashBeam do
+    defmodule JustDoNothingPrism do
       @moduledoc false
       use Lux.Prism,
-        name: "#{HashBeam}",
-        id: HashBeam,
+        name: "#{__MODULE__}",
+        id: __MODULE__,
+        description: "Use this to print the input",
+        # enum that can be either success or failure
+        input_schema: %{type: "string", enum: ["success", "failure"]}
+
+      def handler("failure", _ctx) do
+        {:error, "failure_example"}
+      end
+
+      def handler(input, _ctx) do
+        dbg()
+        {:ok, "success_example"}
+      end
+
+    end
+
+    defmodule HashPrism do
+      @moduledoc false
+      use Lux.Prism,
+        name: "#{HashPrism}",
+        id: HashPrism,
         description: "Use this to hash a string",
         input_schema: %{
           type: "object",
@@ -125,7 +145,30 @@ defmodule Lux.LLM.Integration.OpenAI do
       end
     end
 
-    test "will return a function call result in the response" do
+    defmodule TestBeam do
+      @moduledoc false
+      use Lux.Beam,
+        name: "#{__MODULE__}",
+        id: TestBeam,
+        description: "Use this when the user wants to test Beams",
+        input_schema: %{
+          type: "object",
+          properties: %{
+            to_hash: %{type: "string"},
+            nothing_input: %{type: "string", enum: ["success", "failure"]}
+          },
+          required: ["to_hash"]
+        }
+
+      def steps() do
+        sequence do
+          step(:just_do_nothing, JustDoNothingPrism, %{input: :nothing_input})
+          step(:hash, HashPrism, %{value: :to_hash})
+        end
+      end
+    end
+
+    test "will return a function call result in the response when calling a prism" do
       config = %LLMConfig{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
@@ -139,7 +182,7 @@ defmodule Lux.LLM.Integration.OpenAI do
                   tool_calls: [
                     %{
                       "function" => %{
-                        "name" => "Elixir_Lux_LLM_Integration_OpenAI_HashBeam",
+                        "name" => "Elixir_Lux_LLM_Integration_OpenAI_HashPrism",
                         "arguments" => _
                       }
                     }
@@ -151,9 +194,35 @@ defmodule Lux.LLM.Integration.OpenAI do
               }} =
                OpenAI.call(
                  "Could you give me the hash of 'test' using sha256?",
-                 [HashBeam],
+                 [HashPrism],
                  config
                )
+    end
+
+    test "will return a function call result in the response when calling a beam" do
+      config = %LLMConfig{
+        api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
+        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+        temperature: 0.7
+      }
+
+      assert {:ok,
+              %Signal{
+                payload: %{
+                  content: nil,
+                  tool_calls: [
+                    %{
+                      "function" => %{
+                        "name" => "Elixir_Lux_LLM_Integration_OpenAI_TestBeam",
+                        "arguments" => _
+                      }
+                    }
+                  ],
+                  tool_calls_results: [%{hash: "sha256_hashed_test"}],
+                  finish_reason: "tool_calls"
+                },
+                schema_id: ResponseSignal
+              }} = OpenAI.call("Could you help me to test the beam?", [TestBeam], config)
     end
   end
 end

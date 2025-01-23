@@ -7,7 +7,7 @@ defmodule Lux.Beam.Runner do
   def run(beam, input, opts \\ []) do
     with :ok <- validate_input(beam, input) do
       execution_log = init_execution_log(beam, input, opts[:specter])
-      steps = Lux.Beam.steps(beam)
+      steps = Lux.Beam.steps(beam) |> dbg()
 
       case execute_steps(steps, %{input: input}, execution_log) do
         {:ok, context, log} ->
