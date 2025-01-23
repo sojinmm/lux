@@ -45,11 +45,11 @@ defmodule Lux.MixProject do
       {:venomous, "~> 0.7.5"},
       {:crontab, "~> 1.1"},
       {:ex_json_schema, "~> 0.10.2"},
+      {:nodejs, "~> 2.0"},
       # test and dev dependencies
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
       {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
-      {:nodejs, "~> 2.0"},
       {:mock, "~> 0.3.0", only: [:test]},
       {:stream_data, "~> 1.0", only: [:test]},
       {:styler, "~> 1.3", only: [:dev, :test], runtime: false}

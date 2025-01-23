@@ -42,10 +42,11 @@ defmodule Lux.Prisms.EthBlockNumPrism do
       required: ["block_number", "network"]
     }
 
-  require Lux.Node
   import Lux.Node
 
   alias Lux.Config
+
+  require Lux.Node
 
   def handler(input, _context) do
     network = Map.get(input, :network, "mainnet")
@@ -53,8 +54,6 @@ defmodule Lux.Prisms.EthBlockNumPrism do
     with {:ok, _} <- Lux.Node.import_package("web3"),
          {:ok, result} <- get_latest_block_number(network) do
       {:ok, %{block_number: result, network: network}}
-    else
-      error -> error
     end
   end
 

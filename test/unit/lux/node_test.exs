@@ -1,8 +1,9 @@
 defmodule Lux.NodeTest do
   use ExUnit.Case, async: true
 
-  require Lux.Node
   import Lux.Node
+
+  require Lux.Node
 
   describe "eval/2" do
     test "evaluates simple Node.js expressions" do

@@ -198,7 +198,7 @@ defmodule Mix.Tasks.Setup do
     end
   end
 
-  defp install_nodejs_deps() do
+  defp install_nodejs_deps do
     nodejs_dir = Path.join(File.cwd!(), @priv_nodejs_dir)
 
     case safe_cmd("npm", ["install"], cd: nodejs_dir, stderr_to_stdout: true) do

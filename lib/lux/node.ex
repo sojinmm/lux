@@ -98,15 +98,13 @@ defmodule Lux.Node do
          file_path = Path.join(node_modules_path, filename),
          :ok <- File.write(file_path, code) do
       fun.({file_path, "main"}, [variables], opts)
-    else
-      error -> error
     end
   end
 
   defp maybe_create_node_modules do
     node_modules = Path.join(@module_path, "node_modules/lux")
 
-    unless File.exists?(node_modules) do
+    if !File.exists?(node_modules) do
       File.mkdir_p(node_modules)
     end
 
@@ -114,7 +112,7 @@ defmodule Lux.Node do
   end
 
   defp create_file_name(code) do
-    hash = :crypto.hash(:sha, code) |> Base.encode16(case: :lower)
+    hash = :sha |> :crypto.hash(code) |> Base.encode16(case: :lower)
     "#{hash}.mjs"
   end
 end
