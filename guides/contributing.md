@@ -157,7 +157,7 @@ end
 1. Fork the repository
 2. Create a feature branch
 3. Add your changes following the guidelines above
-4. Run all tests (`mix test` and `mix python.test`)
+4. Run all tests (`mix test.suite` and `mix python.test`)
 5. Format code (`mix format`)
 6. Submit a pull request with:
    - Clear description of changes

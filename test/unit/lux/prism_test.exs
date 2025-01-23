@@ -1,5 +1,5 @@
 defmodule Lux.PrismTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias Lux.Prism
 

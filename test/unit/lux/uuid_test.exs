@@ -1,5 +1,5 @@
 defmodule Lux.UUIDTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
   use ExUnitProperties
 
   alias Lux.UUID

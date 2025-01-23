@@ -1,5 +1,5 @@
 defmodule Mix.Tasks.Python.TestTest do
-  use ExUnit.Case, async: false
+  use UnitCase, async: false
 
   import ExUnit.CaptureIO
 

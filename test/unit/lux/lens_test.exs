@@ -1,5 +1,5 @@
 defmodule Lux.LensTest do
-  use ExUnit.Case, async: true
+  use UnitAPICase, async: true
 
   alias Lux.Lens
 

@@ -53,7 +53,9 @@ defmodule Mix.Tasks.Setup do
           source priv/python/.venv/bin/activate
 
       • Run tests:
-          mix test              # Run Elixir tests
+          mix test.unit         # Run Elixir unit tests
+          mix test.integration  # Run Elixir integration tests
+          mix test.suite        # Run all Elixir tests
           mix python.test       # Run Python tests
 
       • Generate documentation:
