@@ -106,11 +106,9 @@ defmodule Lux.LLM.Integration.OpenAI do
         {:error, "failure_example"}
       end
 
-      def handler(input, _ctx) do
-        dbg()
+      def handler(_input, _ctx) do
         {:ok, "success_example"}
       end
-
     end
 
     defmodule HashPrism do
@@ -160,7 +158,7 @@ defmodule Lux.LLM.Integration.OpenAI do
           required: ["to_hash"]
         }
 
-      def steps() do
+      def steps do
         sequence do
           step(:just_do_nothing, JustDoNothingPrism, %{input: :nothing_input})
           step(:hash, HashPrism, %{value: :to_hash})

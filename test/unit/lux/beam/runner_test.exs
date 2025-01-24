@@ -7,32 +7,16 @@ defmodule Lux.Beam.RunnerTest do
     @moduledoc false
     use Lux.Prism
 
-    def handler(%{value: value} = params, ctx) do
-      result = %{}
+    def handler(%{value: value, extra: extra}, _ctx) do
+      {:ok, {"value_" <> value, "extra_" <> extra}}
+    end
 
-      result =
-        Map.put(
-          result,
-          :value,
-          case value do
-            value when is_list(value) -> get_in(ctx, value)
-            value -> value
-          end
-        )
+    def handler(%{value: value}, _ctx) do
+      {:ok, value}
+    end
 
-      # Handle any other params that might have references
-      result =
-        Enum.reduce(Map.delete(params, :value), result, fn {key, value}, acc ->
-          resolved =
-            case value do
-              value when is_list(value) -> get_in(ctx, value)
-              value -> value
-            end
-
-          Map.put(acc, key, resolved)
-        end)
-
-      {:ok, result}
+    def handler(list, _ctx) when is_list(list) do
+      {:ok, Enum.join(list, ",")}
     end
   end
 
@@ -56,29 +40,32 @@ defmodule Lux.Beam.RunnerTest do
     @impl true
     def steps do
       sequence do
-        step(:first, TestPrism, [:input, :value])
+        step(:first, TestPrism, [:input])
 
         parallel do
           step(:second, TestPrism, %{value: "fixed"})
-          step(:third, TestPrism, %{value: [:steps, :first, :result, :value]})
+          step(:third, TestPrism, %{value: [:steps, :first, :result]})
         end
 
         branch {__MODULE__, :threshold_check?} do
-          true -> step(:high, TestPrism, %{value: "high"})
-          false -> step(:low, TestPrism, %{value: "low"})
+          true ->
+            step(:high, TestPrism, %{value: "above_threshold"})
+
+          false ->
+            step(:low, TestPrism, %{value: "below_threshold"})
         end
       end
     end
 
     def threshold_check?(ctx) do
-      get_in(ctx, [:steps, :first, :result, :value]) == "high_value"
+      get_in(ctx, [:steps, :first, :result]) == "high_value"
     end
   end
 
   describe "run/3" do
     test "executes a successful beam" do
-      assert {:ok, output, log} = Runner.run(TestBeam.beam(), %{value: "test"})
-      assert output.value == "test"
+      assert {:ok, output, log} = Runner.run(TestBeam.beam(), %{value: "high_value"})
+      assert output == "above_threshold"
       assert log.status == :completed
       # first, second, third, branch check, low
       assert length(log.steps) == 4
@@ -89,48 +76,56 @@ defmodule Lux.Beam.RunnerTest do
       # Verify first step
       assert %{
                error: nil,
-               id: "first",
-               input: %{value: "test"},
-               output: %{value: "test"},
+               id: :first,
+               input: %{value: "high_value"},
+               output: "high_value",
                status: :completed,
                started_at: _,
-               completed_at: _
-             } = steps_by_id["first"]
+               completed_at: _,
+               step_index: 0
+             } = steps_by_id[:first]
 
       # Verify second step
       assert %{
                error: nil,
-               id: "second",
+               id: :second,
                input: %{value: "fixed"},
-               output: %{value: "fixed"},
+               output: "fixed",
                status: :completed,
                started_at: _,
-               completed_at: _
-             } = steps_by_id["second"]
+               completed_at: _,
+               step_index: parallel_index_1
+             } = steps_by_id[:second]
 
       # Verify third step
       assert %{
                error: nil,
-               id: "third",
-               input: %{value: "test"},
-               output: %{value: "test"},
+               id: :third,
+               input: %{value: "high_value"},
+               output: "high_value",
                status: :completed,
                started_at: _,
-               completed_at: _
-             } = steps_by_id["third"]
+               completed_at: _,
+               step_index: parallel_index_2
+             } = steps_by_id[:third]
+
+      assert parallel_index_1 != parallel_index_2
 
       # Verify low step
       assert %{
-               id: "low",
-               input: %{value: "low"},
-               output: %{value: "low"},
+               id: :high,
+               input: %{value: "above_threshold"},
+               output: "above_threshold",
                status: :completed,
                started_at: _,
-               completed_at: _
-             } = steps_by_id["low"]
+               completed_at: _,
+               step_index: 3
+             } = steps_by_id[:high]
+
+      assert is_nil(steps_by_id[:low])
 
       # Verify parallel steps completed in any order
-      parallel_steps = Enum.filter(log.steps, &(&1.id in ["second", "third"]))
+      parallel_steps = Enum.filter(log.steps, &(&1.id in [:second, :third]))
       assert length(parallel_steps) == 2
       assert Enum.all?(parallel_steps, &(&1.status == :completed))
     end
@@ -140,7 +135,7 @@ defmodule Lux.Beam.RunnerTest do
 
       parallel_steps =
         Enum.filter(log.steps, fn step ->
-          step.id in ["second", "third"]
+          step.id in [:second, :third]
         end)
 
       assert length(parallel_steps) == 2
@@ -148,17 +143,14 @@ defmodule Lux.Beam.RunnerTest do
     end
 
     test "follows correct branch path" do
-      {:ok, output, _log} = Runner.run(TestBeam.beam(), %{value: "high_value"})
-      assert output.value == "high_value"
-
-      {:ok, output, _log} = Runner.run(TestBeam.beam(), %{value: "low_value"})
-      assert output.value == "low_value"
+      {:ok, "above_threshold", _log} = Runner.run(TestBeam.beam(), %{value: "high_value"})
+      {:ok, "below_threshold", _log} = Runner.run(TestBeam.beam(), %{value: "low_value"})
     end
 
     test "handles parameter references" do
       {:ok, _output, log} = Runner.run(TestBeam.beam(), %{value: "test"})
 
-      third_step = Enum.find(log.steps, &(&1.id == "third"))
+      third_step = Enum.find(log.steps, &(&1.id == :third))
       assert third_step.input.value == "test"
     end
 
@@ -169,7 +161,7 @@ defmodule Lux.Beam.RunnerTest do
 
         def steps do
           sequence do
-            step(:retry, FailingPrism, %{}, retries: 2, retry_backoff: 10)
+            step("retry", FailingPrism, %{}, retries: 2, retry_backoff: 10)
           end
         end
       end
@@ -210,7 +202,7 @@ defmodule Lux.Beam.RunnerTest do
       assert {:error, "failed", log} = Runner.run(FailureBeam.beam(), %{})
       assert log.status == :failed
 
-      failed_step = Enum.find(log.steps, &(&1.id == "will_fail"))
+      failed_step = Enum.find(log.steps, &(&1.id == :will_fail))
       assert failed_step.status == :failed
       assert failed_step.error == "failed"
     end
@@ -240,42 +232,41 @@ defmodule Lux.Beam.RunnerTest do
         end
 
         def first_check?(ctx), do: get_in(ctx, [:input, :value]) == "nested"
-        def second_check?(ctx), do: get_in(ctx, [:steps, :a1, :result, :value]) == "a1"
+        def second_check?(ctx), do: get_in(ctx, [:steps, :a1, :result]) == "a1"
       end
 
       {:ok, output, log} = NestedBeam.run(%{value: "nested"})
-      assert output.value == "b1"
+      assert output == "b1"
       # a1, b1, and the final output
       assert length(log.steps) == 2
 
       {:ok, output, log} = NestedBeam.run(%{value: "other"})
-      assert output.value == "a2"
+      assert output == "a2"
       # just a2
       assert length(log.steps) == 1
     end
 
-    test "handles complex parameter references" do
+    test "handles complex parameter passing" do
       defmodule RefBeam do
         @moduledoc false
         use Lux.Beam, generate_execution_log: true
 
         def steps do
           sequence do
-            step(:first, TestPrism, [:input, :value])
-            step(:second, TestPrism, %{value: [:steps, :first, :result, :value]})
+            step(:first, TestPrism, [:input])
+            step(:second, TestPrism, %{value: [:steps, :first, :result]})
+
             step(:third, TestPrism, %{
-              value: [:steps, :second, :result, :value],
-              extra: [:steps, :first, :result, :value]
+              value: [:steps, :second, :result],
+              extra: [:steps, :first, :result]
             })
           end
         end
       end
 
-      {:ok, output, log} = RefBeam.run(%{value: "test"})
-      assert output.value == "test"
-      assert output.extra == "test"
+      {:ok, {"value_test", "extra_test"}, log} = RefBeam.run(%{value: "test"})
 
-      third_step = Enum.find(log.steps, &(&1.id == "third"))
+      third_step = Enum.find(log.steps, &(&1.id == :third))
       assert third_step.input.value == "test"
       assert third_step.input.extra == "test"
     end
@@ -297,8 +288,8 @@ defmodule Lux.Beam.RunnerTest do
 
       {:error, "failed", log} = Runner.run(ParallelErrorBeam.beam(), %{})
 
-      success_step = Enum.find(log.steps, &(&1.id == "success"))
-      fail_step = Enum.find(log.steps, &(&1.id == "fail"))
+      success_step = Enum.find(log.steps, &(&1.id == :success))
+      fail_step = Enum.find(log.steps, &(&1.id == :fail))
 
       # Success step might complete before failure
       if success_step do
@@ -317,35 +308,36 @@ defmodule Lux.Beam.RunnerTest do
         def steps do
           sequence do
             # Access path to input
-            step(:first, TestPrism, [:input, :value])
+            step(:first, TestPrism, [:input])
 
             # Map with access path and literal list
             step(:second, TestPrism, %{
-              value: [:steps, :first, :result, :value],
+              value: [:steps, :first, :result],
               list: [1, 2, 3],
               nested_list: [[:a, :b], [:c, :d]]
             })
 
-            # Direct literal value
+            # Direct literal value as list
             step(:third, TestPrism, [4, 5, 6])
           end
         end
       end
 
-      {:ok, output, log} = MixedValuesBeam.run(%{value: "test"})
+      {:ok, _output, log} = MixedValuesBeam.run(%{value: "test"})
 
       steps_by_id = Map.new(log.steps, &{&1.id, &1})
 
       # First step gets input value
-      assert steps_by_id["first"].output.value == "test"
+      assert steps_by_id[:first].output == "test"
 
       # Second step gets mix of values
-      assert steps_by_id["second"].output.value == "test"
-      assert steps_by_id["second"].output.list == [1, 2, 3]
-      assert steps_by_id["second"].output.nested_list == [[:a, :b], [:c, :d]]
+      assert steps_by_id[:second].input.value == "test"
+      assert steps_by_id[:second].input.list == [1, 2, 3]
+      assert steps_by_id[:second].input.nested_list == [[:a, :b], [:c, :d]]
 
-      # Third step gets literal list
-      assert steps_by_id["third"].output.value == [4, 5, 6]
+      # Third step gets literal list and joins it
+      assert steps_by_id[:third].input == [4, 5, 6]
+      assert steps_by_id[:third].output == "4,5,6"
     end
   end
 
@@ -369,54 +361,91 @@ defmodule Lux.Beam.RunnerTest do
       high_step = branches[true]
       low_step = branches[false]
 
-      assert high_step.id == "high"
-      assert high_step.params.value == "high"
-      assert low_step.id == "low"
-      assert low_step.params.value == "low"
+      assert high_step.id == :high
+      assert high_step.params.value == "above_threshold"
+      assert low_step.id == :low
+      assert low_step.params.value == "below_threshold"
     end
   end
 
-  test "inputs to beam's steps are as expected" do
+  test "steps, inputs, outputs, and logs are as expected" do
     defmodule A do
+      @moduledoc false
       use Lux.Prism,
         name: "#{A}",
         id: A,
         input_schema: %{type: "string"}
 
-      def handler(input, _ctx) do
-        dbg()
-        assert input == "expected A input"
+      def handler("expected A input", _ctx) do
         {:ok, "expected B input"}
       end
     end
 
     defmodule B do
+      @moduledoc false
       use Lux.Prism,
         name: "#{B}",
         id: B,
         input_schema: %{type: "string"}
 
-      def handler(input, _ctx) do
-        assert input == "expected B input"
+      def handler("expected B input", _ctx) do
         {:ok, "B output"}
       end
     end
 
     defmodule CBeam do
+      @moduledoc false
       use Lux.Beam,
         name: "#{CBeam}",
         id: CBeam,
-        input_schema: %{type: "object", properties: %{a: %{type: "string"}}}
+        input_schema: %{type: "object", properties: %{a: %{type: "string"}}},
+        generate_execution_log: true
 
       def steps do
         sequence do
-          step(:a, A, %{input: :a})
-          step(:b, B, %{input: :b})
+          step(:a, A, [:input, :a])
+          step(:b, B, [:steps, :a, :result])
         end
       end
     end
 
-    assert 123 = CBeam.run(%{a: "expected A input"})
+    assert {:ok, "B output",
+            %{
+              input: %{a: "expected A input"},
+              output: "B output",
+              status: :completed,
+              # matches the first step
+              started_at: started_at,
+              steps: [
+                %{
+                  error: nil,
+                  id: :a,
+                  input: "expected A input",
+                  output: "expected B input",
+                  status: :completed,
+                  started_at: started_at,
+                  completed_at: _,
+                  step_index: 0
+                },
+                %{
+                  error: nil,
+                  id: :b,
+                  input: "expected B input",
+                  output: "B output",
+                  status: :completed,
+                  started_at: _,
+                  completed_at: completed_at,
+                  step_index: 1
+                }
+              ],
+              # matches the last step
+              completed_at: completed_at,
+              beam_id: Lux.Beam.RunnerTest.CBeam,
+              started_by: "system"
+            }} = CBeam.run(%{a: "expected A input"})
+
+    assert started_at
+    assert completed_at
   end
 
   describe "fallbacks" do
@@ -431,7 +460,7 @@ defmodule Lux.Beam.RunnerTest do
 
             step(:second, TestPrism, %{fail: true},
               fallback: fn %{context: ctx} ->
-                {:continue, %{previous_value: get_in(ctx, [:steps, :first, :result, :value])}}
+                {:continue, %{previous_value: get_in(ctx, [:steps, :first, :result])}}
               end
             )
           end
@@ -467,7 +496,7 @@ defmodule Lux.Beam.RunnerTest do
       assert [
                %{
                  error: nil,
-                 id: "test",
+                 id: :test,
                  input: %{fail: true},
                  output: %{retried: true},
                  status: :completed,

@@ -23,7 +23,7 @@ defmodule Lux.BeamTest do
 
         parallel do
           step(:second, TestPrism, %{value: "fixed"}, retries: 2)
-          step(:third, TestPrism, %{value: {:ref, "first"}}, store_io: true)
+          step(:third, TestPrism, %{value: [:steps, :first, :result]}, store_io: true)
         end
 
         branch &above_threshold?/1 do
@@ -99,12 +99,12 @@ defmodule Lux.BeamTest do
 
       assert {:sequence,
               [
-                %{id: "first", module: TestPrism},
-                %{id: "first_again", module: TestPrism},
+                %{id: :first, module: TestPrism},
+                %{id: :first_again, module: TestPrism},
                 {:parallel,
                  [
-                   %{id: "second", opts: %{retries: 2}},
-                   %{id: "third", opts: %{store_io: true}}
+                   %{id: :second, opts: %{retries: 2}},
+                   %{id: :third, opts: %{store_io: true}}
                  ]},
                 {:branch, {TestBeam, :above_threshold?}, _branches}
               ]} = steps
@@ -115,14 +115,70 @@ defmodule Lux.BeamTest do
 
       assert {:sequence,
               [
-                %{id: "first", module: TestPrism},
-                %{id: "first_again", module: TestPrism},
+                %{id: :first, module: TestPrism},
+                %{id: :first_again, module: TestPrism},
                 {:parallel,
                  [
-                   %{id: "second", module: TestPrism, params: %{value: "fixed"}},
-                   %{id: "third", module: TestPrism, params: %{value: {:ref, "first"}}}
+                   %{
+                     id: :second,
+                     module: TestPrism,
+                     opts: %{
+                       timeout: 300_000,
+                       fallback: nil,
+                       dependencies: [],
+                       retries: 2,
+                       store_io: false,
+                       retry_backoff: 1000,
+                       track: false
+                     },
+                     params: %{value: "fixed"}
+                   },
+                   %{
+                     id: :third,
+                     module: TestPrism,
+                     opts: %{
+                       timeout: 300_000,
+                       fallback: nil,
+                       dependencies: [],
+                       retries: 0,
+                       store_io: true,
+                       retry_backoff: 1000,
+                       track: false
+                     },
+                     params: %{value: [:steps, :first, :result]}
+                   }
                  ]},
-                _branch
+                {:branch, {Lux.BeamTest.TestBeam, :above_threshold?},
+                 [
+                   true: %{
+                     id: :high,
+                     module: TestPrism,
+                     opts: %{
+                       timeout: 300_000,
+                       fallback: nil,
+                       dependencies: [],
+                       retries: 0,
+                       store_io: false,
+                       retry_backoff: 1000,
+                       track: false
+                     },
+                     params: %{value: "high"}
+                   },
+                   false: %{
+                     id: :low,
+                     module: TestPrism,
+                     opts: %{
+                       timeout: 300_000,
+                       fallback: nil,
+                       dependencies: [],
+                       retries: 0,
+                       store_io: false,
+                       retry_backoff: 1000,
+                       track: false
+                     },
+                     params: %{value: "low"}
+                   }
+                 ]}
               ]} = steps
     end
   end
@@ -146,12 +202,11 @@ defmodule Lux.BeamTest do
   end
 
   describe "step validation" do
-    test "validates step IDs are strings" do
+    test "validates step IDs are of the same type of what we define them as" do
       steps = TestBeam.steps()
 
       assert {:sequence, [first | _rest]} = steps
-      assert is_binary(first.id)
-      assert first.id == "first"
+      assert :first = first.id
     end
 
     test "validates step options have correct defaults" do
@@ -195,9 +250,9 @@ defmodule Lux.BeamTest do
       high_step = branches[true]
       low_step = branches[false]
 
-      assert high_step.id == "high"
+      assert high_step.id == :high
       assert high_step.params.value == "high"
-      assert low_step.id == "low"
+      assert low_step.id == :low
       assert low_step.params.value == "low"
     end
   end
@@ -206,14 +261,15 @@ defmodule Lux.BeamTest do
     @moduledoc false
     use Lux.Prism
 
-    def handler(input, _ctx) do
-      case input do
-        %{fail: true} -> {:error, "Intentional failure"}
-        %{fail: :unrecoverable} -> {:error, %{type: :unrecoverable, message: "Cannot recover"}}
-        %{fail: :recoverable} -> {:error, %{type: :recoverable, message: "Can recover"}}
-        _ -> {:ok, input}
-      end
-    end
+    def handler(%{fail: true}, _ctx), do: {:error, "Intentional failure"}
+
+    def handler(%{fail: :unrecoverable}, _ctx),
+      do: {:error, %{type: :unrecoverable, message: "Cannot recover"}}
+
+    def handler(%{fail: :recoverable}, _ctx),
+      do: {:error, %{type: :recoverable, message: "Can recover"}}
+
+    def handler(input, _ctx), do: {:ok, input}
   end
 
   defmodule TestFallback do
@@ -240,7 +296,7 @@ defmodule Lux.BeamTest do
         end
       end
 
-      {:ok, result, _log} = ModuleFallbackBeam.run(%{}) |> dbg()
+      {:ok, result, _log} = ModuleFallbackBeam.run(%{})
       assert result.recovered == true
       assert result.original_error.type == :recoverable
     end
@@ -313,7 +369,7 @@ defmodule Lux.BeamTest do
 
             step(:second, TestPrism, %{fail: true},
               fallback: fn %{context: ctx} ->
-                {:continue, %{previous_value: ctx["first"].result.value}}
+                {:continue, %{previous_value: ctx[:steps][:first][:result].value}}
               end
             )
           end
@@ -349,7 +405,7 @@ defmodule Lux.BeamTest do
       assert [
                %{
                  error: nil,
-                 id: "test",
+                 id: :test,
                  input: %{fail: true},
                  output: %{retried: true},
                  status: :completed,
