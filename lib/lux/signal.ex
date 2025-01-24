@@ -1,7 +1,7 @@
 defmodule Lux.Signal do
   @moduledoc """
-  Represents a signal that can be sent between specters.
-  Signals are the primary means of communication between specters.
+  Represents a signal that can be sent between agents.
+  Signals are the primary means of communication between agents.
   """
 
   @type t :: %__MODULE__{

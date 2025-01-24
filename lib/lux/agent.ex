@@ -1,6 +1,6 @@
-defmodule Lux.Specter do
+defmodule Lux.Agent do
   @moduledoc """
-  A Specter defines an autonomous agent's capabilities, behaviors and goals.
+  A Agent defines an autonomous agent's capabilities, behaviors and goals.
   The actual execution and supervision is handled by the Lux runtime.
   """
 
@@ -31,7 +31,7 @@ defmodule Lux.Specter do
           collaboration_config: %{
             can_delegate: boolean(),
             can_request_help: boolean(),
-            trusted_specters: [String.t()],
+            trusted_agents: [String.t()],
             collaboration_protocols: [collaboration_protocol()]
           }
         }
@@ -62,7 +62,7 @@ defmodule Lux.Specter do
             collaboration_config: %{
               can_delegate: true,
               can_request_help: true,
-              trusted_specters: [],
+              trusted_agents: [],
               collaboration_protocols: [:ask, :tell, :delegate, :request_review]
             }
 
@@ -75,16 +75,16 @@ defmodule Lux.Specter do
   @callback learn(t(), capability :: term()) :: {:ok, t()} | {:error, term()}
 
   @doc """
-  Performs a reflection cycle for the specter.
+  Performs a reflection cycle for the agent.
   This is called periodically based on reflection_interval.
   """
-  def reflect(%__MODULE__{reflection_config: config} = specter, context) do
+  def reflect(%__MODULE__{reflection_config: config} = agent, context) do
     with {:ok, actions, updated_reflection} <-
-           Lux.Reflection.reflect(specter.reflection, specter, context) do
+           Lux.Reflection.reflect(agent.reflection, agent, context) do
       limited_actions = Enum.take(actions, config.max_actions_per_reflection)
       chunked_actions = chunk_actions(limited_actions, config.max_parallel_actions)
-      updated_specter = %{specter | reflection: updated_reflection}
-      {:ok, execute_action_chunks(chunked_actions, config.action_timeout), updated_specter}
+      updated_agent = %{agent | reflection: updated_reflection}
+      {:ok, execute_action_chunks(chunked_actions, config.action_timeout), updated_agent}
     end
   end
 
@@ -101,14 +101,14 @@ defmodule Lux.Specter do
   └────────── minute (0 - 59)
   """
   def schedule_beam(
-        %__MODULE__{scheduled_beams: beams} = specter,
+        %__MODULE__{scheduled_beams: beams} = agent,
         beam_module,
         cron_expression,
         opts \\ []
       ) do
     case Parser.parse(cron_expression) do
       {:ok, _} ->
-        {:ok, %{specter | scheduled_beams: [{beam_module, cron_expression, opts} | beams]}}
+        {:ok, %{agent | scheduled_beams: [{beam_module, cron_expression, opts} | beams]}}
 
       {:error, reason} ->
         {:error, {:invalid_cron_expression, reason}}
@@ -118,9 +118,9 @@ defmodule Lux.Specter do
   @doc """
   Removes a scheduled beam.
   """
-  def unschedule_beam(%__MODULE__{scheduled_beams: beams} = specter, beam_module) do
+  def unschedule_beam(%__MODULE__{scheduled_beams: beams} = agent, beam_module) do
     updated_beams = Enum.reject(beams, fn {module, _, _} -> module == beam_module end)
-    {:ok, %{specter | scheduled_beams: updated_beams}}
+    {:ok, %{agent | scheduled_beams: updated_beams}}
   end
 
   @doc """
@@ -138,22 +138,22 @@ defmodule Lux.Specter do
 
   defmacro __using__(_opts) do
     quote do
-      @behaviour Lux.Specter
+      @behaviour Lux.Agent
 
       # Default implementations that can be overridden
       @impl true
-      def reflect(specter, context) do
-        Lux.Specter.reflect(specter, context)
+      def reflect(agent, context) do
+        Lux.Agent.reflect(agent, context)
       end
 
       @impl true
-      def handle_signal(_specter, _signal) do
+      def handle_signal(_agent, _signal) do
         :ignore
       end
 
       @impl true
-      def learn(specter, _capability) do
-        {:ok, specter}
+      def learn(agent, _capability) do
+        {:ok, agent}
       end
 
       defoverridable reflect: 2, handle_signal: 2, learn: 2
@@ -161,7 +161,7 @@ defmodule Lux.Specter do
   end
 
   @doc """
-  Creates a new specter from the given attributes
+  Creates a new agent from the given attributes
   """
   def new(attrs) when is_map(attrs) do
     llm_config = build_llm_config(attrs[:llm_config])
@@ -175,7 +175,7 @@ defmodule Lux.Specter do
 
     struct(__MODULE__, %{
       id: Map.get(attrs, :id, Lux.UUID.generate()),
-      name: Map.get(attrs, :name, "Anonymous Specter"),
+      name: Map.get(attrs, :name, "Anonymous Agent"),
       description: Map.get(attrs, :description, ""),
       goal: Map.get(attrs, :goal, ""),
       llm_config: llm_config,
@@ -247,7 +247,7 @@ defmodule Lux.Specter do
       %{
         can_delegate: true,
         can_request_help: true,
-        trusted_specters: [],
+        trusted_agents: [],
         collaboration_protocols: [:ask, :tell, :delegate, :request_review]
       },
       config || %{}
@@ -255,45 +255,45 @@ defmodule Lux.Specter do
   end
 
   @doc """
-  Handles collaboration between specters.
+  Handles collaboration between agents.
   """
   def collaborate(
-        %__MODULE__{collaboration_config: config} = specter,
-        target_specter,
+        %__MODULE__{collaboration_config: config} = agent,
+        target_agent,
         protocol,
         payload
       ) do
     with true <- config.can_delegate || protocol != :delegate,
          true <- config.can_request_help || protocol != :request_review,
          true <- protocol in config.collaboration_protocols,
-         true <- target_specter.id in config.trusted_specters do
-      do_collaborate(protocol, specter, target_specter, payload)
+         true <- target_agent.id in config.trusted_agents do
+      do_collaborate(protocol, agent, target_agent, payload)
     else
       false -> {:error, :unauthorized}
     end
   end
 
-  defp do_collaborate(:ask, _specter, _target_specter, _question) do
+  defp do_collaborate(:ask, _agent, _target_agent, _question) do
     # Implement question-answer protocol
     {:ok, :not_implemented}
   end
 
-  defp do_collaborate(:tell, _specter, _target_specter, _information) do
+  defp do_collaborate(:tell, _agent, _target_agent, _information) do
     # Implement information sharing protocol
     {:ok, :not_implemented}
   end
 
-  defp do_collaborate(:delegate, _specter, _target_specter, _task) do
+  defp do_collaborate(:delegate, _agent, _target_agent, _task) do
     # Implement task delegation protocol
     {:ok, :not_implemented}
   end
 
-  defp do_collaborate(:request_review, _specter, _target_specter, _work) do
+  defp do_collaborate(:request_review, _agent, _target_agent, _work) do
     # Implement peer review protocol
     {:ok, :not_implemented}
   end
 
-  def handle_signal(specter, signal) do
-    apply(specter, :handle_signal, [specter, signal])
+  def handle_signal(agent, signal) do
+    apply(agent, :handle_signal, [agent, signal])
   end
 end

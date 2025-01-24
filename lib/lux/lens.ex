@@ -1,6 +1,6 @@
 defmodule Lux.Lens do
   @moduledoc """
-  Lenses are used to load data from a source and return it to the calling specter.
+  Lenses are used to load data from a source and return it to the calling agent.
 
   ## Example
 

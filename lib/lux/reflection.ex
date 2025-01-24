@@ -1,7 +1,7 @@
 defmodule Lux.Reflection do
   @moduledoc """
-  A Reflection represents a Specter's decision-making process and self-awareness.
-  It can evolve over time as the Specter learns and adapts to new situations.
+  A Reflection represents a Agent's decision-making process and self-awareness.
+  It can evolve over time as the Agent learns and adapts to new situations.
   """
 
   @type t :: %__MODULE__{
@@ -56,13 +56,12 @@ defmodule Lux.Reflection do
   end
 
   @doc """
-  Performs a reflection cycle for a specter, deciding on next actions.
+  Performs a reflection cycle for a agent, deciding on next actions.
   """
-  def reflect(%__MODULE__{} = reflection, %Lux.Specter{} = specter, context)
-      when is_map(context) do
+  def reflect(%__MODULE__{} = reflection, %Lux.Agent{} = agent, context) when is_map(context) do
     reflection = %{reflection | state: :reflecting}
 
-    prompt = build_reflection_prompt(reflection, specter, context)
+    prompt = build_reflection_prompt(reflection, agent, context)
 
     case call_llm(prompt, reflection.llm_config) do
       {:ok, response} ->
@@ -84,7 +83,7 @@ defmodule Lux.Reflection do
     end
   end
 
-  def reflect(%__MODULE__{} = reflection, _specter, _context) do
+  def reflect(%__MODULE__{} = reflection, _agent, _context) do
     {:error, :invalid_context, %{reflection | state: :idle}}
   end
 
@@ -113,10 +112,10 @@ defmodule Lux.Reflection do
 
   # Private helpers
 
-  defp build_reflection_prompt(reflection, specter, context) do
+  defp build_reflection_prompt(reflection, agent, context) do
     """
-    You are #{specter.name}'s reflection process.
-    Your goal is to help achieve: #{specter.goal}
+    You are #{agent.name}'s reflection process.
+    Your goal is to help achieve: #{agent.goal}
 
     Current context:
     #{inspect(context)}
@@ -130,7 +129,7 @@ defmodule Lux.Reflection do
     Performance metrics:
     #{inspect(reflection.metrics)}
 
-    Based on this information, what actions should the specter take?
+    Based on this information, what actions should the agent take?
     Respond in the following JSON format:
     {
       "reflection": {

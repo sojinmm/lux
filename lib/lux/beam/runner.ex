@@ -12,11 +12,11 @@ defmodule Lux.Beam.Runner do
       case execute_steps(steps, initial_context) do
         {:ok, context} ->
           last_step = get_last_step(context)
-          log = generate_execution_log(beam, context, opts[:specter], last_step)
+          log = generate_execution_log(beam, context, opts[:agent], last_step)
           {:ok, last_step.result, log}
 
         {:error, error, context} ->
-          log = generate_execution_log(beam, context, opts[:specter], nil)
+          log = generate_execution_log(beam, context, opts[:agent], nil)
           {:error, error, log}
       end
     end
@@ -290,7 +290,7 @@ defmodule Lux.Beam.Runner do
     |> elem(1)
   end
 
-  defp generate_execution_log(beam, context, specter, last_step) do
+  defp generate_execution_log(beam, context, agent, last_step) do
     if beam.generate_execution_log do
       # Get ordered steps to find first and last timestamps
       ordered_steps =
@@ -314,7 +314,7 @@ defmodule Lux.Beam.Runner do
 
       %{
         beam_id: beam.id,
-        started_by: specter || "system",
+        started_by: agent || "system",
         started_at: (first_step && first_step.started_at) || DateTime.utc_now(),
         completed_at:
           (last_executed_step && last_executed_step.completed_at) || DateTime.utc_now(),

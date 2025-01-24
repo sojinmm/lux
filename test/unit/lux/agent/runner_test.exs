@@ -1,7 +1,7 @@
-defmodule Lux.Specter.RunnerTest do
+defmodule Lux.Agent.RunnerTest do
   use UnitCase, async: true
 
-  alias Lux.Specter.Runner
+  alias Lux.Agent.Runner
 
   # Test modules
   defmodule TestPrism do
@@ -28,48 +28,48 @@ defmodule Lux.Specter.RunnerTest do
 
   describe "start_link/1" do
     test "starts runner process" do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      assert {:ok, pid} = Runner.start_link(specter)
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      assert {:ok, pid} = Runner.start_link(agent)
       assert Process.alive?(pid)
     end
   end
 
-  describe "get_specter/1" do
+  describe "get_agent/1" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
-      {:ok, pid: pid, specter: specter}
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
+      {:ok, pid: pid, agent: agent}
     end
 
-    test "returns current specter state", %{pid: pid, specter: specter} do
-      assert {:ok, ^specter, ^pid} = Runner.get_specter(pid)
+    test "returns current agent state", %{pid: pid, agent: agent} do
+      assert {:ok, ^agent, ^pid} = Runner.get_agent(pid)
     end
   end
 
   describe "get_state/1" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
-      {:ok, pid: pid, specter: specter}
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
+      {:ok, pid: pid, agent: agent}
     end
 
-    test "returns runner state", %{pid: pid, specter: specter} do
-      assert {:ok, %{specter: ^specter, context: context}} = Runner.get_state(pid)
+    test "returns runner state", %{pid: pid, agent: agent} do
+      assert {:ok, %{agent: ^agent, context: context}} = Runner.get_state(pid)
       assert is_map(context)
     end
   end
 
   describe "schedule_beam/4" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
       {:ok, pid: pid}
     end
 
     test "schedules a beam", %{pid: pid} do
       assert :ok = Runner.schedule_beam(pid, TestBeam, "*/5 * * * *")
-      {:ok, specter, _} = Runner.get_specter(pid)
-      assert length(specter.scheduled_beams) == 1
+      {:ok, agent, _} = Runner.get_agent(pid)
+      assert length(agent.scheduled_beams) == 1
     end
 
     test "handles invalid cron expression", %{pid: pid} do
@@ -79,23 +79,23 @@ defmodule Lux.Specter.RunnerTest do
 
   describe "unschedule_beam/2" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
       :ok = Runner.schedule_beam(pid, TestBeam, "*/5 * * * *")
       {:ok, pid: pid}
     end
 
     test "removes scheduled beam", %{pid: pid} do
       assert :ok = Runner.unschedule_beam(pid, TestBeam)
-      {:ok, specter, _} = Runner.get_specter(pid)
-      assert specter.scheduled_beams == []
+      {:ok, agent, _} = Runner.get_agent(pid)
+      assert agent.scheduled_beams == []
     end
   end
 
   describe "handle_signal/2" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
       {:ok, pid: pid}
     end
 
@@ -109,31 +109,31 @@ defmodule Lux.Specter.RunnerTest do
 
   describe "trigger_learning/1" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
-      {:ok, pid: pid, original_specter: specter}
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
+      {:ok, pid: pid, original_agent: agent}
     end
 
-    test "triggers learning process", %{pid: pid, original_specter: original_specter} do
+    test "triggers learning process", %{pid: pid, original_agent: original_agent} do
       Runner.trigger_learning(pid)
       # Wait a bit for async operation
       Process.sleep(100)
-      {:ok, updated_specter, _} = Runner.get_specter(pid)
-      refute updated_specter.reflection == original_specter.reflection
+      {:ok, updated_agent, _} = Runner.get_agent(pid)
+      refute updated_agent.reflection == original_agent.reflection
     end
   end
 
   describe "periodic tasks" do
     setup do
       # Use shorter intervals for testing
-      specter =
-        Lux.Specter.new(%{
-          name: "Test Specter",
+      agent =
+        Lux.Agent.new(%{
+          name: "Test Agent",
           reflection_interval: 100
         })
 
-      {:ok, pid} = Runner.start_link(specter)
-      {:ok, pid: pid, original_specter: specter}
+      {:ok, pid} = Runner.start_link(agent)
+      {:ok, pid: pid, original_agent: agent}
     end
 
     test "executes scheduled beams", %{pid: pid} do
@@ -147,8 +147,8 @@ defmodule Lux.Specter.RunnerTest do
 
   describe "error handling" do
     setup do
-      specter = Lux.Specter.new(%{name: "Test Specter"})
-      {:ok, pid} = Runner.start_link(specter)
+      agent = Lux.Agent.new(%{name: "Test Agent"})
+      {:ok, pid} = Runner.start_link(agent)
       {:ok, pid: pid}
     end
 
