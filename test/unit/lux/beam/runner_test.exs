@@ -177,10 +177,10 @@ defmodule Lux.Beam.RunnerTest do
     end
 
     test "generates execution log when configured" do
-      {:ok, _output, log} = Runner.run(TestBeam.beam(), %{value: "test"}, specter: "test_specter")
+      {:ok, _output, log} = Runner.run(TestBeam.beam(), %{value: "test"}, agent: "test_agent")
 
       assert log.beam_id != nil
-      assert log.started_by == "test_specter"
+      assert log.started_by == "test_agent"
       assert log.started_at != nil
       assert log.completed_at != nil
       assert log.status == :completed

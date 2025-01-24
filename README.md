@@ -6,11 +6,11 @@
 
 > ⚠️ **Note**: Lux is currently under heavy development and should be considered pre-alpha software. The API and architecture are subject to significant changes. We welcome feedback and contributions.
 
-Lux is a powerful Elixir framework for building intelligent, adaptive, and collaborative multi-agent systems. It enables autonomous entities (Specters) to communicate, learn, and execute complex workflows while continuously improving through reflection.
+Lux is a powerful Elixir framework for building intelligent, adaptive, and collaborative multi-agent systems. It enables autonomous entities (Agents) to communicate, learn, and execute complex workflows while continuously improving through reflection.
 
 ## Why Lux?
 
-- 🧠 **Self-Improving Agents**: Specters with built-in reflection capabilities (coming soon)
+- 🧠 **Self-Improving Agents**: Agents with built-in reflection capabilities (coming soon)
 - 🚀 **Modular Architecture**: Build complex systems from simple, reusable components
 - 🔄 **Type-Safe Communication**: Structured data flow with schema validation
 - 🤖 **AI-First**: Deep LLM integration with advanced prompting and context management
@@ -46,12 +46,12 @@ defmodule MyApp.Schemas.MarketSignal do
     }
 end
 
-# Create an intelligent agent (Specter)
-defmodule MyApp.Specters.TradingAgent do
-  use Lux.Specter
+# Create an intelligent agent (Agent)
+defmodule MyApp.Agents.TradingAgent do
+  use Lux.Agent
 
   def new do
-    Lux.Specter.new(%{
+    Lux.Agent.new(%{
       name: "Trading Agent",
       description: "Analyzes market data and executes trades",
       goal: "Maximize portfolio returns while managing risk",
@@ -64,7 +64,7 @@ defmodule MyApp.Specters.TradingAgent do
   end
 
   # Handle incoming market signals
-  def handle_signal(specter, %{schema_id: MyApp.Schemas.MarketSignal} = signal) do
+  def handle_signal(agent, %{schema_id: MyApp.Schemas.MarketSignal} = signal) do
     case signal.payload.action do
       "buy" -> 
         {:ok, [{MyApp.Prisms.OrderExecution, Map.put(signal.payload, :type, :market_buy)}]}
@@ -76,25 +76,25 @@ defmodule MyApp.Specters.TradingAgent do
   end
 
   # Ignore other signal types
-  def handle_signal(_specter, _signal), do: :ignore
+  def handle_signal(_agent, _signal), do: :ignore
 end
 
-# Start and interact with your specter
-{:ok, pid} = MyApp.Specters.TradingAgent.start_link()
+# Start and interact with your agent
+{:ok, pid} = MyApp.Agents.TradingAgent.start_link()
 ```
 
 ## Core Concepts
 
 Lux is built around four powerful abstractions:
 
-### 1. Specters 👻
+### 1. Agents 👻
 Autonomous agents that combine intelligence and execution:
 ```elixir
-defmodule MyApp.Specters.CryptoHedgeFundCEO do
-  use Lux.Specter
+defmodule MyApp.Agents.CryptoHedgeFundCEO do
+  use Lux.Agent
 
   def new do
-    Lux.Specter.new(%{
+    Lux.Agent.new(%{
       name: "Crypto Hedge Fund CEO",
       description: "Strategic decision maker for crypto investments",
       goal: "Maximize fund performance and manage risk",
@@ -105,7 +105,7 @@ defmodule MyApp.Specters.CryptoHedgeFundCEO do
       ],
       # Enable collaboration with other agents
       collaboration_config: %{
-        trusted_specters: [
+        trusted_agents: [
           "trading-desk-head",
           "risk-manager",
           "research-analyst"
@@ -116,7 +116,7 @@ defmodule MyApp.Specters.CryptoHedgeFundCEO do
   end
   
   # Handle performance reports
-  def handle_signal(specter, %{schema_id: MyApp.Schemas.PerformanceReport} = signal) do
+  def handle_signal(agent, %{schema_id: MyApp.Schemas.PerformanceReport} = signal) do
     case analyze_performance(signal.payload) do
       {:rebalance, changes} ->
         {:ok, [
@@ -134,7 +134,7 @@ defmodule MyApp.Specters.CryptoHedgeFundCEO do
   end
 
   # Handle market alerts
-  def handle_signal(specter, %{schema_id: MyApp.Schemas.MarketAlert} = signal) do
+  def handle_signal(agent, %{schema_id: MyApp.Schemas.MarketAlert} = signal) do
     {:ok, [
       {MyApp.Prisms.EmergencyAssessment, signal.payload},
       {MyApp.Prisms.NotifyRiskManager, signal.payload}
@@ -142,11 +142,11 @@ defmodule MyApp.Specters.CryptoHedgeFundCEO do
   end
 
   # Ignore other signals
-  def handle_signal(_specter, _signal), do: :ignore
+  def handle_signal(_agent, _signal), do: :ignore
 end
 
 # Start the CEO agent
-{:ok, ceo_pid} = MyApp.Specters.CryptoHedgeFundCEO.start_link()
+{:ok, ceo_pid} = MyApp.Agents.CryptoHedgeFundCEO.start_link()
 
 # The CEO agent will:
 # - Monitor fund performance
