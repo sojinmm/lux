@@ -23,6 +23,11 @@ defmodule Lux.Config do
     get_required_key(:api_keys, :openai)
   end
 
+  @spec openweather_api_key() :: api_key()
+  def openweather_api_key do
+    get_required_key(:api_keys, :openweather)
+  end
+
   @doc false
   defp get_required_key(group, key) do
     :lux
