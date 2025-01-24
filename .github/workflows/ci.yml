@@ -67,6 +67,10 @@ jobs:
       - name: Install Python dependencies
         run: poetry install --directory priv/python
 
+      - name: Install Node.js dependencies
+        working-directory: priv/node
+        run: npm install
+
       - name: Check Formatting
         run: mix format --check-formatted
 
