@@ -45,7 +45,7 @@ Signals are created by modules that use the `Lux.Signal` behaviour:
 ```elixir
 defmodule MyApp.Signals.Task do
   use Lux.Signal,
-    schema: MyApp.Schemas.TaskSchema
+    schema_id: MyApp.Schemas.TaskSchema
 end
 ```
 
