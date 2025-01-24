@@ -1,4 +1,4 @@
-defmodule Lux.LLM.Integration.OpenAI do
+defmodule Lux.Integration.LLM.OpenAITest do
   @moduledoc false
   use IntegrationCase, async: true
 
@@ -187,7 +187,7 @@ defmodule Lux.LLM.Integration.OpenAI do
                   tool_calls: [
                     %{
                       "function" => %{
-                        "name" => "Elixir_Lux_LLM_Integration_OpenAI_HashPrism",
+                        "name" => "Elixir_Lux_Integration_LLM_OpenAITest_HashPrism",
                         "arguments" => _
                       }
                     }
@@ -218,7 +218,7 @@ defmodule Lux.LLM.Integration.OpenAI do
                   tool_calls: [
                     %{
                       "function" => %{
-                        "name" => "Elixir_Lux_LLM_Integration_OpenAI_TestBeam",
+                        "name" => "Elixir_Lux_Integration_LLM_OpenAITest_TestBeam",
                         "arguments" => _
                       }
                     }
