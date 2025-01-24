@@ -14,5 +14,6 @@ if config_env() in [:dev, :test] do
   config :lux, :api_keys,
     alchemy: env!("ALCHEMY_API_KEY", :string!),
     openai: env!("OPENAI_API_KEY", :string!),
+    openweather: env!("OPENWEATHER_API_KEY", :string!),
     integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!)
 end

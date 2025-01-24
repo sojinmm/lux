@@ -10,7 +10,7 @@ defmodule Lux.Beam do
   - Supports sequential, parallel, and conditional execution
   - Handles parameter passing between steps
   - Manages execution logging and error handling
-  - Can be used by Specters for agent coordination
+  - Can be used by Agents for agent coordination
 
   ## Creating a Beam
 
@@ -290,7 +290,7 @@ defmodule Lux.Beam do
   defmacro step(id, module, params, opts \\ []) do
     quote do
       %{
-        id: to_string(unquote(id)),
+        id: unquote(id),
         module: unquote(module),
         params: unquote(params),
         opts:

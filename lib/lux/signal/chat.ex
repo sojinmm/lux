@@ -1,12 +1,12 @@
 defmodule Lux.Signal.Chat do
   @moduledoc """
-  Defines the schema for chat messages between specters.
+  Defines the schema for chat messages between agents.
   """
 
   use Lux.SignalSchema,
     name: "Chat Signal",
     version: "1.0.0",
-    description: "Schema for chat messages between specters",
+    description: "Schema for chat messages between agents",
     schema: %{
       "type" => "object",
       "properties" => %{

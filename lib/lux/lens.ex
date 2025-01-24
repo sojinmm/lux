@@ -1,26 +1,39 @@
 defmodule Lux.Lens do
   @moduledoc """
-  Lenses are used to load data from a source and return it to the calling specter.
+  Lenses are used to load data from a source and return it to the calling agent.
 
   ## Example
 
       defmodule MyApp.Lenses.WeatherLens do
         use Lux.Lens,
-          name: "Weather API",
-          description: "Fetches weather data from OpenWeather API",
-          url: "https://api.openweathermap.org/data/2.5/weather",
-          method: :get,
-          schema: %{
-            type: :object,
-            properties: %{
-              location: %{type: :string, description: "City name"},
-              units: %{type: :string, description: "Temperature units (metric/imperial)"}
+            name: "OpenWeather API",
+            description: "Fetches weather data from OpenWeather",
+            url: "https://api.openweathermap.org/data/2.5/weather",
+            method: :get,
+            schema: %{
+              type: :object,
+              properties: %{
+                q: %{
+                  type: :string,
+                  description: "City name"
+                },
+                units: %{
+                  type: :string,
+                  description: "Temperature units. For temperature in Fahrenheit use units=imperial and for temperature in Celsius use units=metric",
+                  enum: ["metric", "imperial"]
+                },
+                appid: %{type: :string, description: "API key"}
+              },
+              required: ["q", "appid"]
             }
-          }
 
         # Optional: Define a custom after_focus function
         def after_focus(%{"main" => %{"temp" => temp}} = body) do
           {:ok, %{temperature: temp, raw_data: body}}
+        end
+
+        def after_focus(%{"error" => error}) do
+          {:error, error}
         end
       end
   """
@@ -80,13 +93,7 @@ defmodule Lux.Lens do
       @doc """
       Returns the Lens struct for this module.
       """
-      def view do
-        if function_exported?(__MODULE__, :after_focus, 1) do
-          %{@lens_struct | after_focus: &__MODULE__.after_focus/1}
-        else
-          @lens_struct
-        end
-      end
+      def view, do: @lens_struct
 
       @doc """
       Focuses the lens with the given input.
@@ -94,8 +101,13 @@ defmodule Lux.Lens do
       def focus(input, opts \\ []) do
         __MODULE__.view()
         |> Map.update!(:params, &Map.merge(&1, input))
+        |> Lux.Lens.authenticate()
         |> Lux.Lens.focus(opts)
       end
+
+      def after_focus(body), do: {:ok, body}
+
+      defoverridable after_focus: 1
     end
   end
 
@@ -110,7 +122,7 @@ defmodule Lux.Lens do
       headers: attrs[:headers] || [],
       auth: attrs[:auth] || nil,
       description: attrs[:description] || "",
-      after_focus: attrs[:after_focus] || nil,
+      after_focus: attrs[:after_focus] || fn body -> {:ok, body} end,
       schema: attrs[:schema] || %{}
     }
   end
@@ -123,17 +135,14 @@ defmodule Lux.Lens do
 
   def focus(
         %__MODULE__{
-          auth: nil,
           url: url,
           method: method,
           params: params,
           headers: headers,
           after_focus: after_focus
         },
-        opts
+        _opts
       ) do
-    after_focus = if opts[:with_after_focus], do: after_focus, else: fn body -> {:ok, body} end
-
     [url: url, headers: headers, max_retries: 2]
     |> Keyword.merge(Application.get_env(:lux, :req_options, []))
     |> Req.new()
@@ -153,11 +162,7 @@ defmodule Lux.Lens do
     end
   end
 
-  def focus(%__MODULE__{auth: auth} = lens, opts) when not is_nil(auth) do
-    lens
-    |> authenticate()
-    |> focus(opts)
-  end
+  def authenticate(%__MODULE__{auth: nil} = lens), do: lens
 
   def authenticate(%__MODULE__{auth: %{type: :api_key, key: key}} = lens),
     do: update_headers(lens, [{"Authorization", "Bearer #{key}"}])

@@ -1,6 +1,6 @@
 defmodule Lux.Prisms.HandleChat do
   @moduledoc """
-  A prism that handles chat messages between specters.
+  A prism that handles chat messages between agents.
   It processes incoming chat messages and generates appropriate responses.
   """
 
@@ -17,7 +17,7 @@ defmodule Lux.Prisms.HandleChat do
   """
   def handler(
         %{"message" => message, "message_type" => message_type, "context" => context},
-        %{specter: specter} = _ctx
+        %{agent: agent} = _ctx
       ) do
     # Create a chat signal from the input
     chat_signal = %Lux.Signal{
@@ -28,8 +28,8 @@ defmodule Lux.Prisms.HandleChat do
       }
     }
 
-    # Process the chat message using the specter's LLM
-    case process_chat(chat_signal, specter) do
+    # Process the chat message using the agent's LLM
+    case process_chat(chat_signal, agent) do
       {:ok, response} ->
         {:ok,
          %{
@@ -39,7 +39,7 @@ defmodule Lux.Prisms.HandleChat do
              "thread_id" => context["thread_id"],
              "reply_to" => chat_signal.id,
              "metadata" => %{
-               "sender_id" => specter.id
+               "sender_id" => agent.id
              }
            }
          }}
@@ -53,18 +53,18 @@ defmodule Lux.Prisms.HandleChat do
              "thread_id" => context["thread_id"],
              "reply_to" => chat_signal.id,
              "metadata" => %{
-               "sender_id" => specter.id
+               "sender_id" => agent.id
              }
            }
          }}
     end
   end
 
-  defp process_chat(chat_signal, specter) do
-    # Use the specter's LLM to generate a response
+  defp process_chat(chat_signal, agent) do
+    # Use the agent's LLM to generate a response
     prompt = """
-    You are #{specter.name}, an AI specter with the following goal:
-    #{specter.goal}
+    You are #{agent.name}, an AI agent with the following goal:
+    #{agent.goal}
 
     You received the following chat message:
     #{chat_signal.payload["message"]}
@@ -74,7 +74,7 @@ defmodule Lux.Prisms.HandleChat do
     """
 
     # need to pass beams and prisms instead of empty list here.
-    case LLM.call(prompt, [], specter.llm_config) do
+    case LLM.call(prompt, [], agent.llm_config) do
       {:ok, %{content: content}} ->
         {:ok, %{message: content}}
 

@@ -22,14 +22,21 @@ defmodule MyApp.Lenses.WeatherAPI do
     description: "Fetches weather data from OpenWeather",
     url: "https://api.openweathermap.org/data/2.5/weather",
     method: :get,
-    auth: %{type: :api_key, key: System.get_env("OPENWEATHER_API_KEY")},
     schema: %{
       type: :object,
       properties: %{
-        city: %{type: :string},
-        units: %{type: :string, enum: ["metric", "imperial"]}
+        q: %{
+          type: :string,
+          description: "City name"
+        },
+        units: %{
+          type: :string,
+          description: "Temperature units. For temperature in Fahrenheit use units=imperial and for temperature in Celsius use units=metric",
+          enum: ["metric", "imperial"]
+        },
+        appid: %{type: :string, description: "API key"}
       },
-      required: ["city"]
+      required: ["q", "appid"]
     }
 
   def after_focus(%{"main" => %{"temp" => temp}} = response) do
@@ -37,6 +44,10 @@ defmodule MyApp.Lenses.WeatherAPI do
       temperature: temp,
       raw_data: response
     }}
+  end
+
+  def after_focus(%{"error" => error}) do
+    {:error, error}
   end
 end
 ```
@@ -48,8 +59,9 @@ Lenses can be used directly or within Beams:
 ```elixir
 # Direct usage
 {:ok, weather} = MyApp.Lenses.WeatherAPI.focus(%{
-  city: "London",
-  units: "metric"
+  q: "London",
+  units: "metric",
+  appid: Lux.Config.open_weather_api_key
 })
 
 # Access results
@@ -214,10 +226,8 @@ defmodule MyApp.Lenses.WeatherAPITest do
   describe "focus/1" do
     test "fetches weather data successfully" do
       Req.Test.expect(Lux.Lens, fn conn ->
-        assert conn.params == %{"city" => "London", "units" => "metric"}
-        assert Enum.any?(conn.headers, fn {k, v} -> 
-          k == "Authorization" and String.starts_with?(v, "Bearer ")
-        end)
+        assert conn.params == %{"q" => "London", "units" => "metric", "appid" => "test_key"}
+
         Req.Test.json(conn, %{
           "main" => %{"temp" => 20.5},
           "weather" => [%{"description" => "clear sky"}]
@@ -225,8 +235,9 @@ defmodule MyApp.Lenses.WeatherAPITest do
       end)
 
       {:ok, result} = MyApp.Lenses.WeatherAPI.focus(%{
-        city: "London",
-        units: "metric"
+        q: "London",
+        units: "metric",
+        appid: "test_key"
       })
 
       assert result.temperature == 20.5
@@ -234,12 +245,13 @@ defmodule MyApp.Lenses.WeatherAPITest do
 
     test "handles API errors" do
       Req.Test.expect(Lux.Lens, fn conn ->
-        Req.Test.json(conn, %{"error" => "City not found"}, status: 404)
+        Req.Test.json(conn, %{"error" => "City not found"})
       end)
 
       assert {:error, _} = MyApp.Lenses.WeatherAPI.focus(%{
-        city: "NonexistentCity",
-        units: "metric"
+        q: "NonexistentCity",
+        units: "metric",
+        appid: "test_key"
       })
     end
   end

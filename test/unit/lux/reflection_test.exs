@@ -41,9 +41,9 @@ defmodule Lux.ReflectionTest do
           description: "Test reflection process"
         })
 
-      specter = %Lux.Specter{
-        id: "test-specter",
-        name: "Test Specter",
+      agent = %Lux.Agent{
+        id: "test-agent",
+        name: "Test Agent",
         goal: "Test goal"
       }
 
@@ -52,15 +52,15 @@ defmodule Lux.ReflectionTest do
         environment: "test"
       }
 
-      {:ok, reflection: reflection, specter: specter, context: context}
+      {:ok, reflection: reflection, agent: agent, context: context}
     end
 
     test "performs reflection and returns actions with updated reflection", %{
       reflection: reflection,
-      specter: specter,
+      agent: agent,
       context: context
     } do
-      {:ok, actions, updated_reflection} = Reflection.reflect(reflection, specter, context)
+      {:ok, actions, updated_reflection} = Reflection.reflect(reflection, agent, context)
 
       # Check actions
       assert is_list(actions)
@@ -77,9 +77,9 @@ defmodule Lux.ReflectionTest do
       assert updated_reflection.metrics.total_actions == length(actions)
     end
 
-    test "handles errors gracefully", %{reflection: reflection, specter: specter} do
+    test "handles errors gracefully", %{reflection: reflection, agent: agent} do
       bad_context = nil
-      {:error, _reason, updated_reflection} = Reflection.reflect(reflection, specter, bad_context)
+      {:error, _reason, updated_reflection} = Reflection.reflect(reflection, agent, bad_context)
       assert updated_reflection.state == :idle
     end
   end
