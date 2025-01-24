@@ -4,7 +4,7 @@ defmodule Lux.Agent do
   The actual execution and supervision is handled by the Lux runtime.
   """
 
-  alias Crontab.CronExpression.Parser
+  alias Lux.LLM
 
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
@@ -19,22 +19,7 @@ defmodule Lux.Agent do
           beams: [Lux.Beam.t()],
           lenses: [Lux.Lens.t()],
           accepts_signals: [Lux.SignalSchema.t()],
-          llm_config: map(),
-          memory: list(),
-          scheduled_beams: [scheduled_beam()],
-          reflection_interval: non_neg_integer(),
-          reflection: Lux.Reflection.t(),
-          reflection_config: %{
-            max_actions_per_reflection: pos_integer(),
-            max_parallel_actions: pos_integer(),
-            action_timeout: pos_integer()
-          },
-          collaboration_config: %{
-            can_delegate: boolean(),
-            can_request_help: boolean(),
-            trusted_agents: [String.t()],
-            collaboration_protocols: [collaboration_protocol()]
-          }
+          llm_config: map()
         }
 
   defstruct id: nil,
@@ -51,114 +36,19 @@ defmodule Lux.Agent do
               model: "gpt-4",
               temperature: 0.7,
               max_tokens: 1000
-            },
-            memory: [],
-            scheduled_beams: [],
-            reflection_interval: 60_000,
-            reflection: nil,
-            reflection_config: %{
-              max_actions_per_reflection: 5,
-              max_parallel_actions: 2,
-              action_timeout: 30_000
-            },
-            collaboration_config: %{
-              can_delegate: true,
-              can_request_help: true,
-              trusted_agents: [],
-              collaboration_protocols: [:ask, :tell, :delegate, :request_review]
             }
-
-  @callback reflect(t(), context :: map()) :: {:ok, [action]} | {:error, term()}
-            when action: {module(), map()}
-
-  @callback handle_signal(t(), Lux.Signal.t()) :: {:ok, [action]} | :ignore | {:error, term()}
-            when action: {module(), map()}
-
-  @callback learn(t(), capability :: term()) :: {:ok, t()} | {:error, term()}
 
   @callback chat(t(), message :: String.t(), opts :: keyword()) ::
               {:ok, String.t()} | {:error, term()}
 
-  @doc """
-  Performs a reflection cycle for the agent.
-  This is called periodically based on reflection_interval.
-  """
-  def reflect(%__MODULE__{reflection_config: config} = agent, context) do
-    with {:ok, actions, updated_reflection} <-
-           Lux.Reflection.reflect(agent.reflection, agent, context) do
-      limited_actions = Enum.take(actions, config.max_actions_per_reflection)
-      chunked_actions = chunk_actions(limited_actions, config.max_parallel_actions)
-      updated_agent = %{agent | reflection: updated_reflection}
-      {:ok, execute_action_chunks(chunked_actions, config.action_timeout), updated_agent}
-    end
-  end
-
-  @doc """
-  Schedules a beam to run periodically using cron expression.
-  The cron expression follows the standard cron format:
-
-  * * * * *
-  │ │ │ │ │
-  │ │ │ │ └── day of week (0 - 6) (0 is Sunday)
-  │ │ │ └──── month (1 - 12)
-  │ │ └────── day of month (1 - 31)
-  │ └──────── hour (0 - 23)
-  └────────── minute (0 - 59)
-  """
-  def schedule_beam(
-        %__MODULE__{scheduled_beams: beams} = agent,
-        beam_module,
-        cron_expression,
-        opts \\ []
-      ) do
-    case Parser.parse(cron_expression) do
-      {:ok, _} ->
-        {:ok, %{agent | scheduled_beams: [{beam_module, cron_expression, opts} | beams]}}
-
-      {:error, reason} ->
-        {:error, {:invalid_cron_expression, reason}}
-    end
-  end
-
-  @doc """
-  Removes a scheduled beam.
-  """
-  def unschedule_beam(%__MODULE__{scheduled_beams: beams} = agent, beam_module) do
-    updated_beams = Enum.reject(beams, fn {module, _, _} -> module == beam_module end)
-    {:ok, %{agent | scheduled_beams: updated_beams}}
-  end
-
-  @doc """
-  Checks which beams should run based on their cron expressions.
-  Returns a list of beam modules that should be executed.
-  """
-  def get_due_beams(%__MODULE__{scheduled_beams: beams}) do
-    now = DateTime.utc_now()
-
-    Enum.filter(beams, fn {_module, cron_expression, _opts} ->
-      {:ok, cron} = Parser.parse(cron_expression)
-      Crontab.DateChecker.matches_date?(cron, now)
-    end)
-  end
+  @callback handle_signal(t(), Lux.Signal.t()) :: {:ok, term()} | :ignore | {:error, term()}
 
   defmacro __using__(_opts) do
     quote do
       @behaviour Lux.Agent
-
-      # Default implementations that can be overridden
-      @impl true
-      def reflect(agent, context) do
-        Lux.Agent.reflect(agent, context)
-      end
-
       @impl true
       def handle_signal(_agent, _signal) do
         :ignore
-      end
-
-      @impl true
-      def learn(agent, _capability) do
-        {:ok, agent}
       end
 
       @impl true
@@ -166,7 +56,7 @@ defmodule Lux.Agent do
         {:error, :not_implemented}
       end
 
-      defoverridable reflect: 2, handle_signal: 2, learn: 2, chat: 3
+      defoverridable chat: 3, handle_signal: 2
     end
   end
 
@@ -174,32 +64,17 @@ defmodule Lux.Agent do
   Creates a new agent from the given attributes
   """
   def new(attrs) when is_map(attrs) do
-    llm_config = build_llm_config(attrs[:llm_config])
-
-    reflection =
-      Lux.Reflection.new(%{
-        name: attrs[:name] || "Anonymous Reflection",
-        description: attrs[:description] || "Default reflection process",
-        llm_config: llm_config
-      })
-
     struct(__MODULE__, %{
       id: Map.get(attrs, :id, Lux.UUID.generate()),
       name: Map.get(attrs, :name, "Anonymous Agent"),
       description: Map.get(attrs, :description, ""),
       goal: Map.get(attrs, :goal, ""),
       module: Map.get(attrs, :module, __MODULE__),
-      llm_config: llm_config,
+      llm_config: Map.get(attrs, :llm_config, %{}),
       prisms: Map.get(attrs, :prisms, []),
       beams: Map.get(attrs, :beams, []),
       lenses: Map.get(attrs, :lenses, []),
-      accepts_signals: Map.get(attrs, :accepts_signals, []),
-      memory: [],
-      scheduled_beams: Map.get(attrs, :scheduled_beams, []),
-      reflection_interval: Map.get(attrs, :reflection_interval, 60_000),
-      reflection: reflection,
-      reflection_config: build_reflection_config(attrs[:reflection_config]),
-      collaboration_config: build_collaboration_config(attrs[:collaboration_config])
+      accepts_signals: Map.get(attrs, :accepts_signals, [])
     })
   end
 
@@ -208,101 +83,6 @@ defmodule Lux.Agent do
   end
 
   # Private helpers
-
-  defp default_llm_config do
-    %{
-      provider: :openai,
-      model: "gpt-4",
-      temperature: 0.7,
-      max_tokens: 1000
-    }
-  end
-
-  defp chunk_actions(actions, chunk_size) do
-    Enum.chunk_every(actions, chunk_size)
-  end
-
-  defp execute_action_chunks(chunks, timeout) do
-    results =
-      chunks
-      |> Enum.map(fn chunk ->
-        chunk
-        |> Enum.map(&Task.async(fn -> execute_action(&1, timeout) end))
-        |> Task.await_many(timeout)
-      end)
-      |> List.flatten()
-
-    {:ok, results}
-  end
-
-  defp execute_action({module, params}, timeout) do
-    Task.await(Task.async(fn -> apply(module, :run, [params]) end), timeout)
-  catch
-    :exit, {:timeout, _} -> {:error, :timeout}
-    kind, reason -> {:error, {kind, reason}}
-  end
-
-  defp build_llm_config(config) do
-    Map.merge(default_llm_config(), config || %{})
-  end
-
-  defp build_reflection_config(config) do
-    Map.merge(
-      %{max_actions_per_reflection: 5, max_parallel_actions: 2, action_timeout: 30_000},
-      config || %{}
-    )
-  end
-
-  defp build_collaboration_config(config) do
-    Map.merge(
-      %{
-        can_delegate: true,
-        can_request_help: true,
-        trusted_agents: [],
-        collaboration_protocols: [:ask, :tell, :delegate, :request_review]
-      },
-      config || %{}
-    )
-  end
-
-  @doc """
-  Handles collaboration between agents.
-  """
-  def collaborate(
-        %__MODULE__{collaboration_config: config} = agent,
-        target_agent,
-        protocol,
-        payload
-      ) do
-    with true <- config.can_delegate || protocol != :delegate,
-         true <- config.can_request_help || protocol != :request_review,
-         true <- protocol in config.collaboration_protocols,
-         true <- target_agent.id in config.trusted_agents do
-      do_collaborate(protocol, agent, target_agent, payload)
-    else
-      false -> {:error, :unauthorized}
-    end
-  end
-
-  defp do_collaborate(:ask, _agent, _target_agent, _question) do
-    # Implement question-answer protocol
-    {:ok, :not_implemented}
-  end
-
-  defp do_collaborate(:tell, _agent, _target_agent, _information) do
-    # Implement information sharing protocol
-    {:ok, :not_implemented}
-  end
-
-  defp do_collaborate(:delegate, _agent, _target_agent, _task) do
-    # Implement task delegation protocol
-    {:ok, :not_implemented}
-  end
-
-  defp do_collaborate(:request_review, _agent, _target_agent, _work) do
-    # Implement peer review protocol
-    {:ok, :not_implemented}
-  end
 
   def handle_signal(agent, signal) do
     apply(agent, :handle_signal, [agent, signal])
@@ -314,4 +94,39 @@ defmodule Lux.Agent do
   def chat(%__MODULE__{module: module} = agent, message, opts \\ []) when is_atom(module) do
     apply(module, :chat, [agent, message, opts])
   end
+
+  def chat(agent, message, _opts) do
+    case LLM.call(message, [], agent.llm_config) do
+      {:ok, %{payload: %{content: content}}} when is_map(content) ->
+        # If content is a map, convert it to a string representation
+        {:ok, format_content(content)}
+
+      {:ok, %{payload: %{content: content}}} when is_binary(content) ->
+        {:ok, content}
+
+      {:error, reason} ->
+        {:error, reason}
+
+      {:ok, %Req.Response{status: 401}} ->
+        {:error, :invalid_api_key}
+
+      {:ok, %Req.Response{body: %{"error" => error}}} ->
+        {:error, error["message"] || "Unknown error"}
+
+      unexpected ->
+        {:error, {:unexpected_response, unexpected}}
+    end
+  end
+
+  # Helper function to format map content into a readable string
+  defp format_content(content) when is_map(content) do
+    Enum.map_join(content, "\n", fn {k, v} -> "#{k}: #{format_value(v)}" end)
+  end
+
+  defp format_value(value) when is_list(value) do
+    Enum.map_join(value, ", ", &format_value/1)
+  end
+
+  defp format_value(value) when is_map(value), do: format_content(value)
+  defp format_value(value), do: to_string(value)
 end

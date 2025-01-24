@@ -43,7 +43,8 @@ defmodule Lux.Agent.Supervisor do
     |> DynamicSupervisor.which_children()
     |> Enum.map(fn {_, pid, _, _} -> pid end)
     |> Enum.filter(&is_pid/1)
-    |> Enum.map(&Runner.get_agent/1)
+
+    # |> Enum.map(&Runner.get_agent/1)
   end
 
   @doc """
