@@ -1,18 +1,18 @@
-defmodule Lux.NodeTest do
+defmodule Lux.NodeJSTest do
   use ExUnit.Case, async: true
 
-  import Lux.Node
+  import Lux.NodeJS
 
-  require Lux.Node
+  require Lux.NodeJS
 
   describe "eval/2" do
     test "evaluates simple Node.js expressions" do
-      assert {:ok, 2} = Lux.Node.eval("export const main = () => 1 + 1")
+      assert {:ok, 2} = eval("export const main = () => 1 + 1")
     end
 
     test "evaluates code with variable bindings" do
       assert {:ok, 30} =
-               Lux.Node.eval("export const main = ({x, y}) => x * y", variables: %{x: 5, y: 6})
+               eval("export const main = ({x, y}) => x * y", variables: %{x: 5, y: 6})
     end
 
     test "supports multi-line code" do
@@ -28,25 +28,25 @@ defmodule Lux.NodeTest do
       }
       """
 
-      assert {:ok, 120} = Lux.Node.eval(code, variables: %{n: 5})
+      assert {:ok, 120} = eval(code, variables: %{n: 5})
     end
   end
 
   describe "eval!/2" do
     test "returns result directly on success" do
-      assert 3 == Lux.Node.eval!("export const main = () => 1 + 2")
+      assert 3 == eval!("export const main = () => 1 + 2")
     end
 
     test "raises error on failure" do
       assert_raise NodeJS.Error,
                    ~r/undefined_var is not defined/,
                    fn ->
-                     Lux.Node.eval!("undefined_var")
+                     eval!("undefined_var")
                    end
     end
 
     test "supports variable bindings" do
-      assert 42 == Lux.Node.eval!("export const main = ({x}) => x * 2", variables: %{x: 21})
+      assert 42 == eval!("export const main = ({x}) => x * 2", variables: %{x: 21})
     end
   end
 

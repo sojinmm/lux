@@ -7,7 +7,7 @@ defmodule Lux.Application do
     children = [
       {Venomous.SnakeSupervisor, [strategy: :one_for_one, max_restarts: 0, max_children: 50]},
       {Venomous.PetSnakeSupervisor, [strategy: :one_for_one, max_children: 10]},
-      Lux.Node,
+      Lux.NodeJS,
       {Lux.Specter.Supervisor, []}
     ]
 

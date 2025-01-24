@@ -1,4 +1,4 @@
-defmodule Lux.Node do
+defmodule Lux.NodeJS do
   @moduledoc """
   Provides functions for executing Node.js code with variable bindings.
 
@@ -10,8 +10,8 @@ defmodule Lux.Node do
 
   ## Examples
 
-      iex> require Lux.Node
-      iex> Lux.Node.nodejs variables: %{x: 40, y: 2} do
+      iex> require Lux.NodeJS
+      iex> Lux.NodeJS.nodejs variables: %{x: 40, y: 2} do
       ...>   ~JS'''
       ...>   export const main = ({x, y}) => x + y
       ...>   '''
@@ -36,10 +36,10 @@ defmodule Lux.Node do
 
   ## Examples
 
-      iex> Lux.Node.eval("export const main = ({x}) => x * 2", variables: %{x: 21})
+      iex> Lux.NodeJS.eval("export const main = ({x}) => x * 2", variables: %{x: 21})
       {:ok, 42}
 
-      iex> Lux.Node.eval("export const main = () => os.getenv('TEST')", env: %{"TEST" => "value"})
+      iex> Lux.NodeJS.eval("export const main = () => os.getenv('TEST')", env: %{"TEST" => "value"})
       {:ok, "value"}
   """
   @spec eval(String.t(), eval_options()) :: {:ok, term()} | {:error, String.t()}
@@ -104,7 +104,7 @@ defmodule Lux.Node do
   """
   defmacro nodejs(opts \\ [], do: {:sigil_JS, _, [{:<<>>, _, [code]}, []]}) do
     quote do
-      Lux.Node.eval(unquote(code), unquote(opts))
+      Lux.NodeJS.eval(unquote(code), unquote(opts))
     end
   end
 
