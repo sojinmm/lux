@@ -352,7 +352,7 @@ The Python code is executed in an isolated environment and has access to all ins
 git clone https://github.com/spectrallabs/lux.git
 cd lux
 
-# Install Elixir, Erlang, and Python with the correct versions
+# Install Elixir, Erlang, Python and Node.js with the correct versions
 asdf install
 
 # Install all dependencies (Elixir and Python)

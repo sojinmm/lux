@@ -45,6 +45,7 @@ defmodule Lux.MixProject do
       {:venomous, "~> 0.7.5"},
       {:crontab, "~> 1.1"},
       {:ex_json_schema, "~> 0.10.2"},
+      {:nodejs, "~> 2.0"},
       # test and dev dependencies
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
