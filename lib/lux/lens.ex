@@ -98,7 +98,7 @@ defmodule Lux.Lens do
       @doc """
       Focuses the lens with the given input.
       """
-      def focus(input, opts \\ []) do
+      def focus(input \\ %{}, opts \\ []) do
         __MODULE__.view()
         |> Map.update!(:params, &Map.merge(&1, input))
         |> Lux.Lens.authenticate()
