@@ -24,6 +24,10 @@ defmodule Lux.NodeJS do
 
   @type eval_options :: [eval_option()]
 
+  @type import_result :: %{
+    required(String.t()) => boolean() | String.t()
+  }
+
   @module_path Application.app_dir(:lux, "priv/node")
 
   @doc """
@@ -77,15 +81,15 @@ defmodule Lux.NodeJS do
     * `:timeout` - Timeout in milliseconds for Node.js execution
 
   """
-  @spec import_package(String.t(), keyword()) :: {:ok, String.t()} | {:error, String.t()}
+  @spec import_package(String.t(), keyword()) :: {:ok, import_result()} | {:error, String.t()}
   def import_package(package_name, opts \\ []) when is_binary(package_name) do
     {update_lock_file, opts} = Keyword.pop(opts, :update_lock_file, true)
 
     {"lux.mjs", "importPackage"}
     |> NodeJS.call([package_name, %{update_lock_file: update_lock_file}], opts)
     |> case do
-      {:ok, %{"success" => true}} ->
-        {:ok, package_name}
+      {:ok, %{"success" => true} = result} ->
+        {:ok, result}
 
       {:ok, %{"error" => "ERR_MODULE_NOT_FOUND"}} ->
         {:error, "Cannot import package: #{package_name}"}

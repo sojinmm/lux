@@ -106,5 +106,25 @@ defmodule Lux.NodeJSTest do
     end
   end
 
-  # test with npm modules
+  describe "web3 integration" do
+    test "loads and uses web3 library" do
+      assert {:ok, %{"success" => true}} = import_package("web3")
+
+      result =
+        nodejs variables: %{address: "0xd3cda913deb6f67967b99d67acdfa1712c293601"} do
+          ~JS"""
+          import {validator} from 'web3'
+
+          export const main = ({address}) => {
+            return {
+              address,
+              valid: validator.isAddress(address, true)
+            };
+          }
+          """
+        end
+
+      assert {:ok, %{"address" => _, "valid" => true}} = result
+    end
+  end
 end
