@@ -334,7 +334,7 @@ defmodule Lux.LLM.OpenAI do
 
   def chat(config, messages) when is_list(messages) do
     # Extract the system message and user message
-    {system_content, user_content} =
+    {_system_content, user_content} =
       case messages do
         [%{role: "system", content: sys}, %{role: "user", content: usr}] -> {sys, usr}
         [%{role: "user", content: usr}] -> {"", usr}

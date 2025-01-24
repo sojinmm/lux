@@ -26,6 +26,16 @@ defmodule Lux.AgentTest do
     end
   end
 
+  defmodule SimpleAgent do
+    @moduledoc false
+    use Lux.Agent,
+      name: "Simple Agent",
+      description: "A simple agent that keeps things simple.",
+      goal: "You have one simple goal. Not making things too complicated.",
+      prisms: [TestPrism],
+      beams: [TestBeam]
+  end
+
   describe "new/1" do
     test "creates a new agent with default values" do
       agent = Agent.new(%{})
@@ -55,6 +65,33 @@ defmodule Lux.AgentTest do
       assert agent.prisms == [TestPrism]
       assert agent.beams == [TestBeam]
       assert agent.llm_config.model == "gpt-3.5-turbo"
+    end
+
+    test "can also be called from modules using the __using__ macro" do
+      assert %Agent{
+               name: "Simple Agent",
+               description: "A simple agent that keeps things simple.",
+               goal: "You have one simple goal. Not making things too complicated.",
+               prisms: [TestPrism],
+               beams: [TestBeam],
+               llm_config: %{
+                 model: "gpt-123",
+                 temperature: 0.7,
+                 max_tokens: 1000
+               }
+             } =
+               SimpleAgent.new(%{
+                 name: "Simple Agent",
+                 description: "A simple agent that keeps things simple.",
+                 goal: "You have one simple goal. Not making things too complicated.",
+                 prisms: [TestPrism],
+                 beams: [TestBeam],
+                 llm_config: %{
+                   model: "gpt-123",
+                   temperature: 0.7,
+                   max_tokens: 1000
+                 }
+               })
     end
   end
 end

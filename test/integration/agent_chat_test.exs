@@ -16,6 +16,7 @@ defmodule Lux.Integration.AgentChatTest do
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.0,
+        max_tokens: 50,
         seed: @seed
       }
 
@@ -37,12 +38,12 @@ defmodule Lux.Integration.AgentChatTest do
 
     test "can chat with the agent", %{pid: pid} do
       {:ok, response} =
-        NewRunner.chat(pid, "Can you help me understand quantum entanglement?", [], @timeout)
+        NewRunner.chat(pid, "Can you define petricor?", [], @timeout)
 
       assert is_binary(response)
       assert String.length(response) > 0
-      # The response should be relevant to quantum entanglement
-      assert response =~ ~r/quantum|entanglement|particle|physics/i
+      # The response should be relevant to petrology
+      assert response =~ ~r/minerals|smell|rain/i
     end
 
     test "handles chat errors gracefully", %{agent: agent} do

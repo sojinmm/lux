@@ -43,20 +43,34 @@ defmodule Lux.Agent do
 
   @callback handle_signal(t(), Lux.Signal.t()) :: {:ok, term()} | :ignore | {:error, term()}
 
+  @callback new(attrs :: map()) :: t()
+
   defmacro __using__(_opts) do
     quote do
       @behaviour Lux.Agent
+
+      @default_values %{
+        module: __MODULE__
+      }
+
       @impl true
-      def handle_signal(_agent, _signal) do
+      def new(attrs) do
+        @default_values
+        |> Map.merge(attrs)
+        |> Lux.Agent.new()
+      end
+
+      @impl true
+      def chat(agent, message, opts \\ []) do
+        Lux.Agent.chat(agent, message, opts)
+      end
+
+      @impl true
+      def handle_signal(agent, signal) do
         :ignore
       end
 
-      @impl true
-      def chat(agent, message, _opts) do
-        {:error, :not_implemented}
-      end
-
-      defoverridable chat: 3, handle_signal: 2
+      defoverridable new: 1, chat: 3, handle_signal: 2
     end
   end
 
@@ -88,12 +102,12 @@ defmodule Lux.Agent do
     apply(agent, :handle_signal, [agent, signal])
   end
 
-  @doc """
-  Sends a chat message to the agent and returns its response.
-  """
-  def chat(%__MODULE__{module: module} = agent, message, opts \\ []) when is_atom(module) do
-    apply(module, :chat, [agent, message, opts])
-  end
+  # @doc """
+  # Sends a chat message to the agent and returns its response.
+  # """
+  # def chat(%__MODULE__{module: module} = agent, message, opts \\ []) when is_atom(module) do
+  #   apply(module, :chat, [agent, message, opts])
+  # end
 
   def chat(agent, message, _opts) do
     case LLM.call(message, [], agent.llm_config) do

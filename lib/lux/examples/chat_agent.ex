@@ -7,14 +7,15 @@ defmodule Lux.Examples.ChatAgent do
   alias Lux.LLM.OpenAI
   alias Lux.LLM.OpenAI.Config, as: LLMConfig
 
-  def new(opts \\ []) do
+  @impl true
+  def new(opts) do
     Lux.Agent.new(%{
       name: opts[:name] || "Chat Assistant",
       description:
         opts[:description] || "A helpful chat assistant that can engage in conversations",
       goal:
         opts[:goal] ||
-          "Help users by engaging in meaningful conversations and providing assistance",
+          "Help users by engaging in meaningful conversations and providing assistance. You keep your responses short and concise.",
       module: __MODULE__,
       llm_config: %LLMConfig{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
