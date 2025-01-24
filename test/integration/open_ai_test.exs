@@ -138,7 +138,6 @@ defmodule Lux.LLM.Integration.OpenAI do
         }
 
       def handler(%{value: value, algo: algo}, _ctx) do
-        dbg()
         {:ok, %{hash: algo <> "_hashed_" <> value}}
       end
 
@@ -165,7 +164,11 @@ defmodule Lux.LLM.Integration.OpenAI do
       def steps do
         sequence do
           step(:just_do_nothing, LoggingPrism, [:input])
-          step(:hash, HashPrism, %{value: [:steps, :just_do_nothing, :result, "to_hash"], algo: [:input, "algorithm"]})
+
+          step(:hash, HashPrism, %{
+            value: [:steps, :just_do_nothing, :result, "to_hash"],
+            algo: [:input, "algorithm"]
+          })
         end
       end
     end

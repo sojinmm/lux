@@ -243,6 +243,9 @@ defmodule Lux.LLM.OpenAI do
     tool_calls
     |> Enum.map(&execute_tool_call/1)
     |> Enum.reduce({:ok, []}, fn
+      {:ok, result, _log}, {:ok, results} ->
+        {:ok, [result | results]}
+
       {:ok, result}, {:ok, results} ->
         {:ok, [result | results]}
 
