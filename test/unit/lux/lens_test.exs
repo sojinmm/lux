@@ -9,38 +9,35 @@ defmodule Lux.LensTest do
 
   describe "new" do
     test "creates a new lens from a map" do
-      assert Lux.Lens.new(
+      assert %Lens{
                url: "https://weatherapi.com",
                method: :get,
                params: %{id: 1},
-               name: "weather"
-             ) ==
-               %Lens{
+               name: "weather",
+               headers: [],
+               auth: nil,
+               description: "",
+               schema: %{}
+             } =
+               Lux.Lens.new(
                  url: "https://weatherapi.com",
                  method: :get,
                  params: %{id: 1},
-                 name: "weather",
-                 headers: [],
-                 auth: nil,
-                 description: "",
-                 after_focus: nil,
-                 schema: %{}
-               }
+                 name: "weather"
+               )
     end
 
     test "creates a new lens from a list" do
-      assert Lens.new(url: "https://weatherapi.com", method: :get, params: %{id: 1}) ==
-               %Lens{
-                 url: "https://weatherapi.com",
-                 method: :get,
-                 params: %{id: 1},
-                 name: "",
-                 headers: [],
-                 auth: nil,
-                 description: "",
-                 after_focus: nil,
-                 schema: %{}
-               }
+      assert %Lens{
+               url: "https://weatherapi.com",
+               method: :get,
+               params: %{id: 1},
+               name: "",
+               headers: [],
+               auth: nil,
+               description: "",
+               schema: %{}
+             } = Lens.new(url: "https://weatherapi.com", method: :get, params: %{id: 1})
     end
   end
 
