@@ -290,7 +290,7 @@ defmodule Lux.Beam do
   defmacro step(id, module, params, opts \\ []) do
     quote do
       %{
-        id: to_string(unquote(id)),
+        id: unquote(id),
         module: unquote(module),
         params: unquote(params),
         opts:

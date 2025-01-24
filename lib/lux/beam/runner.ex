@@ -6,14 +6,14 @@ defmodule Lux.Beam.Runner do
 
   def run(beam, input, opts \\ []) do
     with :ok <- validate_input(beam, input) do
-      initial_context = %{input: input}
+      initial_context = %{input: input, steps: %{}, step_index: 0}
       steps = Lux.Beam.steps(beam)
 
       case execute_steps(steps, initial_context) do
         {:ok, context} ->
-          output = get_last_step_output(context)
-          log = generate_execution_log(beam, context, opts[:specter], output)
-          {:ok, output.result, log}
+          last_step = get_last_step(context)
+          log = generate_execution_log(beam, context, opts[:specter], last_step)
+          {:ok, last_step.result, log}
 
         {:error, error, context} ->
           log = generate_execution_log(beam, context, opts[:specter], nil)
@@ -35,7 +35,7 @@ defmodule Lux.Beam.Runner do
     |> List.flatten()
     |> Enum.reduce_while({:ok, context}, fn
       step, {:ok, acc_context} ->
-        case execute_step(step, acc_context) do
+        case execute_steps(step, acc_context) do
           {:ok, new_context} -> {:cont, {:ok, new_context}}
           error -> {:halt, error}
         end
@@ -43,25 +43,51 @@ defmodule Lux.Beam.Runner do
   end
 
   defp execute_steps({:parallel, steps}, context) do
-    steps
-    |> Task.async_stream(
-      fn step -> execute_step(step, context) end,
-      ordered: false,
-      on_timeout: :kill_task
-    )
-    |> Enum.reduce_while({:ok, context}, fn
-      {:ok, {:ok, step_context}}, {:ok, acc_context} ->
-        # Merge contexts in order they complete
-        merged_context = Map.merge(acc_context, step_context)
-        {:cont, {:ok, merged_context}}
+    base_index = context.step_index
 
-      {:ok, {:error, error, step_context}}, _acc ->
-        {:halt, {:error, error, step_context}}
+    # Use Task.async_stream with ordered: true to maintain execution order
+    results =
+      steps
+      |> List.flatten()
+      |> Enum.with_index()
+      |> Task.async_stream(
+        fn {step, idx} ->
+          # Each parallel step gets its own sequential index
+          step_context = %{context | step_index: base_index + idx}
+          execute_steps(step, step_context)
+        end,
+        # This ensures we process results in order
+        ordered: true,
+        on_timeout: :kill_task
+      )
+      |> Enum.reduce_while([], fn
+        {:ok, {:ok, step_context}}, acc ->
+          {:cont, [step_context | acc]}
 
-      # Skip crashed tasks
-      {:exit, _}, acc ->
-        {:cont, acc}
-    end)
+        {:ok, {:error, error, step_context}}, _acc ->
+          {:halt, {:error, error, step_context}}
+
+        {:exit, _}, acc ->
+          {:cont, acc}
+      end)
+
+    case results do
+      {:error, error, step_context} ->
+        {:error, error, step_context}
+
+      contexts when is_list(contexts) ->
+        # Merge results in reverse order since we accumulated them that way
+        merged_context =
+          contexts
+          |> Enum.reverse()
+          |> Enum.reduce(context, fn step_context, acc ->
+            update_in(acc, [:steps], &Map.merge(&1, step_context.steps))
+          end)
+
+        # Update final step index
+        final_index = base_index + length(contexts)
+        {:ok, %{merged_context | step_index: final_index}}
+    end
   end
 
   defp execute_steps({:branch, condition, branches}, context) do
@@ -77,11 +103,15 @@ defmodule Lux.Beam.Runner do
         execute_steps({:sequence, steps}, context)
 
       {_condition, step} ->
-        execute_step(step, context)
+        execute_steps(step, context)
 
       nil ->
         {:error, :no_matching_branch, context}
     end
+  end
+
+  defp execute_steps(%{id: _id, module: _module, params: _params, opts: _opts} = step, context) do
+    execute_step(step, context)
   end
 
   defp execute_steps(step, context) when not is_nil(step) do
@@ -90,22 +120,64 @@ defmodule Lux.Beam.Runner do
 
   defp execute_step(%{id: id, module: module, params: params, opts: opts}, context) do
     resolved_params = resolve_params(params, context)
+    started_at = DateTime.utc_now()
+    step_index = context.step_index
 
     try do
       case apply(module, :handler, [resolved_params, context]) do
         {:ok, result} ->
-          {:ok, Map.put(context, id, %{input: resolved_params, result: result})}
+          step_result = %{
+            input: resolved_params,
+            result: result,
+            status: :completed,
+            started_at: started_at,
+            completed_at: DateTime.utc_now(),
+            error: nil,
+            step_index: step_index
+          }
+
+          {:ok,
+           context
+           |> put_in([:steps, id], step_result)
+           |> Map.put(:step_index, step_index + 1)}
 
         {:error, error} ->
-          handle_step_error(id, module, resolved_params, opts, error, context)
+          handle_step_error(
+            id,
+            module,
+            resolved_params,
+            opts,
+            error,
+            context,
+            started_at,
+            step_index
+          )
       end
     rescue
       error ->
-        handle_step_error(id, module, resolved_params, opts, error, context)
+        handle_step_error(
+          id,
+          module,
+          resolved_params,
+          opts,
+          error,
+          context,
+          started_at,
+          step_index
+        )
     end
   end
 
-  defp handle_step_error(id, module, params, %{retries: retries} = opts, _error, context)
+  defp handle_step_error(
+         id,
+         module,
+         params,
+         %{retries: retries} = opts,
+         _error,
+         context,
+         _started_at,
+         _step_index
+       )
        when retries > 0 do
     Process.sleep(opts.retry_backoff)
 
@@ -120,18 +192,67 @@ defmodule Lux.Beam.Runner do
     )
   end
 
-  defp handle_step_error(id, _module, params, %{fallback: fallback} = _opts, error, context)
+  defp handle_step_error(
+         id,
+         _module,
+         params,
+         %{fallback: fallback} = _opts,
+         error,
+         context,
+         started_at,
+         step_index
+       )
        when not is_nil(fallback) do
     case apply_fallback(fallback, %{error: error, context: context}) do
       {:continue, result} ->
-        {:ok, Map.put(context, id, %{input: params, result: result})}
+        step_result = %{
+          input: params,
+          result: result,
+          status: :completed,
+          started_at: started_at,
+          completed_at: DateTime.utc_now(),
+          error: nil,
+          step_index: step_index
+        }
+
+        {:ok,
+         context
+         |> put_in([:steps, id], step_result)
+         |> Map.put(:step_index, step_index + 1)}
+
       {:stop, result} ->
-        {:error, result, context}
+        step_result = %{
+          input: params,
+          result: nil,
+          status: :failed,
+          started_at: started_at,
+          completed_at: DateTime.utc_now(),
+          error: result,
+          step_index: step_index
+        }
+
+        {:error, result,
+         context
+         |> put_in([:steps, id], step_result)
+         |> Map.put(:step_index, step_index + 1)}
     end
   end
 
-  defp handle_step_error(_id, _module, _params, _opts, error, context) do
-    {:error, error, context}
+  defp handle_step_error(id, _module, params, _opts, error, context, started_at, step_index) do
+    step_result = %{
+      input: params,
+      result: nil,
+      status: :failed,
+      started_at: started_at,
+      completed_at: DateTime.utc_now(),
+      error: error,
+      step_index: step_index
+    }
+
+    {:error, error,
+     context
+     |> put_in([:steps, id], step_result)
+     |> Map.put(:step_index, step_index + 1)}
   end
 
   defp apply_fallback(fallback, params) when is_function(fallback, 1) do
@@ -166,48 +287,46 @@ defmodule Lux.Beam.Runner do
   # Handle all other values as literals
   defp resolve_value(value, _context), do: value
 
-  defp get_last_step_output(context) do
-    context
-    |> Map.delete(:input)
-    |> dbg()
-    |> Enum.sort_by(fn {key, _} ->
-      case Integer.parse(to_string(key)) do
-        {num, _} -> num
-        _ -> key
-      end
-    end)
-    |> List.last()
+  defp get_last_step(context) do
+    context.steps
+    |> Enum.sort_by(fn {_key, step} -> step.step_index end, :desc)
+    |> List.first()
     |> elem(1)
   end
 
-  defp generate_execution_log(beam, context, specter, output) do
-    case beam.generate_execution_log do
-      true ->
-        %{
-          beam_id: beam.id,
-          started_by: specter || "system",
-          started_at: DateTime.utc_now(),
-          completed_at: DateTime.utc_now(),
-          status: if(output, do: :completed, else: :failed),
-          input: context.input,
-          output: output,
-          steps: context
-                 |> Map.delete(:input)
-                 |> Enum.map(fn {id, %{input: input, result: result}} ->
-                   %{
-                     id: id,
-                     status: :completed,
-                     started_at: DateTime.utc_now(),
-                     completed_at: DateTime.utc_now(),
-                     input: input,
-                     output: result,
-                     error: nil
-                   }
-                 end)
-        }
+  defp generate_execution_log(beam, context, specter, last_step) do
+    if beam.generate_execution_log do
+      # Get ordered steps to find first and last timestamps
+      ordered_steps =
+        context.steps
+        |> Enum.sort_by(fn {_id, step} -> step.step_index end)
+        |> Enum.map(fn {id, step_data} ->
+          %{
+            id: id,
+            status: step_data.status,
+            started_at: step_data.started_at,
+            completed_at: step_data.completed_at,
+            input: step_data.input,
+            output: step_data.result,
+            error: step_data.error,
+            step_index: step_data.step_index
+          }
+        end)
 
-      false ->
-        nil
+      first_step = List.first(ordered_steps)
+      last_executed_step = List.last(ordered_steps)
+
+      %{
+        beam_id: beam.id,
+        started_by: specter || "system",
+        started_at: (first_step && first_step.started_at) || DateTime.utc_now(),
+        completed_at:
+          (last_executed_step && last_executed_step.completed_at) || DateTime.utc_now(),
+        status: if(last_step && last_step.status == :completed, do: :completed, else: :failed),
+        input: context.input,
+        output: last_step && last_step.result,
+        steps: ordered_steps
+      }
     end
   end
 end
