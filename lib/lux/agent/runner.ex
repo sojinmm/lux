@@ -36,6 +36,10 @@ defmodule Lux.Agent.Runner do
     GenServer.cast(pid, :learn)
   end
 
+  def chat(pid, message, opts \\ []) do
+    GenServer.call(pid, {:chat, message, opts})
+  end
+
   # Server Callbacks
 
   @impl true
@@ -77,6 +81,16 @@ defmodule Lux.Agent.Runner do
     case Lux.Agent.unschedule_beam(agent, beam_module) do
       {:ok, updated_agent} ->
         {:reply, :ok, %{state | agent: updated_agent}}
+    end
+  end
+
+  def handle_call({:chat, message, opts}, _from, %{agent: agent} = state) do
+    case Lux.Agent.chat(agent, message, opts) do
+      {:ok, response} ->
+        {:reply, {:ok, response}, state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 

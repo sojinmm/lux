@@ -14,6 +14,7 @@ defmodule Lux.Agent do
           name: String.t(),
           description: String.t(),
           goal: String.t(),
+          module: module(),
           prisms: [Lux.Prism.t()],
           beams: [Lux.Beam.t()],
           lenses: [Lux.Lens.t()],
@@ -40,6 +41,7 @@ defmodule Lux.Agent do
             name: "",
             description: "",
             goal: "",
+            module: nil,
             prisms: [],
             beams: [],
             lenses: [],
@@ -73,6 +75,9 @@ defmodule Lux.Agent do
             when action: {module(), map()}
 
   @callback learn(t(), capability :: term()) :: {:ok, t()} | {:error, term()}
+
+  @callback chat(t(), message :: String.t(), opts :: keyword()) ::
+              {:ok, String.t()} | {:error, term()}
 
   @doc """
   Performs a reflection cycle for the agent.
@@ -156,7 +161,12 @@ defmodule Lux.Agent do
         {:ok, agent}
       end
 
-      defoverridable reflect: 2, handle_signal: 2, learn: 2
+      @impl true
+      def chat(agent, message, _opts) do
+        {:error, :not_implemented}
+      end
+
+      defoverridable reflect: 2, handle_signal: 2, learn: 2, chat: 3
     end
   end
 
@@ -178,6 +188,7 @@ defmodule Lux.Agent do
       name: Map.get(attrs, :name, "Anonymous Agent"),
       description: Map.get(attrs, :description, ""),
       goal: Map.get(attrs, :goal, ""),
+      module: Map.get(attrs, :module, __MODULE__),
       llm_config: llm_config,
       prisms: Map.get(attrs, :prisms, []),
       beams: Map.get(attrs, :beams, []),
@@ -295,5 +306,12 @@ defmodule Lux.Agent do
 
   def handle_signal(agent, signal) do
     apply(agent, :handle_signal, [agent, signal])
+  end
+
+  @doc """
+  Sends a chat message to the agent and returns its response.
+  """
+  def chat(%__MODULE__{module: module} = agent, message, opts \\ []) when is_atom(module) do
+    apply(module, :chat, [agent, message, opts])
   end
 end
