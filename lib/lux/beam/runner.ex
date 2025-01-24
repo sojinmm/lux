@@ -259,10 +259,6 @@ defmodule Lux.Beam.Runner do
     fallback.(params)
   end
 
-  defp apply_fallback({fallback_module, function}, params) when is_list(fallback_module) do
-    apply(fallback_module, function, [params])
-  end
-
   defp apply_fallback(fallback, params) when is_atom(fallback) do
     apply(fallback, :handle_error, [params])
   end

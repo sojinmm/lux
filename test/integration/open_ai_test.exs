@@ -93,21 +93,20 @@ defmodule Lux.LLM.Integration.OpenAI do
   end
 
   describe "Requests with prisms and beams (tool calling)" do
-    defmodule JustDoNothingPrism do
+    defmodule LoggingPrism do
       @moduledoc false
       use Lux.Prism,
         name: "#{__MODULE__}",
         id: __MODULE__,
-        description: "Use this to print the input",
+        description: "Use this to print the input to the console",
         # enum that can be either success or failure
-        input_schema: %{type: "string", enum: ["success", "failure"]}
+        input_schema: %{type: "string"}
 
-      def handler("failure", _ctx) do
-        {:error, "failure_example"}
-      end
+      require Logger
 
-      def handler(_input, _ctx) do
-        {:ok, "success_example"}
+      def handler(input, _ctx) do
+        Logger.info("LoggingPrism: #{inspect(input)}")
+        {:ok, input}
       end
     end
 
@@ -121,7 +120,7 @@ defmodule Lux.LLM.Integration.OpenAI do
           type: "object",
           properties: %{
             value: %{type: "string", description: "The string to hash"},
-            algorithm: %{
+            hashing_algorithm: %{
               type: "string",
               enum: ["sha256", "sha512"],
               description: "The hashing algorithm to use",
@@ -138,8 +137,13 @@ defmodule Lux.LLM.Integration.OpenAI do
           required: ["hash"]
         }
 
-      def handler(input, _ctx) do
-        {:ok, %{hash: input["algorithm"] <> "_hashed_" <> input["value"]}}
+      def handler(%{value: value, algo: algo}, _ctx) do
+        dbg()
+        {:ok, %{hash: algo <> "_hashed_" <> value}}
+      end
+
+      def handler(%{"hashing_algorithm" => "sha256", "value" => "test"}, _) do
+        {:ok, %{hash: "oooook"}}
       end
     end
 
@@ -148,20 +152,20 @@ defmodule Lux.LLM.Integration.OpenAI do
       use Lux.Beam,
         name: "#{__MODULE__}",
         id: TestBeam,
-        description: "Use this when the user wants to test Beams",
+        description: "Use this when the user wants to hash a string",
         input_schema: %{
           type: "object",
           properties: %{
             to_hash: %{type: "string"},
-            nothing_input: %{type: "string", enum: ["success", "failure"]}
+            algorithm: %{type: "string", enum: ["sha256"]}
           },
-          required: ["to_hash"]
+          required: ["to_hash", "algorithm"]
         }
 
       def steps do
         sequence do
-          step(:just_do_nothing, JustDoNothingPrism, %{input: :nothing_input})
-          step(:hash, HashPrism, %{value: :to_hash})
+          step(:just_do_nothing, LoggingPrism, [:input])
+          step(:hash, HashPrism, %{value: [:steps, :just_do_nothing, :result, "to_hash"], algo: [:input, "algorithm"]})
         end
       end
     end
@@ -185,7 +189,7 @@ defmodule Lux.LLM.Integration.OpenAI do
                       }
                     }
                   ],
-                  tool_calls_results: [%{hash: "sha256_hashed_test"}],
+                  tool_calls_results: [%{hash: "oooook"}],
                   finish_reason: "tool_calls"
                 },
                 schema_id: ResponseSignal
@@ -216,11 +220,11 @@ defmodule Lux.LLM.Integration.OpenAI do
                       }
                     }
                   ],
-                  tool_calls_results: [%{hash: "sha256_hashed_test"}],
+                  tool_calls_results: [%{hash: "sha256_hashed_SPECTRAL"}],
                   finish_reason: "tool_calls"
                 },
                 schema_id: ResponseSignal
-              }} = OpenAI.call("Could you help me to test the beam?", [TestBeam], config)
+              }} = OpenAI.call("Could you help me to hash the word SPECTRAL?", [TestBeam], config)
     end
   end
 end
