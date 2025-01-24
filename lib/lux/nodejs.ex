@@ -25,8 +25,8 @@ defmodule Lux.NodeJS do
   @type eval_options :: [eval_option()]
 
   @type import_result :: %{
-    required(String.t()) => boolean() | String.t()
-  }
+          required(String.t()) => boolean() | String.t()
+        }
 
   @module_path Application.app_dir(:lux, "priv/node")
 
