@@ -5,6 +5,7 @@ defmodule Lux.Agent do
   """
 
   alias Lux.LLM
+  alias Lux.LLM.OpenAI.Config
 
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
@@ -49,25 +50,51 @@ defmodule Lux.Agent do
     quote do
       @behaviour Lux.Agent
 
+      use GenServer
+
       @default_values %{
         module: __MODULE__
       }
 
-      @impl true
+      @impl Lux.Agent
       def new(attrs) do
         @default_values
         |> Map.merge(attrs)
         |> Lux.Agent.new()
       end
 
-      @impl true
+      @impl Lux.Agent
       def chat(agent, message, opts \\ []) do
         Lux.Agent.chat(agent, message, opts)
       end
 
-      @impl true
+      @impl Lux.Agent
       def handle_signal(agent, signal) do
         :ignore
+      end
+
+      # GenServer Client API
+      def start_link(attrs \\ %{}) do
+        agent = new(attrs)
+        GenServer.start_link(__MODULE__, agent)
+      end
+
+      def send_message(pid, message, opts \\ []) do
+        GenServer.call(pid, {:chat, message, opts})
+      end
+
+      # GenServer Callbacks
+      @impl GenServer
+      def init(agent) do
+        {:ok, agent}
+      end
+
+      @impl GenServer
+      def handle_call({:chat, message, opts}, _from, agent) do
+        case chat(agent, message, opts) do
+          {:ok, response} = ok -> {:reply, ok, agent}
+          {:error, _reason} = error -> {:reply, error, agent}
+        end
       end
 
       defoverridable new: 1, chat: 3, handle_signal: 2
@@ -84,7 +111,13 @@ defmodule Lux.Agent do
       description: Map.get(attrs, :description, ""),
       goal: Map.get(attrs, :goal, ""),
       module: Map.get(attrs, :module, __MODULE__),
-      llm_config: Map.get(attrs, :llm_config, %{}),
+      llm_config:
+        attrs
+        |> Map.get(:llm_config, %{})
+        |> then(fn
+          %Config{} = config -> config
+          config -> struct(Config, config)
+        end),
       prisms: Map.get(attrs, :prisms, []),
       beams: Map.get(attrs, :beams, []),
       lenses: Map.get(attrs, :lenses, []),
@@ -96,21 +129,12 @@ defmodule Lux.Agent do
     attrs |> Map.new() |> new()
   end
 
-  # Private helpers
-
   def handle_signal(agent, signal) do
-    apply(agent, :handle_signal, [agent, signal])
+    apply(agent.module, :handle_signal, [agent, signal])
   end
 
-  # @doc """
-  # Sends a chat message to the agent and returns its response.
-  # """
-  # def chat(%__MODULE__{module: module} = agent, message, opts \\ []) when is_atom(module) do
-  #   apply(module, :chat, [agent, message, opts])
-  # end
-
   def chat(agent, message, _opts) do
-    case LLM.call(message, [], agent.llm_config) do
+    case LLM.call(message, agent.beams ++ agent.prisms, agent.llm_config) do
       {:ok, %{payload: %{content: content}}} when is_map(content) ->
         # If content is a map, convert it to a string representation
         {:ok, format_content(content)}
@@ -126,6 +150,9 @@ defmodule Lux.Agent do
 
       {:ok, %Req.Response{body: %{"error" => error}}} ->
         {:error, error["message"] || "Unknown error"}
+
+      {:ok, %Lux.Signal{} = signal} ->
+        {:ok, signal}
 
       unexpected ->
         {:error, {:unexpected_response, unexpected}}
