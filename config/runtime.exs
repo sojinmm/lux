@@ -20,5 +20,5 @@ if config_env() in [:dev, :test] do
     transpose: env!("TRANSPOSE_API_KEY", :string!),
     integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!, required: false),
     integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!, required: false),
-    integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, required: false)  # Use regular key for integration tests
+    integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, required: false)
 end

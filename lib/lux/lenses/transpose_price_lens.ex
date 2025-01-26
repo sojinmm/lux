@@ -24,7 +24,6 @@ defmodule Lux.Lenses.TransposePriceLens do
   ```
   """
 
-  # Define the auth function before using it
   def add_api_key(lens) do
     %{lens | headers: lens.headers ++ [{"X-API-KEY", Lux.Config.transpose_api_key()}]}
   end
