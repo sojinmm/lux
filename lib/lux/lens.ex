@@ -100,17 +100,21 @@ defmodule Lux.Lens do
       """
       def focus(input \\ %{}, opts \\ []) do
         __MODULE__.view()
-        |> Map.update!(:params, &Map.merge(&1, input))
+        |> Map.update!(:params, fn params ->
+          params
+          |> Map.merge(input)
+          |> before_focus()
+        end)
         |> Lux.Lens.authenticate()
         |> Lux.Lens.focus(opts)
       end
 
       def after_focus(body), do: {:ok, body}
+      def before_focus(params), do: params
 
-      defoverridable after_focus: 1
+      defoverridable after_focus: 1, before_focus: 1
     end
   end
-
   @callback after_focus(response :: any()) :: {:ok, any()} | {:error, any()}
 
   def new(attrs) when is_map(attrs) do
