@@ -115,6 +115,7 @@ defmodule Lux.Lens do
       defoverridable after_focus: 1, before_focus: 1
     end
   end
+
   @callback after_focus(response :: any()) :: {:ok, any()} | {:error, any()}
 
   def new(attrs) when is_map(attrs) do

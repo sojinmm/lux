@@ -24,10 +24,6 @@ defmodule Lux.Lenses.TransposePriceLens do
   ```
   """
 
-  def add_api_key(lens) do
-    %{lens | headers: lens.headers ++ [{"X-API-KEY", Lux.Config.transpose_api_key()}]}
-  end
-
   use Lux.Lens,
     name: "Transpose Token Price API",
     description: "Fetches historical token prices from Transpose",
@@ -73,6 +69,10 @@ defmodule Lux.Lenses.TransposePriceLens do
       required: ["token_addresses", "timestamp"]
     }
 
+  def add_api_key(lens) do
+    %{lens | headers: lens.headers ++ [{"X-API-KEY", Lux.Config.transpose_api_key()}]}
+  end
+
   def before_focus(params) do
     # Convert token_addresses array to comma-separated string
     Map.update!(params, :token_addresses, &Enum.join(&1, ","))
@@ -91,15 +91,16 @@ defmodule Lux.Lenses.TransposePriceLens do
   """
   @impl true
   def after_focus(%{"status" => "success", "results" => prices}) do
-    transformed_prices = Enum.map(prices, fn price ->
-      %{
-        price: price["price"],
-        token_address: price["token_address"],
-        token_symbol: price["token_symbol"],
-        timestamp: price["timestamp"],
-        block_number: price["block_number"]
-      }
-    end)
+    transformed_prices =
+      Enum.map(prices, fn price ->
+        %{
+          price: price["price"],
+          token_address: price["token_address"],
+          token_symbol: price["token_symbol"],
+          timestamp: price["timestamp"],
+          block_number: price["block_number"]
+        }
+      end)
 
     {:ok, %{prices: transformed_prices}}
   end
