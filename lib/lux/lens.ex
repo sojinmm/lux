@@ -100,12 +100,9 @@ defmodule Lux.Lens do
       """
       def focus(input \\ %{}, opts \\ []) do
         __MODULE__.view()
-        |> Map.update!(:params, fn params ->
-          params
-          |> Map.merge(input)
-          |> before_focus()
-        end)
+        |> Map.update!(:params, &Map.merge(&1, input))
         |> Lux.Lens.authenticate()
+        |> Map.update!(:params, &before_focus(&1))
         |> Lux.Lens.focus(opts)
       end
 
