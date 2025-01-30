@@ -223,6 +223,7 @@ defmodule MyApp.Prisms.RiskAssessment do
     }}
   end
 end
+```
 [Learn more about Prisms](guides/prisms.md)
 
 ### 4. Beams 🌟
