@@ -26,6 +26,7 @@ defmodule Lux.Memory do
   end
 
   @type memory_entry :: %{
+          id: integer(),
           content: term(),
           type: memory_type(),
           timestamp: integer(),
