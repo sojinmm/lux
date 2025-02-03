@@ -9,6 +9,10 @@ defmodule Lux.Agent do
 
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
+  @type memory_config :: %{
+          backend: module(),
+          name: atom() | nil
+        }
 
   @type t :: %__MODULE__{
           id: String.t(),
@@ -20,7 +24,9 @@ defmodule Lux.Agent do
           beams: [Lux.Beam.t()],
           lenses: [Lux.Lens.t()],
           accepts_signals: [Lux.SignalSchema.t()],
-          llm_config: map()
+          llm_config: map(),
+          memory_config: memory_config() | nil,
+          memory_pid: pid() | nil
         }
 
   defstruct id: nil,
@@ -32,6 +38,8 @@ defmodule Lux.Agent do
             beams: [],
             lenses: [],
             accepts_signals: [],
+            memory_config: nil,
+            memory_pid: nil,
             llm_config: %{
               provider: :openai,
               model: "gpt-4",
@@ -86,6 +94,17 @@ defmodule Lux.Agent do
       # GenServer Callbacks
       @impl GenServer
       def init(agent) do
+        # Initialize memory if configured
+        agent =
+          case agent.memory_config do
+            %{backend: backend} = config when not is_nil(backend) ->
+              {:ok, pid} = backend.initialize(name: config[:name])
+              %{agent | memory_pid: pid}
+
+            _ ->
+              agent
+          end
+
         {:ok, agent}
       end
 
@@ -95,6 +114,16 @@ defmodule Lux.Agent do
           {:ok, response} = ok -> {:reply, ok, agent}
           {:error, _reason} = error -> {:reply, error, agent}
         end
+      end
+
+      @impl GenServer
+      def terminate(_reason, agent) do
+        # Cleanup memory if it exists
+        if agent.memory_pid do
+          Process.exit(agent.memory_pid, :normal)
+        end
+
+        :ok
       end
 
       defoverridable new: 1, chat: 3, handle_signal: 2
@@ -111,6 +140,8 @@ defmodule Lux.Agent do
       description: Map.get(attrs, :description, ""),
       goal: Map.get(attrs, :goal, ""),
       module: Map.get(attrs, :module, __MODULE__),
+      memory_config: Map.get(attrs, :memory_config),
+      memory_pid: nil,
       llm_config:
         attrs
         |> Map.get(:llm_config, %{})

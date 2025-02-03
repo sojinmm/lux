@@ -3,8 +3,9 @@ defmodule Lux.Memory.SimpleMemory do
   A simple memory implementation using GenServer and ETS.
   Provides efficient chronological storage and retrieval of memory entries.
   """
-  use GenServer
   @behaviour Lux.Memory
+
+  use GenServer
 
   defstruct [:name, :table, counter: 0]
 
@@ -41,16 +42,18 @@ defmodule Lux.Memory.SimpleMemory do
   @impl GenServer
   def init(opts) do
     # Create ETS table with ordered_set for chronological ordering
-    table_name = case opts[:name] do
-      nil -> :ets.new(__MODULE__, [:ordered_set, :protected])
-      name -> :ets.new(name, [:ordered_set, :protected, :named_table])
-    end
+    table_name =
+      case opts[:name] do
+        nil -> :ets.new(__MODULE__, [:ordered_set, :protected])
+        name -> :ets.new(name, [:ordered_set, :protected, :named_table])
+      end
 
-    {:ok, %__MODULE__{
-      name: opts[:name],
-      table: table_name,
-      counter: 0
-    }}
+    {:ok,
+     %__MODULE__{
+       name: opts[:name],
+       table: table_name,
+       counter: 0
+     }}
   end
 
   @impl GenServer
@@ -73,18 +76,21 @@ defmodule Lux.Memory.SimpleMemory do
   end
 
   def handle_call({:recent, n}, _from, state) do
-    result = case :ets.select_reverse(
-      state.table,
-      [{
-        {{:"$1", :"$2"}, :"$3"},
-        [],
-        [:"$3"]
-      }],
-      n
-    ) do
-      :"$end_of_table" -> []
-      {entries, _continuation} -> entries
-    end
+    result =
+      case :ets.select_reverse(
+             state.table,
+             [
+               {
+                 {{:"$1", :"$2"}, :"$3"},
+                 [],
+                 [:"$3"]
+               }
+             ],
+             n
+           ) do
+        :"$end_of_table" -> []
+        {entries, _continuation} -> entries
+      end
 
     {:reply, {:ok, result}, state}
   end
@@ -93,13 +99,14 @@ defmodule Lux.Memory.SimpleMemory do
     start_ts = DateTime.to_unix(start_time)
     end_ts = DateTime.to_unix(end_time)
 
-    result = :ets.select(state.table, [
-      {
-        {{:"$1", :_}, :"$2"},
-        [{:>=, :"$1", start_ts}, {:"=<", :"$1", end_ts}],
-        [:"$2"]
-      }
-    ])
+    result =
+      :ets.select(state.table, [
+        {
+          {{:"$1", :_}, :"$2"},
+          [{:>=, :"$1", start_ts}, {:"=<", :"$1", end_ts}],
+          [:"$2"]
+        }
+      ])
 
     {:reply, {:ok, result}, state}
   end

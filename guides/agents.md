@@ -9,6 +9,7 @@ An Agent consists of:
 - Name and description
 - Goal or purpose
 - LLM configuration
+- Memory configuration (optional)
 - Optional components (Prisms, Beams, Lenses)
 - Signal handling capabilities
 
@@ -38,25 +39,66 @@ end
 
 ## Agent Configuration
 
+### Memory Configuration
+Agents can be configured with memory to maintain state and recall previous interactions:
+
+```elixir
+defmodule MyApp.Agents.MemoryAgent do
+  use Lux.Agent
+
+  @impl true
+  def new(opts \\ %{}) do
+    Lux.Agent.new(%{
+      name: "Memory-Enabled Assistant",
+      description: "An assistant that remembers past interactions",
+      goal: "Help users while maintaining context of conversations",
+      memory_config: %{
+        backend: Lux.Memory.SimpleMemory,
+        name: :memory_agent_store
+      },
+      llm_config: %{
+        api_key: Application.get_env(:lux, :api_keys)[:openai],
+        model: Application.get_env(:lux, :open_ai_models)[:smartest],
+        temperature: 0.7
+      }
+    })
+  end
+
+  @impl true
+  def chat(agent, message, opts) do
+    # Store the user's message
+    {:ok, _} = Lux.Memory.SimpleMemory.add(
+      agent.memory_pid,
+      message,
+      :interaction,
+      %{role: :user}
+    )
+
+    case super(agent, message, opts) do
+      {:ok, response} = ok ->
+        # Store the assistant's response
+        {:ok, _} = Lux.Memory.SimpleMemory.add(
+          agent.memory_pid,
+          response,
+          :interaction,
+          %{role: :assistant}
+        )
+        ok
+      error -> error
+    end
+  end
+end
+```
+
 ### LLM Configuration
 Control how your agent interacts with language models:
 
 ```elixir
 llm_config: %{
-  # API configuration
   api_key: Application.get_env(:lux, :api_keys)[:openai],
   model: "gpt-4",
-  
-  # Response characteristics
-  temperature: 0.7,        # 0.0-1.0: lower = more focused, higher = more creative         # Maximum response length
-  
-  # System messages for personality
-  messages: [
-    %{
-      role: "system",
-      content: "You are a helpful assistant..."
-    }
-  ]
+  temperature: 0.7,
+  max_tokens: 1000
 }
 ```
 
@@ -178,6 +220,22 @@ Chat with your agent:
 # With structured responses
 {:ok, %Lux.Signal{payload: %{message: content}}} = 
   StructuredAgent.send_message(pid, "Tell me a joke!")
+```
+
+### Working with Memory
+Access an agent's memory:
+
+```elixir
+# Get recent interactions
+{:ok, recent} = Lux.Memory.SimpleMemory.recent(agent.memory_pid, 5)
+
+# Search for specific content
+{:ok, matches} = Lux.Memory.SimpleMemory.search(agent.memory_pid, "specific topic")
+
+# Get interactions within a time window
+start_time = DateTime.utc_now() |> DateTime.add(-3600) # 1 hour ago
+end_time = DateTime.utc_now()
+{:ok, window} = Lux.Memory.SimpleMemory.window(agent.memory_pid, start_time, end_time)
 ```
 
 ## Best Practices

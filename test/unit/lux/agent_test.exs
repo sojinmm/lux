@@ -2,6 +2,7 @@ defmodule Lux.AgentTest do
   use UnitCase, async: true
 
   alias Lux.Agent
+  alias Lux.Memory.SimpleMemory
 
   # Test modules
   defmodule TestPrism do
@@ -36,6 +37,47 @@ defmodule Lux.AgentTest do
       beams: [TestBeam]
   end
 
+  defmodule MemoryAgent do
+    @moduledoc false
+    use Lux.Agent
+
+    def new(_opts \\ %{}) do
+      Agent.new(%{
+        name: "Memory Agent",
+        description: "An agent with memory capabilities",
+        goal: "Remember and use past interactions",
+        memory_config: %{
+          backend: SimpleMemory,
+          name: :test_memory
+        }
+      })
+    end
+
+    # We override the chat functions to store the messages in memory here and do not actually call any LLM...
+    @impl true
+    def chat(agent, message, _opts) do
+      response = "Response to: " <> message
+
+      with {:ok, _} <-
+             SimpleMemory.add(
+               agent.memory_pid,
+               message,
+               :interaction,
+               %{role: :user}
+             ) do
+        {:ok, _} =
+          SimpleMemory.add(
+            agent.memory_pid,
+            response,
+            :interaction,
+            %{role: :assistant}
+          )
+
+        {:ok, response}
+      end
+    end
+  end
+
   describe "new/1" do
     test "creates a new agent with default values" do
       agent = Agent.new(%{})
@@ -46,6 +88,8 @@ defmodule Lux.AgentTest do
       assert agent.prisms == []
       assert agent.beams == []
       assert agent.lenses == []
+      assert agent.memory_config == nil
+      assert agent.memory_pid == nil
     end
 
     test "creates a new agent with custom values" do
@@ -55,7 +99,11 @@ defmodule Lux.AgentTest do
         goal: "Test goal",
         prisms: [TestPrism],
         beams: [TestBeam],
-        llm_config: %{model: "gpt-3.5-turbo"}
+        llm_config: %{model: "gpt-3.5-turbo"},
+        memory_config: %{
+          backend: SimpleMemory,
+          name: :test_memory
+        }
       }
 
       agent = Agent.new(attrs)
@@ -65,6 +113,8 @@ defmodule Lux.AgentTest do
       assert agent.prisms == [TestPrism]
       assert agent.beams == [TestBeam]
       assert agent.llm_config.model == "gpt-3.5-turbo"
+      assert agent.memory_config.backend == SimpleMemory
+      assert agent.memory_config.name == :test_memory
     end
 
     test "can also be called from modules using the __using__ macro" do
@@ -92,6 +142,37 @@ defmodule Lux.AgentTest do
                    max_tokens: 1000
                  }
                })
+    end
+  end
+
+  describe "memory operations" do
+    test "initializes memory on start" do
+      {:ok, pid} = MemoryAgent.start_link()
+      agent = :sys.get_state(pid)
+      assert is_pid(agent.memory_pid)
+    end
+
+    test "stores and retrieves interactions" do
+      {:ok, pid} = MemoryAgent.start_link()
+
+      # Send a message
+      {:ok, response} = MemoryAgent.send_message(pid, "Hello")
+      assert response == "Response to: Hello"
+
+      # Check stored messages
+      agent = :sys.get_state(pid)
+      {:ok, recent} = SimpleMemory.recent(agent.memory_pid, 2)
+
+      assert length(recent) == 2
+      [assistant_msg, user_msg] = recent
+
+      assert assistant_msg.content == "Response to: Hello"
+      assert assistant_msg.type == :interaction
+      assert assistant_msg.metadata.role == :assistant
+
+      assert user_msg.content == "Hello"
+      assert user_msg.type == :interaction
+      assert user_msg.metadata.role == :user
     end
   end
 end
