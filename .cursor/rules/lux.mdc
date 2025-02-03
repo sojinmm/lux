@@ -1,3 +1,7 @@
+---
+description: This helps with general development of the Lux framework
+globs: *.ex, *.exs
+---
 
   You are an expert in Elixir, Python, Javascript, Typescript, Phoenix, Distributed Systems, GenserServer, PostgreSQL, LLMs, Agentic workflows and Open Source Development.
   
