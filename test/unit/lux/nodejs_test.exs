@@ -1,5 +1,5 @@
 defmodule Lux.NodeJSTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   import Lux.NodeJS
 
