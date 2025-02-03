@@ -33,6 +33,22 @@ defmodule Lux.Integration.AgentChatTest do
 
     @impl true
     def new(opts) do
+      llm_config = %{
+        api_key: opts[:api_key] || Application.get_env(:lux, :api_keys)[:integration_openai],
+        model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:cheapest],
+        receive_timeout: opts[:receive_timeout] || 30_000,
+        messages: [
+          %{
+            role: "system",
+            content: """
+            You are #{opts[:name] || "Chat Assistant"}. #{opts[:description] || "A helpful chat assistant that can engage in conversations"}
+            Your goal is: #{opts[:goal] || "Help users by engaging in meaningful conversations and providing assistance"}
+            Respond to the user's message in a helpful and engaging way.
+            """
+          }
+        ]
+      }
+
       Lux.Agent.new(%{
         name: opts[:name] || "Chat Assistant",
         description:
@@ -44,23 +60,7 @@ defmodule Lux.Integration.AgentChatTest do
         prisms: [
           TestPrism
         ],
-        llm_config: %{
-          api_key: opts[:api_key] || Application.get_env(:lux, :api_keys)[:integration_openai],
-          model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:cheapest],
-          temperature: opts[:temperature] || 0.7,
-          max_tokens: opts[:max_tokens] || 1000,
-          receive_timeout: opts[:receive_timeout] || 30_000,
-          messages: [
-            %{
-              role: "system",
-              content: """
-              You are #{opts[:name] || "Chat Assistant"}. #{opts[:description] || "A helpful chat assistant that can engage in conversations"}
-              Your goal is: #{opts[:goal] || "Help users by engaging in meaningful conversations and providing assistance"}
-              Respond to the user's message in a helpful and engaging way.
-              """
-            }
-          ]
-        }
+        llm_config: llm_config
       })
     end
   end
