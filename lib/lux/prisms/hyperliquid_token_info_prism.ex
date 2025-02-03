@@ -60,9 +60,10 @@ defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
     }
 
   import Lux.Python
-  require Lux.Python
 
   alias Lux.Config
+
+  require Lux.Python
 
   def handler(_input, _ctx) do
     with {:ok, private_key} <- get_private_key(),
@@ -84,39 +85,39 @@ defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
   end
 
   defp get_private_key do
-    try do
-      {:ok, Config.hyperliquid_account_key()}
-    rescue
-      RuntimeError -> {:error, :missing_private_key}
-    end
+    {:ok, Config.hyperliquid_account_key()}
+  rescue
+    RuntimeError -> {:error, :missing_private_key}
   end
 
   defp fetch_token_prices(private_key, address) do
-    python variables: %{private_key: private_key, address: address} do
-      ~PY"""
-      from collections import defaultdict
-      from hyperliquid.info import Info
-      from hyperliquid_utils.setup import setup
+    python_result =
+      python variables: %{private_key: private_key, address: address} do
+        ~PY"""
+        from collections import defaultdict
+        from hyperliquid.info import Info
+        from hyperliquid_utils.setup import setup
 
-      def get_token_to_price_mapping(info_obj):
-          token_to_price = defaultdict(float)
+        def get_token_to_price_mapping(info_obj):
+            token_to_price = defaultdict(float)
 
-          token_metadata = info_obj.meta_and_asset_ctxs()
-          token_names, token_price = token_metadata[0], token_metadata[1]
+            token_metadata = info_obj.meta_and_asset_ctxs()
+            token_names, token_price = token_metadata[0], token_metadata[1]
 
-          for idx, token_name in enumerate(token_names["universe"]):
-              token_to_price[token_name["name"]] = token_price[idx]
-              token_to_price[token_name["name"]]["szDecimals"] = token_name["szDecimals"]
+            for idx, token_name in enumerate(token_names["universe"]):
+                token_to_price[token_name["name"]] = token_price[idx]
+                token_to_price[token_name["name"]]["szDecimals"] = token_name["szDecimals"]
 
-          return token_to_price
+            return token_to_price
 
-      MAINNET_API_URL = "https://api.hyperliquid.xyz"
-      address, info, exchange = setup(private_key, address, MAINNET_API_URL, skip_ws=True)
-      price_mapping = get_token_to_price_mapping(info)
-      price_mapping  # Return the result
-      """
-    end
-    |> case do
+        MAINNET_API_URL = "https://api.hyperliquid.xyz"
+        address, info, exchange = setup(private_key, address, MAINNET_API_URL, skip_ws=True)
+        price_mapping = get_token_to_price_mapping(info)
+        price_mapping  # Return the result
+        """
+      end
+
+    case python_result do
       %{"error" => error} -> {:error, error}
       result when is_map(result) -> {:ok, result}
     end
