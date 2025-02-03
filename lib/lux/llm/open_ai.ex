@@ -324,46 +324,4 @@ defmodule Lux.LLM.OpenAI do
   end
 
   def prism?(_), do: false
-
-  @doc """
-  Sends a chat completion request to OpenAI.
-  """
-  def chat(%{provider: :invalid_provider}, _messages) do
-    {:error, :invalid_provider}
-  end
-
-  def chat(config, messages) when is_list(messages) do
-    # Extract the system message and user message
-    {_system_content, user_content} =
-      case messages do
-        [%{role: "system", content: sys}, %{role: "user", content: usr}] -> {sys, usr}
-        [%{role: "user", content: usr}] -> {"", usr}
-        _ -> {"", ""}
-      end
-
-    # Generate appropriate mock responses based on the content
-    cond do
-      user_content =~ "What kind of assistant are you?" ->
-        {:ok, "I am a research assistant specialized in scientific literature and analysis."}
-
-      user_content =~ "Can you help with academic papers?" ->
-        {:ok, "Yes, I can help you find, analyze, and understand scientific research papers."}
-
-      true ->
-        response =
-          if config[:max_tokens] do
-            String.slice(
-              "This is a mock response from OpenAI, tailored to your request about #{user_content}",
-              0,
-              config.max_tokens
-            )
-          else
-            "This is a mock response from OpenAI, tailored to your request about #{user_content}"
-          end
-
-        {:ok, response}
-    end
-  end
-
-  def chat(_config, _messages), do: {:error, :invalid_messages}
 end
