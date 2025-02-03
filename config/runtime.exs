@@ -21,4 +21,8 @@ if config_env() in [:dev, :test] do
     integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!, required: false),
     integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!, required: false),
     integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, required: false)
+
+  config :lux, :accounts,
+    hyperliquid_private_key: env!("HYPERLIQUID_PRIVATE_KEY", :string!),
+    hyperliquid_address: env!("HYPERLIQUID_ADDRESS", :string!, required: false)
 end
