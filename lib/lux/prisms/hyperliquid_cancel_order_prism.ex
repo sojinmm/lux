@@ -66,9 +66,10 @@ defmodule Lux.Prisms.HyperliquidCancelOrderPrism do
     }
 
   import Lux.Python
-  require Lux.Python
 
   alias Lux.Config
+
+  require Lux.Python
 
   def handler(input, _ctx) do
     with {:ok, private_key} <- get_private_key(),
@@ -90,39 +91,39 @@ defmodule Lux.Prisms.HyperliquidCancelOrderPrism do
   end
 
   defp get_private_key do
-    try do
-      {:ok, Config.hyperliquid_account_key()}
-    rescue
-      RuntimeError -> {:error, :missing_private_key}
-    end
+    {:ok, Config.hyperliquid_account_key()}
+  rescue
+    RuntimeError -> {:error, :missing_private_key}
   end
 
   defp cancel_order(private_key, address, params) do
-    python variables: %{private_key: private_key, address: address, params: params} do
-      ~PY"""
-      from hyperliquid.exchange import Exchange
-      from hyperliquid_utils.setup import setup
+    python_result =
+      python variables: %{private_key: private_key, address: address, params: params} do
+        ~PY"""
+        from hyperliquid.exchange import Exchange
+        from hyperliquid_utils.setup import setup
 
-      MAINNET_API_URL = "https://api.hyperliquid.xyz"
-      address, info, exchange = setup(private_key, address, MAINNET_API_URL, skip_ws=True)
+        MAINNET_API_URL = "https://api.hyperliquid.xyz"
+        address, info, exchange = setup(private_key, address, MAINNET_API_URL, skip_ws=True)
 
-      # Update exchange instance if vault_address is provided
-      if "vault_address" in params:
-          exchange = Exchange(
-              exchange.wallet,
-              exchange.base_url,
-              vault_address=params["vault_address"]
-          )
+        # Update exchange instance if vault_address is provided
+        if "vault_address" in params:
+            exchange = Exchange(
+                exchange.wallet,
+                exchange.base_url,
+                vault_address=params["vault_address"]
+            )
 
-      result = exchange.cancel(params["coin"], params["order_id"])
-      {
-          "coin": params["coin"],
-          "order_id": params["order_id"],
-          "result": result
-      }
-      """
-    end
-    |> case do
+        result = exchange.cancel(params["coin"], params["order_id"])
+        {
+            "coin": params["coin"],
+            "order_id": params["order_id"],
+            "result": result
+        }
+        """
+      end
+
+    case python_result do
       %{"error" => error} -> {:error, error}
       result when is_map(result) -> {:ok, result}
     end
