@@ -28,6 +28,14 @@ defmodule Lux.Config do
     get_required_key(:api_keys, :openweather)
   end
 
+  @spec transpose_api_key() :: api_key()
+  def transpose_api_key do
+    case Application.get_env(:lux, :env) do
+      :test -> get_required_key(:api_keys, :integration_transpose)
+      _ -> get_required_key(:api_keys, :transpose)
+    end
+  end
+
   @doc false
   defp get_required_key(group, key) do
     :lux
