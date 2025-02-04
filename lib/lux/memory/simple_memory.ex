@@ -102,7 +102,7 @@ defmodule Lux.Memory.SimpleMemory do
     result =
       :ets.select(state.table, [
         {
-          {{:"$1", :_}, :"$2"},
+          {{:_, :"$1"}, :"$2"},
           [{:>=, :"$1", start_ts}, {:"=<", :"$1", end_ts}],
           [:"$2"]
         }

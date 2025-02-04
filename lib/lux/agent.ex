@@ -168,32 +168,31 @@ defmodule Lux.Agent do
   def chat(agent, message, opts) do
     llm_config = build_llm_config(agent, opts)
 
-    case_result =
-      case LLM.call(message, agent.beams ++ agent.prisms, llm_config) do
-        {:ok, %{payload: %{content: content}}} when is_map(content) ->
-          store_interaction(agent, message, format_content(content), opts)
-          {:ok, format_content(content)}
+    case LLM.call(message, agent.beams ++ agent.prisms, llm_config) do
+      {:ok, %{payload: %{content: content}}} when is_map(content) ->
+        store_interaction(agent, message, format_content(content), opts)
+        {:ok, format_content(content)}
 
-        {:ok, %{payload: %{content: content}}} when is_binary(content) ->
-          store_interaction(agent, message, content, opts)
-          {:ok, content}
+      {:ok, %{payload: %{content: content}}} when is_binary(content) ->
+        store_interaction(agent, message, content, opts)
+        {:ok, content}
 
-        {:error, reason} ->
-          {:error, reason}
+      {:error, reason} ->
+        {:error, reason}
 
-        {:ok, %Req.Response{status: 401}} ->
-          {:error, :invalid_api_key}
+      {:ok, %Req.Response{status: 401}} ->
+        {:error, :invalid_api_key}
 
-        {:ok, %Req.Response{body: %{"error" => error}}} ->
-          {:error, error["message"] || "Unknown error"}
+      {:ok, %Req.Response{body: %{"error" => error}}} ->
+        {:error, error["message"] || "Unknown error"}
 
-        {:ok, %Lux.Signal{payload: %{tool_calls_results: tool_call_results}} = signal} ->
-          store_interaction(agent, message, format_content(tool_call_results), opts)
-          {:ok, signal}
+      {:ok, %Lux.Signal{payload: %{tool_calls_results: tool_call_results}} = signal} ->
+        store_interaction(agent, message, format_content(tool_call_results), opts)
+        {:ok, signal}
 
-        unexpected ->
-          {:error, {:unexpected_response, unexpected}}
-      end
+      unexpected ->
+        {:error, {:unexpected_response, unexpected}}
+    end
   end
 
   # Private function to build LLM config with memory context if enabled
