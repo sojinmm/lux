@@ -70,7 +70,7 @@ defmodule Lux.Memory.SimpleMemory do
     }
 
     # Use {timestamp, counter} as key for chronological ordering with uniqueness
-    true = :ets.insert(state.table, {{timestamp, counter}, entry})
+    true = :ets.insert(state.table, {{counter, timestamp}, entry})
 
     {:reply, {:ok, entry}, %{state | counter: counter + 1}}
   end

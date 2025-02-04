@@ -88,7 +88,8 @@ defmodule Lux.Agent do
       end
 
       def send_message(pid, message, opts \\ []) do
-        GenServer.call(pid, {:chat, message, opts})
+        timeout = Keyword.get(opts, :timeout, 60_000)
+        GenServer.call(pid, {:chat, message, opts}, timeout)
       end
 
       # GenServer Callbacks
@@ -164,35 +165,88 @@ defmodule Lux.Agent do
     apply(agent.module, :handle_signal, [agent, signal])
   end
 
-  def chat(agent, message, _opts) do
-    case LLM.call(message, agent.beams ++ agent.prisms, agent.llm_config) do
-      {:ok, %{payload: %{content: content}}} when is_map(content) ->
-        # If content is a map, convert it to a string representation
-        {:ok, format_content(content)}
+  def chat(agent, message, opts) do
+    llm_config = build_llm_config(agent, opts)
 
-      {:ok, %{payload: %{content: content}}} when is_binary(content) ->
-        {:ok, content}
+    case_result =
+      case LLM.call(message, agent.beams ++ agent.prisms, llm_config) do
+        {:ok, %{payload: %{content: content}}} when is_map(content) ->
+          store_interaction(agent, message, format_content(content), opts)
+          {:ok, format_content(content)}
 
-      {:error, reason} ->
-        {:error, reason}
+        {:ok, %{payload: %{content: content}}} when is_binary(content) ->
+          store_interaction(agent, message, content, opts)
+          {:ok, content}
 
-      {:ok, %Req.Response{status: 401}} ->
-        {:error, :invalid_api_key}
+        {:error, reason} ->
+          {:error, reason}
 
-      {:ok, %Req.Response{body: %{"error" => error}}} ->
-        {:error, error["message"] || "Unknown error"}
+        {:ok, %Req.Response{status: 401}} ->
+          {:error, :invalid_api_key}
 
-      {:ok, %Lux.Signal{} = signal} ->
-        {:ok, signal}
+        {:ok, %Req.Response{body: %{"error" => error}}} ->
+          {:error, error["message"] || "Unknown error"}
 
-      unexpected ->
-        {:error, {:unexpected_response, unexpected}}
+        {:ok, %Lux.Signal{payload: %{tool_calls_results: tool_call_results}} = signal} ->
+          store_interaction(agent, message, format_content(tool_call_results), opts)
+          {:ok, signal}
+
+        unexpected ->
+          {:error, {:unexpected_response, unexpected}}
+      end
+  end
+
+  # Private function to build LLM config with memory context if enabled
+  defp build_llm_config(agent, opts) do
+    if agent.memory_pid && Keyword.get(opts, :use_memory, false) do
+      max_context = Keyword.get(opts, :max_memory_context, 5)
+      {:ok, recent} = agent.memory_config.backend.recent(agent.memory_pid, max_context)
+
+      # Convert memory entries to chat messages
+      memory_messages =
+        recent
+        |> Enum.reverse()
+        |> Enum.map(fn entry ->
+          %{role: entry.metadata.role, content: entry.content}
+        end)
+
+      # Add memory context to existing messages or create new messages list
+      Map.update(agent.llm_config, :messages, memory_messages, fn existing ->
+        memory_messages ++ existing
+      end)
+    else
+      agent.llm_config
+    end
+  end
+
+  # Private function to store interactions in memory if enabled
+  defp store_interaction(agent, user_message, assistant_response, opts) do
+    if agent.memory_pid && Keyword.get(opts, :use_memory, false) do
+      {:ok, _} =
+        agent.memory_config.backend.add(
+          agent.memory_pid,
+          user_message,
+          :interaction,
+          %{role: :user}
+        )
+
+      {:ok, _} =
+        agent.memory_config.backend.add(
+          agent.memory_pid,
+          assistant_response,
+          :interaction,
+          %{role: :assistant}
+        )
     end
   end
 
   # Helper function to format map content into a readable string
   defp format_content(content) when is_map(content) do
     Enum.map_join(content, "\n", fn {k, v} -> "#{k}: #{format_value(v)}" end)
+  end
+
+  defp format_content(result) when is_list(result) do
+    Enum.map_join(result, "\n", fn element -> format_content(element) end)
   end
 
   defp format_value(value) when is_list(value) do
