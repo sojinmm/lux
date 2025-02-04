@@ -175,7 +175,12 @@ defmodule Lux.Prisms.HyperliquidExecuteOrderPrism do
 
   defp execute_order(private_key, address, api_url, params) do
     python_result =
-      python variables: %{private_key: private_key, address: address, api_url: api_url, params: params} do
+      python variables: %{
+               private_key: private_key,
+               address: address,
+               api_url: api_url,
+               params: params
+             } do
         ~PY"""
         from hyperliquid.exchange import Exchange
         from hyperliquid_utils.setup import setup

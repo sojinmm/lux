@@ -124,7 +124,11 @@ defmodule Lux.Prisms.HyperliquidOpenOrdersPrism do
 
   defp fetch_open_orders(private_key, target_address, api_url) do
     python_result =
-      python variables: %{private_key: private_key, target_address: target_address, api_url: api_url} do
+      python variables: %{
+               private_key: private_key,
+               target_address: target_address,
+               api_url: api_url
+             } do
         ~PY"""
         from hyperliquid.info import Info
         from hyperliquid_utils.setup import setup

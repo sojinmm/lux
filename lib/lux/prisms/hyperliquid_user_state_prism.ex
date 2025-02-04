@@ -137,7 +137,11 @@ defmodule Lux.Prisms.HyperliquidUserStatePrism do
 
   defp fetch_user_state(private_key, target_address, api_url) do
     python_result =
-      python variables: %{private_key: private_key, target_address: target_address, api_url: api_url} do
+      python variables: %{
+               private_key: private_key,
+               target_address: target_address,
+               api_url: api_url
+             } do
         ~PY"""
         from hyperliquid.info import Info
         from hyperliquid_utils.setup import setup
