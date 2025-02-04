@@ -1,10 +1,10 @@
-defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
+defmodule Lux.Prisms.Hyperliquid.HyperliquidTokenInfoPrism do
   @moduledoc """
   A prism that fetches token price data from the Hyperliquid API.
 
   ## Example
 
-      iex> Lux.Prisms.HyperliquidTokenInfoPrism.run(%{})
+      iex> Lux.Prisms.Hyperliquid.HyperliquidTokenInfoPrism.run(%{})
       {:ok, %{
         prices: %{
           "BTC" => %{

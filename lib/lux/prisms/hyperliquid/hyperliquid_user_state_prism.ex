@@ -1,11 +1,11 @@
-defmodule Lux.Prisms.HyperliquidUserStatePrism do
+defmodule Lux.Prisms.Hyperliquid.HyperliquidUserStatePrism do
   @moduledoc """
   A prism that fetches user state information from the Hyperliquid exchange.
 
   ## Example
 
       # Get state for a specific address
-      iex> Lux.Prisms.HyperliquidUserStatePrism.run(%{
+      iex> Lux.Prisms.Hyperliquid.HyperliquidUserStatePrism.run(%{
       ...>   address: "0x0403369c02199a0cb827f4d6492927e9fa5668d5"
       ...> })
       {:ok,

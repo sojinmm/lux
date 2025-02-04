@@ -1,11 +1,11 @@
-defmodule Lux.Prisms.HyperliquidOpenOrdersPrism do
+defmodule Lux.Prisms.Hyperliquid.HyperliquidOpenOrdersPrism do
   @moduledoc """
   A prism that fetches open orders from the Hyperliquid exchange.
 
   ## Example
 
       # Get open orders for a specific address
-      iex> Lux.Prisms.HyperliquidOpenOrdersPrism.run(%{
+      iex> Lux.Prisms.Hyperliquid.HyperliquidOpenOrdersPrism.run(%{
       ...>   address: "0x0403369c02199a0cb827f4d6492927e9fa5668d5"
       ...> })
       {:ok,

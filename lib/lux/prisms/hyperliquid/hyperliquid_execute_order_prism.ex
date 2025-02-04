@@ -1,11 +1,11 @@
-defmodule Lux.Prisms.HyperliquidExecuteOrderPrism do
+defmodule Lux.Prisms.Hyperliquid.HyperliquidExecuteOrderPrism do
   @moduledoc """
   A prism that executes orders on the Hyperliquid exchange.
 
   ## Example
 
       # Limit order
-      iex> Lux.Prisms.HyperliquidExecuteOrderPrism.run(%{
+      iex> Lux.Prisms.Hyperliquid.HyperliquidExecuteOrderPrism.run(%{
       ...>   coin: "ETH",
       ...>   is_buy: true,
       ...>   sz: 0.0051,
@@ -23,7 +23,7 @@ defmodule Lux.Prisms.HyperliquidExecuteOrderPrism do
        }}
 
       # Trigger order (Stop Loss)
-      iex> Lux.Prisms.HyperliquidExecuteOrderPrism.run(%{
+      iex> Lux.Prisms.Hyperliquid.HyperliquidExecuteOrderPrism.run(%{
       ...>   coin: "ETH",
       ...>   is_buy: false,
       ...>   sz: 0.1,
