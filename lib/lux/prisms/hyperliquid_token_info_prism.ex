@@ -4,7 +4,7 @@ defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
 
   ## Example
 
-      iex> Lux.Prisms.HyperliquidTokenInfoPrism.run()
+      iex> Lux.Prisms.HyperliquidTokenInfoPrism.run(%{})
       {:ok, %{
         prices: %{
           "BTC" => %{
@@ -68,13 +68,17 @@ defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
   def handler(_input, _ctx) do
     with {:ok, private_key} <- get_private_key(),
          {:ok, address} <- {:ok, Config.hyperliquid_account_address()},
+         {:ok, api_url} <- {:ok, Config.hyperliquid_api_url()},
          {:ok, %{"success" => true}} <- Lux.Python.import_package("hyperliquid.info"),
          {:ok, %{"success" => true}} <- Lux.Python.import_package("hyperliquid_utils.setup"),
-         {:ok, result} <- fetch_token_prices(private_key, address) do
+         {:ok, result} <- fetch_token_prices(private_key, address, api_url) do
       {:ok, %{prices: result}}
     else
       {:error, :missing_private_key} ->
         {:error, "Hyperliquid account private key is not configured"}
+
+      {:error, :missing_api_url} ->
+        {:error, "Hyperliquid API URL is not configured"}
 
       {:ok, %{"success" => false, "error" => error}} ->
         {:error, "Failed to import required packages: #{error}"}
@@ -90,9 +94,9 @@ defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
     RuntimeError -> {:error, :missing_private_key}
   end
 
-  defp fetch_token_prices(private_key, address) do
+  defp fetch_token_prices(private_key, address, api_url) do
     python_result =
-      python variables: %{private_key: private_key, address: address} do
+      python variables: %{private_key: private_key, address: address, api_url: api_url} do
         ~PY"""
         from collections import defaultdict
         from hyperliquid.info import Info
@@ -110,8 +114,7 @@ defmodule Lux.Prisms.HyperliquidTokenInfoPrism do
 
             return token_to_price
 
-        MAINNET_API_URL = "https://api.hyperliquid.xyz"
-        address, info, exchange = setup(private_key, address, MAINNET_API_URL, skip_ws=True)
+        address, info, exchange = setup(private_key, address, api_url, skip_ws=True)
         price_mapping = get_token_to_price_mapping(info)
         price_mapping  # Return the result
         """

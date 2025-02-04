@@ -109,13 +109,17 @@ defmodule Lux.Prisms.HyperliquidUserStatePrism do
 
   def handler(%{address: address} = _input, _ctx) do
     with {:ok, private_key} <- get_private_key(),
+         {:ok, api_url} <- {:ok, Config.hyperliquid_api_url()},
          {:ok, %{"success" => true}} <- Lux.Python.import_package("hyperliquid.info"),
          {:ok, %{"success" => true}} <- Lux.Python.import_package("hyperliquid_utils.setup"),
-         {:ok, result} <- fetch_user_state(private_key, address) do
+         {:ok, result} <- fetch_user_state(private_key, address, api_url) do
       {:ok, %{status: "success", user_state: result}}
     else
       {:error, :missing_private_key} ->
         {:error, "Hyperliquid account private key is not configured"}
+
+      {:error, :missing_api_url} ->
+        {:error, "Hyperliquid API URL is not configured"}
 
       {:ok, %{"success" => false, "error" => error}} ->
         {:error, "Failed to import required packages: #{error}"}
@@ -131,16 +135,14 @@ defmodule Lux.Prisms.HyperliquidUserStatePrism do
     RuntimeError -> {:error, :missing_private_key}
   end
 
-  defp fetch_user_state(private_key, target_address) do
+  defp fetch_user_state(private_key, target_address, api_url) do
     python_result =
-      python variables: %{private_key: private_key, target_address: target_address} do
+      python variables: %{private_key: private_key, target_address: target_address, api_url: api_url} do
         ~PY"""
         from hyperliquid.info import Info
         from hyperliquid_utils.setup import setup
 
-        MAINNET_API_URL = "https://api.hyperliquid.xyz"
-        _, info, _ = setup(private_key, target_address, MAINNET_API_URL, skip_ws=True)
-
+        _, info, _ = setup(private_key, target_address, api_url, skip_ws=True)
         user_state = info.user_state(target_address)
         user_state  # Return the result
         """

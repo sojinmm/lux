@@ -24,5 +24,6 @@ if config_env() in [:dev, :test] do
 
   config :lux, :accounts,
     hyperliquid_private_key: env!("HYPERLIQUID_PRIVATE_KEY", :string!),
-    hyperliquid_address: env!("HYPERLIQUID_ADDRESS", :string!, required: false)
+    hyperliquid_address: env!("HYPERLIQUID_ADDRESS", :string!, required: false),
+    hyperliquid_api_url: env!("HYPERLIQUID_API_URL", :string!)
 end

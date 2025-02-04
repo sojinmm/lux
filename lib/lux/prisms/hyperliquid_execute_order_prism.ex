@@ -147,13 +147,17 @@ defmodule Lux.Prisms.HyperliquidExecuteOrderPrism do
   def handler(input, _ctx) do
     with {:ok, private_key} <- get_private_key(),
          {:ok, address} <- {:ok, Config.hyperliquid_account_address()},
+         {:ok, api_url} <- {:ok, Config.hyperliquid_api_url()},
          {:ok, %{"success" => true}} <- Lux.Python.import_package("hyperliquid.exchange"),
          {:ok, %{"success" => true}} <- Lux.Python.import_package("hyperliquid_utils.setup"),
-         {:ok, result} <- execute_order(private_key, address, input) do
+         {:ok, result} <- execute_order(private_key, address, api_url, input) do
       {:ok, %{status: "success", order_result: result}}
     else
       {:error, :missing_private_key} ->
         {:error, "Hyperliquid account private key is not configured"}
+
+      {:error, :missing_api_url} ->
+        {:error, "Hyperliquid API URL is not configured"}
 
       {:ok, %{"success" => false, "error" => error}} ->
         {:error, "Failed to import required packages: #{error}"}
@@ -169,15 +173,14 @@ defmodule Lux.Prisms.HyperliquidExecuteOrderPrism do
     RuntimeError -> {:error, :missing_private_key}
   end
 
-  defp execute_order(private_key, address, params) do
+  defp execute_order(private_key, address, api_url, params) do
     python_result =
-      python variables: %{private_key: private_key, address: address, params: params} do
+      python variables: %{private_key: private_key, address: address, api_url: api_url, params: params} do
         ~PY"""
         from hyperliquid.exchange import Exchange
         from hyperliquid_utils.setup import setup
 
-        MAINNET_API_URL = "https://api.hyperliquid.xyz"
-        address, info, exchange = setup(private_key, address, MAINNET_API_URL, skip_ws=True)
+        address, info, exchange = setup(private_key, address, api_url, skip_ws=True)
 
         # Update exchange instance if vault_address is provided
         if "vault_address" in params:

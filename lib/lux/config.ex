@@ -58,6 +58,14 @@ defmodule Lux.Config do
     |> Keyword.get(:hyperliquid_address, "")
   end
 
+  @doc """
+  Gets the configured Hyperliquid API URL.
+  """
+  @spec hyperliquid_api_url() :: String.t()
+  def hyperliquid_api_url do
+    Application.fetch_env!(:lux, :accounts)[:hyperliquid_api_url]
+  end
+
   @doc false
   defp get_required_key(group, key) do
     :lux
