@@ -4,7 +4,7 @@ import Config
 config :lux, :open_ai_models,
   cheapest: "gpt-4o-mini",
   default: "gpt-4o-mini",
-  smartest: "gpt-4"
+  smartest: "gpt-4o"
 
 config :venomous, :snake_manager, %{
   snake_ttl_minutes: 10,

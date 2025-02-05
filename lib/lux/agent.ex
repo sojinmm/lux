@@ -80,7 +80,8 @@ defmodule Lux.Agent do
       end
 
       def send_message(pid, message, opts \\ []) do
-        GenServer.call(pid, {:chat, message, opts})
+        timeout = opts[:timeout] || 120_000
+        GenServer.call(pid, {:chat, message, opts}, timeout)
       end
 
       # GenServer Callbacks

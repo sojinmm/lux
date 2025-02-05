@@ -22,15 +22,27 @@ defmodule MyApp.Agents.Assistant do
 
   @impl true
   def new(opts \\ %{}) do
+    llm_config = %{
+      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
+      temperature: 0.7,
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are #{opts[:name] || "Simple Assistant"}, #{opts[:description] || "a helpful assistant that can engage in conversations"}.
+          Your goal is: #{opts[:goal] || "Help users by providing clear and accurate responses"}
+          """
+        }
+      ]
+    }
+
     Lux.Agent.new(%{
-      name: "Simple Assistant",
-      description: "A helpful assistant that can engage in conversations",
-      goal: "Help users by providing clear and accurate responses",
-      llm_config: %{
-        api_key: Application.get_env(:lux, :api_keys)[:openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
-        temperature: 0.7
-      }
+      name: opts[:name] || "Simple Assistant",
+      description: opts[:description] || "A helpful assistant that can engage in conversations",
+      goal: opts[:goal] || "Help users by providing clear and accurate responses",
+      module: __MODULE__,
+      llm_config: llm_config
     })
   end
 end
@@ -42,13 +54,13 @@ end
 Control how your agent interacts with language models:
 
 ```elixir
-llm_config: %{
+llm_config = %{
   # API configuration
-  api_key: Application.get_env(:lux, :api_keys)[:openai],
-  model: "gpt-4",
+  api_key: Lux.Config.openai_api_key(),
+  model: Application.get_env(:lux, :open_ai_models)[:default],
   
   # Response characteristics
-  temperature: 0.7,        # 0.0-1.0: lower = more focused, higher = more creative         # Maximum response length
+  temperature: 0.7,        # 0.0-1.0: lower = more focused, higher = more creative
   
   # System messages for personality
   messages: [
@@ -80,13 +92,27 @@ defmodule MyApp.Agents.StructuredAssistant do
 
   @impl true
   def new(opts \\ %{}) do
+    llm_config = %{
+      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
+      temperature: 0.7,
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are #{opts[:name] || "Structured Assistant"}, #{opts[:description] || "an assistant that provides structured responses"}.
+          Your goal is: #{opts[:goal] || "Provide clear, structured responses to user queries"}
+          """
+        }
+      ]
+    }
+
     Lux.Agent.new(%{
-      name: "Structured Assistant",
-      description: "An assistant that provides structured responses",
-      llm_config: %{
-        # ... basic config ...
-        json_schema: ResponseSchema  # Define response structure
-      }
+      name: opts[:name] || "Structured Assistant",
+      description: opts[:description] || "An assistant that provides structured responses",
+      goal: opts[:goal] || "Provide clear, structured responses to user queries",
+      module: __MODULE__,
+      llm_config: llm_config
     })
   end
 end
@@ -103,24 +129,29 @@ defmodule MyApp.Agents.ChatAgent do
 
   @impl true
   def new(opts \\ %{}) do
+    llm_config = %{
+      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
+      temperature: 0.7,
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are #{opts[:name] || "Chat Assistant"}, #{opts[:description] || "a conversational assistant"}.
+          Your goal is: #{opts[:goal] || "Engage in helpful dialogue"}
+          
+          Respond to users in a clear and concise manner.
+          """
+        }
+      ]
+    }
+
     Lux.Agent.new(%{
       name: opts[:name] || "Chat Assistant",
-      description: "A conversational assistant",
-      goal: "Engage in helpful dialogue",
-      llm_config: %{
-        api_key: Application.get_env(:lux, :api_keys)[:openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
-        temperature: 0.7,
-        messages: [
-          %{
-            role: "system",
-            content: """
-            You are a helpful chat assistant.
-            Respond to users in a clear and concise manner.
-            """
-          }
-        ]
-      }
+      description: opts[:description] || "A conversational assistant",
+      goal: opts[:goal] || "Engage in helpful dialogue",
+      module: __MODULE__,
+      llm_config: llm_config
     })
   end
 end
@@ -135,25 +166,30 @@ defmodule MyApp.Agents.FunAgent do
 
   @impl true
   def new(opts \\ %{}) do
+    llm_config = %{
+      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
+      temperature: 0.8,  # Higher temperature for more creative responses
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are #{opts[:name] || "Fun Assistant"}, #{opts[:description] || "a playful and witty AI assistant who loves jokes"}.
+          Your goal is: #{opts[:goal] || "Make conversations fun and engaging while being helpful"}
+          
+          Keep your responses light-hearted but still helpful.
+          When explaining technical concepts, use fun analogies and examples.
+          """
+        }
+      ]
+    }
+
     Lux.Agent.new(%{
-      name: "Fun Assistant",
-      description: "A playful and witty AI assistant who loves jokes",
-      goal: "Make conversations fun and engaging while being helpful",
-      llm_config: %{
-        api_key: Application.get_env(:lux, :api_keys)[:openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
-        temperature: 0.8,  # Higher temperature for more creative responses
-        messages: [
-          %{
-            role: "system",
-            content: """
-            You are a fun and witty assistant. You love making jokes and puns.
-            Keep your responses light-hearted but still helpful.
-            When explaining technical concepts, use fun analogies and examples.
-            """
-          }
-        ]
-      }
+      name: opts[:name] || "Fun Assistant",
+      description: opts[:description] || "A playful and witty AI assistant who loves jokes",
+      goal: opts[:goal] || "Make conversations fun and engaging while being helpful",
+      module: __MODULE__,
+      llm_config: llm_config
     })
   end
 end
@@ -162,7 +198,7 @@ end
 ## Using Agents
 
 ### Starting an Agent
-Agents can be used as GenServers, so you can start them like this:
+Agents can be started as GenServers:
 
 ```elixir
 {:ok, pid} = MyApp.Agents.ChatAgent.start_link()
@@ -172,12 +208,11 @@ Agents can be used as GenServers, so you can start them like this:
 Chat with your agent:
 
 ```elixir
-# Basic chat
+# Basic chat (default timeout is 120 seconds)
 {:ok, response} = ChatAgent.send_message(pid, "Hello!")
 
-# With structured responses
-{:ok, %Lux.Signal{payload: %{message: content}}} = 
-  StructuredAgent.send_message(pid, "Tell me a joke!")
+# With custom timeout
+{:ok, response} = ChatAgent.send_message(pid, "Tell me a joke!", timeout: 30_000)
 ```
 
 ## Best Practices
@@ -187,22 +222,18 @@ Chat with your agent:
    - Use descriptive names and goals
    - Keep system messages concise but informative
 
-2. **Response Structure**
-   - Use schemas for predictable responses
-   - Consider the tradeoff between flexibility and structure
-   - Document expected response formats
-
-3. **Configuration**
-   - Use application config for API keys
+2. **Configuration**
+   - Use `Lux.Config` for API keys
+   - Use application config for model selection
    - Choose appropriate temperature settings
-   - Set reasonable token limits
+   - Set reasonable timeouts for long-running operations
 
-4. **Error Handling**
+3. **Error Handling**
    - Handle API errors gracefully
    - Provide meaningful error messages
    - Consider retry strategies for transient failures
 
-5. **Testing**
+4. **Testing**
    - Test agent behavior with different inputs
    - Mock LLM responses in tests
    - Verify structured response handling
@@ -212,7 +243,14 @@ defmodule MyApp.Agents.ChatAgentTest do
   use ExUnit.Case, async: true
 
   setup do
-    {:ok, pid} = MyApp.Agents.ChatAgent.start_link()
+    config = %{
+      api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
+      model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+      temperature: 0.0,
+      seed: 42
+    }
+
+    {:ok, pid} = ChatAgent.start_link(%{llm_config: config})
     {:ok, agent: pid}
   end
 
@@ -220,13 +258,6 @@ defmodule MyApp.Agents.ChatAgentTest do
     {:ok, response} = ChatAgent.send_message(pid, "Hello!")
     assert is_binary(response)
     assert String.length(response) > 0
-  end
-
-  test "handles errors gracefully", %{agent: pid} do
-    # Simulate API error
-    agent = %{agent | llm_config: %{api_key: "invalid"}}
-    assert {:error, :invalid_api_key} = 
-      ChatAgent.send_message(pid, "This should fail")
   end
 end
 ```
