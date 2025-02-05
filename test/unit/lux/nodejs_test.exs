@@ -102,7 +102,7 @@ defmodule Lux.NodeJSTest do
           """
         end
 
-      assert {:error, "Call timed out."} = result
+      assert {:error, :timeout} = result
     end
   end
 
