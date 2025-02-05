@@ -49,6 +49,7 @@ defmodule Lux.NodeJS do
   @spec eval(String.t(), eval_options()) :: {:ok, term()} | {:error, String.t()}
   def eval(code, opts \\ []) do
     {variables, opts} = Keyword.pop(opts, :variables, %{})
+
     code
     |> do_eval(variables, opts, &NodeJS.call/3)
     |> case do
