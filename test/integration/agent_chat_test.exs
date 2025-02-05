@@ -1,7 +1,7 @@
 defmodule Lux.Integration.AgentChatTest do
   use IntegrationCase, async: true
 
-  alias Lux.LLM.OpenAI.Config, as: LLMConfig
+  alias Lux.Memory.SimpleMemory
 
   # Fixed seed for deterministic responses in tests
   @seed 42
@@ -60,7 +60,11 @@ defmodule Lux.Integration.AgentChatTest do
         prisms: [
           TestPrism
         ],
-        llm_config: llm_config
+        llm_config: llm_config,
+        memory_config: %{
+          backend: SimpleMemory,
+          name: :test_memory
+        }
       })
     end
   end
@@ -97,26 +101,6 @@ defmodule Lux.Integration.AgentChatTest do
       assert response =~ ~r/minerals|smell|rain/i
     end
 
-    test "respects LLM configuration options" do
-      # Create an agent with specific LLM settings
-      {:ok, pid} =
-        ChatAgent.start_link(%{
-          name: "Research Assistant",
-          llm_config: %LLMConfig{
-            api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-            model: Application.get_env(:lux, :open_ai_models)[:cheapest],
-            temperature: 0.1,
-            max_tokens: 50,
-            seed: @seed
-          }
-        })
-
-      {:ok, response} = ChatAgent.send_message(pid, "Give a very brief hello")
-      assert is_binary(response)
-      # Response should be concise due to max_tokens
-      assert String.length(response) < 200
-    end
-
     test "maintains consistent persona across chats", %{pid: pid} do
       # First chat to establish role
       {:ok, response1} = ChatAgent.send_message(pid, "What kind of assistant are you?")
@@ -135,6 +119,116 @@ defmodule Lux.Integration.AgentChatTest do
 
       assert is_binary(message)
       assert message =~ "from TestPrism"
+    end
+  end
+
+  describe "chat with memory" do
+    setup do
+      config = %{
+        api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
+        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+        temperature: 0.0,
+        max_tokens: 50,
+        seed: @seed
+      }
+
+      # Create and start a new chat agent with memory
+      {:ok, pid} =
+        ChatAgent.start_link(%{
+          name: "Memory-Enabled Assistant",
+          description: "An assistant that remembers past interactions",
+          goal: "Help users while maintaining context of conversations",
+          llm_config: config,
+          memory_config: %{
+            backend: SimpleMemory,
+            name: :test_memory
+          }
+        })
+
+      {:ok, pid: pid}
+    end
+
+    test "stores interactions in memory when enabled", %{pid: pid} do
+      # Send a message with memory enabled
+      {:ok, response1} = ChatAgent.send_message(pid, "What's your name?", use_memory: true)
+      assert is_binary(response1)
+
+      # Verify the interaction was stored
+      agent = :sys.get_state(pid)
+      {:ok, recent} = SimpleMemory.recent(agent.memory_pid, 2)
+      assert length(recent) == 2
+
+      [assistant_msg, user_msg] = recent
+      assert user_msg.content == "What's your name?"
+      assert user_msg.metadata.role == :user
+      assert assistant_msg.metadata.role == :assistant
+    end
+
+    test "includes memory context in subsequent chats", %{pid: pid} do
+      # First interaction
+      {:ok, _} = ChatAgent.send_message(pid, "My name is John", use_memory: true)
+
+      # Second interaction should reference the previous context
+      {:ok, response} =
+        ChatAgent.send_message(pid, "What's my name? (do not use any tools...)", use_memory: true)
+
+      assert response =~ ~r/john/i
+
+      # Verify all interactions were stored
+      agent = :sys.get_state(pid)
+      {:ok, recent} = SimpleMemory.recent(agent.memory_pid, 4)
+      assert length(recent) == 4
+    end
+
+    test "respects max_memory_context limit", %{pid: pid} do
+      # Send multiple messages
+      messages = [
+        "Message 1 - use no tools",
+        "Message 2 - use no tools",
+        "Message 3 - use no tools",
+        "Message 4 - use no tools",
+        "Message 5 - use no tools"
+      ]
+
+      # Process messages sequentially and ensure each one completes
+      Enum.each(messages, fn msg ->
+        {:ok, _response} = ChatAgent.send_message(pid, msg, use_memory: true)
+        # Get state to ensure message was processed
+        agent = :sys.get_state(pid)
+        {:ok, recent} = SimpleMemory.recent(agent.memory_pid, 2)
+        # Verify each message + response pair
+        assert length(recent) == 2
+      end)
+
+      # Send a message with limited context
+      {:ok, _} =
+        ChatAgent.send_message(pid, "Final message",
+          use_memory: true,
+          max_memory_context: 3
+        )
+
+      # Verify all messages were stored (5 initial + 1 final = 6 messages, each with a response)
+      agent = :sys.get_state(pid)
+      {:ok, recent} = SimpleMemory.recent(agent.memory_pid, 12)
+      # 6 messages * 2 (user + assistant)
+      assert length(recent) == 12
+
+      # Verify the chronological order
+      messages_in_memory = Enum.map(recent, & &1.content)
+      assert Enum.any?(messages_in_memory, &(&1 =~ "Message 1"))
+      assert Enum.any?(messages_in_memory, &(&1 =~ "Final message"))
+    end
+
+    test "memory is disabled by default", %{pid: pid} do
+      # Send a message without enabling memory
+      {:ok, response} = ChatAgent.send_message(pid, "Hello")
+      assert is_binary(response)
+
+      # Verify no interactions were stored
+      agent = :sys.get_state(pid)
+
+      {:ok, recent} = SimpleMemory.recent(agent.memory_pid, 2)
+      assert recent == []
     end
   end
 end

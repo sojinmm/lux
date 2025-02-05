@@ -9,6 +9,10 @@ defmodule Lux.Agent do
 
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
+  @type memory_config :: %{
+          backend: module(),
+          name: atom() | nil
+        }
 
   @type t :: %__MODULE__{
           id: String.t(),
@@ -20,7 +24,9 @@ defmodule Lux.Agent do
           beams: [Lux.Beam.t()],
           lenses: [Lux.Lens.t()],
           accepts_signals: [Lux.SignalSchema.t()],
-          llm_config: map()
+          llm_config: map(),
+          memory_config: memory_config() | nil,
+          memory_pid: pid() | nil
         }
 
   defstruct id: nil,
@@ -32,6 +38,8 @@ defmodule Lux.Agent do
             beams: [],
             lenses: [],
             accepts_signals: [],
+            memory_config: nil,
+            memory_pid: nil,
             llm_config: %{
               provider: :openai,
               model: "gpt-4",
@@ -87,6 +95,17 @@ defmodule Lux.Agent do
       # GenServer Callbacks
       @impl GenServer
       def init(agent) do
+        # Initialize memory if configured
+        agent =
+          case agent.memory_config do
+            %{backend: backend} = config when not is_nil(backend) ->
+              {:ok, pid} = backend.initialize(name: config[:name])
+              %{agent | memory_pid: pid}
+
+            _ ->
+              agent
+          end
+
         {:ok, agent}
       end
 
@@ -96,6 +115,16 @@ defmodule Lux.Agent do
           {:ok, response} = ok -> {:reply, ok, agent}
           {:error, _reason} = error -> {:reply, error, agent}
         end
+      end
+
+      @impl GenServer
+      def terminate(_reason, agent) do
+        # Cleanup memory if it exists
+        if agent.memory_pid do
+          Process.exit(agent.memory_pid, :normal)
+        end
+
+        :ok
       end
 
       defoverridable new: 1, chat: 3, handle_signal: 2
@@ -112,6 +141,8 @@ defmodule Lux.Agent do
       description: Map.get(attrs, :description, ""),
       goal: Map.get(attrs, :goal, ""),
       module: Map.get(attrs, :module, __MODULE__),
+      memory_config: Map.get(attrs, :memory_config),
+      memory_pid: nil,
       llm_config:
         attrs
         |> Map.get(:llm_config, %{})
@@ -134,13 +165,16 @@ defmodule Lux.Agent do
     apply(agent.module, :handle_signal, [agent, signal])
   end
 
-  def chat(agent, message, _opts) do
-    case LLM.call(message, agent.beams ++ agent.prisms, agent.llm_config) do
+  def chat(agent, message, opts) do
+    llm_config = build_llm_config(agent, opts)
+
+    case LLM.call(message, agent.beams ++ agent.prisms, llm_config) do
       {:ok, %{payload: %{content: content}}} when is_map(content) ->
-        # If content is a map, convert it to a string representation
+        store_interaction(agent, message, format_content(content), opts)
         {:ok, format_content(content)}
 
       {:ok, %{payload: %{content: content}}} when is_binary(content) ->
+        store_interaction(agent, message, content, opts)
         {:ok, content}
 
       {:error, reason} ->
@@ -152,7 +186,8 @@ defmodule Lux.Agent do
       {:ok, %Req.Response{body: %{"error" => error}}} ->
         {:error, error["message"] || "Unknown error"}
 
-      {:ok, %Lux.Signal{} = signal} ->
+      {:ok, %Lux.Signal{payload: %{tool_calls_results: tool_call_results}} = signal} ->
+        store_interaction(agent, message, format_content(tool_call_results), opts)
         {:ok, signal}
 
       unexpected ->
@@ -160,9 +195,57 @@ defmodule Lux.Agent do
     end
   end
 
+  # Private function to build LLM config with memory context if enabled
+  defp build_llm_config(agent, opts) do
+    if agent.memory_pid && Keyword.get(opts, :use_memory, false) do
+      max_context = Keyword.get(opts, :max_memory_context, 5)
+      {:ok, recent} = agent.memory_config.backend.recent(agent.memory_pid, max_context)
+
+      # Convert memory entries to chat messages
+      memory_messages =
+        recent
+        |> Enum.reverse()
+        |> Enum.map(fn entry ->
+          %{role: entry.metadata.role, content: entry.content}
+        end)
+
+      # Add memory context to existing messages or create new messages list
+      Map.update(agent.llm_config, :messages, memory_messages, fn existing ->
+        memory_messages ++ existing
+      end)
+    else
+      agent.llm_config
+    end
+  end
+
+  # Private function to store interactions in memory if enabled
+  defp store_interaction(agent, user_message, assistant_response, opts) do
+    if agent.memory_pid && Keyword.get(opts, :use_memory, false) do
+      {:ok, _} =
+        agent.memory_config.backend.add(
+          agent.memory_pid,
+          user_message,
+          :interaction,
+          %{role: :user}
+        )
+
+      {:ok, _} =
+        agent.memory_config.backend.add(
+          agent.memory_pid,
+          assistant_response,
+          :interaction,
+          %{role: :assistant}
+        )
+    end
+  end
+
   # Helper function to format map content into a readable string
   defp format_content(content) when is_map(content) do
     Enum.map_join(content, "\n", fn {k, v} -> "#{k}: #{format_value(v)}" end)
+  end
+
+  defp format_content(result) when is_list(result) do
+    Enum.map_join(result, "\n", fn element -> format_content(element) end)
   end
 
   defp format_value(value) when is_list(value) do
