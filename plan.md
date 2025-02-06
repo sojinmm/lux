@@ -9,7 +9,9 @@
    - [x] Agent reflection capabilities for self-awareness and decision making
 
 2. **Communication Foundation**
-   - [x] Signal system for message passing
+   - [x] Signal system for point-to-point message passing
+   - [x] Basic signal routing infrastructure
+   - [x] Signal delivery status tracking and notifications
    - [x] Chat handling prism for processing messages
    - [x] Basic collaboration protocols defined (`:ask`, `:tell`, `:delegate`, `:request_review`)
 
@@ -24,11 +26,15 @@
 ## Missing Features 🚀
 
 1. **Enhanced Communication**
-   - [ ] Structured message routing between agents
    - [ ] Message queuing and prioritization
    - [ ] Asynchronous communication patterns
-   - [ ] Broadcast/multicast capabilities
-   - [ ] Error handling and retry mechanisms for inter-agent communication
+   - [ ] Error handling and retry mechanisms
+   - [ ] Signal archival and retrieval system
+     - [ ] Pluggable storage backends (ETS, PostgreSQL)
+     - [ ] Query interface for historical signals
+     - [ ] TTL and cleanup policies
+     - [ ] Signal indexing and search
+     - [ ] Audit trail for signal lifecycle
 
 2. **Collaboration Protocols Implementation**
    - [ ] Implementation of `:ask` protocol for agent queries
@@ -56,12 +62,16 @@
    - [ ] Resource locking and access control
    - [ ] Knowledge base synchronization
    - [ ] Shared context management
+   - [ ] Signal Archive
+     - [ ] Historical signal access and replay
+     - [ ] Signal analytics and insights
+     - [ ] Integration with monitoring tools
 
 6. **Monitoring and Debugging**
-   - [ ] Multi-agent interaction logging
-   - [ ] Performance metrics for team collaboration
-   - [ ] Debugging tools for inter-agent communication
-   - [ ] Team-wide analytics and insights
+   - [ ] Agent interaction logging
+   - [ ] Performance metrics for individual agents
+   - [ ] Debugging tools for signal routing
+   - [ ] Signal delivery analytics and insights
 
 7. **Security and Safety**
    - [ ] Inter-agent trust management
@@ -73,7 +83,8 @@
 
 1. Enhanced Communication (High Priority)
    - Core functionality needed for reliable agent interaction
-   - Required for implementing collaboration protocols
+   - Focus on point-to-point signal delivery
+   - Signal archival system for persistence and analysis
 
 2. Collaboration Protocols Implementation (High Priority)
    - Enables structured interaction patterns
@@ -90,6 +101,7 @@
 5. Shared Knowledge and Resources (Medium Priority)
    - Enhances team effectiveness
    - Builds on team management
+   - Includes signal archival system
 
 6. Monitoring and Debugging (Low Priority)
    - Improves system observability
@@ -102,9 +114,14 @@
 ## Next Steps
 
 1. Begin implementing the Enhanced Communication system
-   - Design message routing system
+   - Design point-to-point message routing
    - Implement message queuing
    - Add retry mechanisms
+   - Design and implement signal archival system
+     - Define storage backend interface
+     - Implement ETS-based storage
+     - Add PostgreSQL backend
+     - Design query/search interface
 
 2. Implement collaboration protocols one at a time
    - Start with `:ask` protocol
