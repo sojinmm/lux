@@ -79,23 +79,26 @@ end
 {:ok, writer_pid} = MyApp.Agents.Writer.start_link()
 
 # Get agent states
-researcher = :sys.get_state(researcher_pid)
-writer = :sys.get_state(writer_pid)
+researcher = Lux.Agent.get_state(researcher_pid)
+writer = Lux.Agent.get_state(writer_pid)
+
+# start the agent hub
+{:ok, hub} = Lux.AgentHub.start_link(name: :my_hub)
 
 # Register agents with their capabilities
-:ok = Lux.AgentHub.register(researcher, researcher_pid, [:research, :analysis])
-:ok = Lux.AgentHub.register(writer, writer_pid, [:writing, :editing])
+:ok = Lux.AgentHub.register(hub, researcher_pid, [:research, :analysis])
+:ok = Lux.AgentHub.register(hub, writer_pid, [:writing, :editing])
 ```
 
 ## Finding and Using Agents
 
 ```elixir
 # Find agents by capability
-research_agents = Lux.AgentHub.find_by_capability(:research)
-writing_agents = Lux.AgentHub.find_by_capability(:writing)
+research_agents = Lux.AgentHub.find_by_capability(hub, :research)
+writing_agents = Lux.AgentHub.find_by_capability(hub, :writing)
 
 # Get specific agent info
-{:ok, researcher_info} = Lux.AgentHub.get_agent_info(researcher.id)
+{:ok, researcher_info} = Lux.AgentHub.get_agent_info(hub, researcher.id)
 ```
 
 ## Coordinating Work Between Agents
@@ -111,7 +114,7 @@ Here's an example of how to coordinate work between a researcher and writer:
   )
 
 # 2. Update researcher status to busy
-:ok = Lux.AgentHub.update_status(researcher.id, :busy)
+:ok = Lux.AgentHub.update_status(hub, researcher.id, :busy)
 
 # 3. Send research to writer for content creation
 {:ok, article} = 
@@ -124,7 +127,7 @@ Here's an example of how to coordinate work between a researcher and writer:
   )
 
 # 4. Mark researcher as available again
-:ok = Lux.AgentHub.update_status(researcher.id, :available)
+:ok = Lux.AgentHub.update_status(hub, researcher.id, :available)
 ```
 
 ## Best Practices
@@ -153,11 +156,14 @@ defmodule MyApp.Workflows.ContentCreation do
   alias Lux.AgentHub
   
   def create_article(topic) do
+    # Get default Agent Hub
+    hub = AgentHub.get_default()
+
     # Find available researcher
-    case AgentHub.find_by_capability(:research) do
+    case AgentHub.find_by_capability(hub, :research) do
       [%{agent: researcher, pid: researcher_pid, status: :available} | _] ->
         # Update researcher status
-        :ok = AgentHub.update_status(researcher.id, :busy)
+        :ok = AgentHub.update_status(hub, researcher.id, :busy)
         
         # Get research
         {:ok, research} = MyApp.Agents.Researcher.send_message(
@@ -166,10 +172,10 @@ defmodule MyApp.Workflows.ContentCreation do
         )
         
         # Mark researcher as available
-        :ok = AgentHub.update_status(researcher.id, :available)
+        :ok = AgentHub.update_status(hub, researcher.id, :available)
         
         # Find available writer
-        case AgentHub.find_by_capability(:writing) do
+        case AgentHub.find_by_capability(hub, :writing) do
           [%{pid: writer_pid} | _] ->
             # Create content
             {:ok, article} = MyApp.Agents.Writer.send_message(

@@ -99,8 +99,8 @@ defmodule Lux.Integration.AgentCollaborationTest do
       writer = :sys.get_state(writer_pid)
 
       # Register agents with their capabilities
-      :ok = AgentHub.register(hub_name, researcher, researcher_pid, [:research, :analysis])
-      :ok = AgentHub.register(hub_name, writer, writer_pid, [:writing, :editing])
+      :ok = AgentHub.register(hub_name, researcher_pid, [:research, :analysis])
+      :ok = AgentHub.register(hub_name, writer_pid, [:writing, :editing])
 
       {:ok,
        hub: hub_name,

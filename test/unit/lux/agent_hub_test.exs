@@ -20,8 +20,8 @@ defmodule Lux.AgentHubTest do
   end
 
   describe "starting hubs" do
-    test "can start an unnamed hub" do
-      assert {:ok, pid} = AgentHub.start_link()
+    test "default hub already started" do
+      assert {:error, {:already_started, pid}} = AgentHub.start_link()
       assert is_pid(pid)
     end
 
@@ -60,7 +60,7 @@ defmodule Lux.AgentHubTest do
     end
 
     test "can register an agent", %{hub: hub, agent: agent, agent_pid: pid} do
-      assert :ok = AgentHub.register(hub, agent, pid, [:test])
+      assert :ok = AgentHub.register(hub, pid, [:test])
       assert [info] = AgentHub.list_agents(hub)
       assert info.agent.id == agent.id
       assert info.pid == pid
@@ -69,14 +69,14 @@ defmodule Lux.AgentHubTest do
     end
 
     test "can find agents by capability", %{hub: hub, agent: agent, agent_pid: pid} do
-      :ok = AgentHub.register(hub, agent, pid, [:research])
+      :ok = AgentHub.register(hub, pid, [:research])
       assert [info] = AgentHub.find_by_capability(hub, :research)
       assert info.agent.id == agent.id
       assert [] = AgentHub.find_by_capability(hub, :unknown)
     end
 
     test "can get agent info", %{hub: hub, agent: agent, agent_pid: pid} do
-      :ok = AgentHub.register(hub, agent, pid, [:test])
+      :ok = AgentHub.register(hub, pid, [:test])
       assert {:ok, info} = AgentHub.get_agent_info(hub, agent.id)
       assert info.agent.id == agent.id
       assert {:error, :not_found} = AgentHub.get_agent_info(hub, "unknown")
@@ -88,7 +88,7 @@ defmodule Lux.AgentHubTest do
       {:ok, _hub} = start_supervised({AgentHub, name: :test_hub})
       {:ok, agent_pid} = TestAgent.start_link()
       agent = :sys.get_state(agent_pid)
-      :ok = AgentHub.register(:test_hub, agent, agent_pid, [:test])
+      :ok = AgentHub.register(:test_hub, agent_pid, [:test])
 
       {:ok, hub: :test_hub, agent: agent, agent_pid: agent_pid}
     end
@@ -125,16 +125,15 @@ defmodule Lux.AgentHubTest do
     test "hubs maintain separate agent registries", %{
       hub1: hub1,
       hub2: hub2,
-      agent: agent,
       agent_pid: pid
     } do
       # Register in hub1
-      :ok = AgentHub.register(hub1, agent, pid, [:test])
+      :ok = AgentHub.register(hub1, pid, [:test])
       assert [_] = AgentHub.list_agents(hub1)
       assert [] = AgentHub.list_agents(hub2)
 
       # Register in hub2 with different capabilities
-      :ok = AgentHub.register(hub2, agent, pid, [:other])
+      :ok = AgentHub.register(hub2, pid, [:other])
       assert [info1] = AgentHub.list_agents(hub1)
       assert [info2] = AgentHub.list_agents(hub2)
       assert info1.capabilities == [:test]
@@ -147,8 +146,8 @@ defmodule Lux.AgentHubTest do
       agent: agent,
       agent_pid: pid
     } do
-      :ok = AgentHub.register(hub1, agent, pid, [:test])
-      :ok = AgentHub.register(hub2, agent, pid, [:test])
+      :ok = AgentHub.register(hub1, pid, [:test])
+      :ok = AgentHub.register(hub2, pid, [:test])
 
       # Update status in hub1
       :ok = AgentHub.update_status(hub1, agent.id, :busy)
@@ -164,8 +163,8 @@ defmodule Lux.AgentHubTest do
       agent: agent,
       agent_pid: pid
     } do
-      :ok = AgentHub.register(hub1, agent, pid, [:test])
-      :ok = AgentHub.register(hub2, agent, pid, [:test])
+      :ok = AgentHub.register(hub1, pid, [:test])
+      :ok = AgentHub.register(hub2, pid, [:test])
 
       GenServer.stop(pid)
       # Give the hubs time to process the DOWN message
