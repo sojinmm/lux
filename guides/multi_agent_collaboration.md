@@ -86,8 +86,8 @@ writer = Lux.Agent.get_state(writer_pid)
 {:ok, hub} = Lux.AgentHub.start_link(name: :my_hub)
 
 # Register agents with their capabilities
-:ok = Lux.AgentHub.register(hub, researcher_pid, [:research, :analysis])
-:ok = Lux.AgentHub.register(hub, writer_pid, [:writing, :editing])
+:ok = Lux.AgentHub.register(hub, researcher, researcher_pid, [:research, :analysis])
+:ok = Lux.AgentHub.register(hub, writer, writer_pid, [:writing, :editing])
 ```
 
 ## Finding and Using Agents

@@ -74,8 +74,8 @@ defmodule Lux.AgentHub do
   Registers an agent in the hub.
   """
   @spec register(hub(), pid(), [atom()]) :: :ok | {:error, term()}
-  def register(hub, pid, capabilities \\ []) do
-    GenServer.call(hub, {:register, pid, capabilities})
+  def register(hub, agent, pid, capabilities \\ []) do
+    GenServer.call(hub, {:register, agent, pid, capabilities})
   end
 
   @doc """
@@ -119,25 +119,19 @@ defmodule Lux.AgentHub do
   end
 
   @impl true
-  def handle_call({:register, pid, capabilities}, _from, state) do
-    if Process.alive?(pid) do
-      agent = :sys.get_state(pid)
+  def handle_call({:register, agent, pid, capabilities}, _from, state) do
+    agent_info = %{
+      agent: agent,
+      pid: pid,
+      status: :available,
+      capabilities: capabilities,
+      last_updated: DateTime.utc_now()
+    }
 
-      agent_info = %{
-        agent: agent,
-        pid: pid,
-        status: :available,
-        capabilities: capabilities,
-        last_updated: DateTime.utc_now()
-      }
+    # Monitor the agent's process to track when it goes down
+    Process.monitor(pid)
 
-      # Monitor the agent's process to track when it goes down
-      Process.monitor(pid)
-
-      {:reply, :ok, Map.put(state, agent.id, agent_info)}
-    else
-      {:reply, {:error, :agent_not_alive}, state}
-    end
+    {:reply, :ok, Map.put(state, agent.id, agent_info)}
   end
 
   @impl true
