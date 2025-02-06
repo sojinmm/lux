@@ -6,7 +6,7 @@ This guide demonstrates how to create and coordinate multiple agents working tog
 
 Multi-agent collaboration in Lux is built on several key components:
 
-1. **Agent Registry**: Central system for discovering and tracking agents
+1. **Agent Hub**: Central system for discovering and tracking agents
 2. **Capabilities**: Tags that describe what an agent can do
 3. **Status Tracking**: Monitoring agent availability and workload
 4. **Message Passing**: Communication between agents
@@ -26,7 +26,8 @@ defmodule MyApp.Agents.Researcher do
       goal: "Find and analyze information accurately",
       capabilities: [:research, :analysis],
       llm_config: %{
-        model: "gpt-4",
+        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+        model: "gpt-4o-mini",
         temperature: 0.7,
         messages: [
           %{
@@ -52,7 +53,8 @@ defmodule MyApp.Agents.Writer do
       goal: "Create engaging content from research",
       capabilities: [:writing, :editing],
       llm_config: %{
-        model: "gpt-4",
+        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+        model: "gpt-4o-mini",
         temperature: 0.7,
         messages: [
           %{
@@ -81,19 +83,19 @@ researcher = :sys.get_state(researcher_pid)
 writer = :sys.get_state(writer_pid)
 
 # Register agents with their capabilities
-:ok = Lux.Agent.Registry.register(researcher, researcher_pid, [:research, :analysis])
-:ok = Lux.Agent.Registry.register(writer, writer_pid, [:writing, :editing])
+:ok = Lux.AgentHub.register(researcher, researcher_pid, [:research, :analysis])
+:ok = Lux.AgentHub.register(writer, writer_pid, [:writing, :editing])
 ```
 
 ## Finding and Using Agents
 
 ```elixir
 # Find agents by capability
-research_agents = Lux.Agent.Registry.find_by_capability(:research)
-writing_agents = Lux.Agent.Registry.find_by_capability(:writing)
+research_agents = Lux.AgentHub.find_by_capability(:research)
+writing_agents = Lux.AgentHub.find_by_capability(:writing)
 
 # Get specific agent info
-{:ok, researcher_info} = Lux.Agent.Registry.get_agent_info(researcher.id)
+{:ok, researcher_info} = Lux.AgentHub.get_agent_info(researcher.id)
 ```
 
 ## Coordinating Work Between Agents
@@ -109,7 +111,7 @@ Here's an example of how to coordinate work between a researcher and writer:
   )
 
 # 2. Update researcher status to busy
-:ok = Lux.Agent.Registry.update_status(researcher.id, :busy)
+:ok = Lux.AgentHub.update_status(researcher.id, :busy)
 
 # 3. Send research to writer for content creation
 {:ok, article} = 
@@ -122,7 +124,7 @@ Here's an example of how to coordinate work between a researcher and writer:
   )
 
 # 4. Mark researcher as available again
-:ok = Lux.Agent.Registry.update_status(researcher.id, :available)
+:ok = Lux.AgentHub.update_status(researcher.id, :available)
 ```
 
 ## Best Practices
@@ -148,14 +150,14 @@ Here's a complete example of a research and writing pipeline:
 
 ```elixir
 defmodule MyApp.Workflows.ContentCreation do
-  alias Lux.Agent.Registry
+  alias Lux.AgentHub
   
   def create_article(topic) do
     # Find available researcher
-    case Registry.find_by_capability(:research) do
+    case AgentHub.find_by_capability(:research) do
       [%{agent: researcher, pid: researcher_pid, status: :available} | _] ->
         # Update researcher status
-        :ok = Registry.update_status(researcher.id, :busy)
+        :ok = AgentHub.update_status(researcher.id, :busy)
         
         # Get research
         {:ok, research} = MyApp.Agents.Researcher.send_message(
@@ -164,10 +166,10 @@ defmodule MyApp.Workflows.ContentCreation do
         )
         
         # Mark researcher as available
-        :ok = Registry.update_status(researcher.id, :available)
+        :ok = AgentHub.update_status(researcher.id, :available)
         
         # Find available writer
-        case Registry.find_by_capability(:writing) do
+        case AgentHub.find_by_capability(:writing) do
           [%{pid: writer_pid} | _] ->
             # Create content
             {:ok, article} = MyApp.Agents.Writer.send_message(
