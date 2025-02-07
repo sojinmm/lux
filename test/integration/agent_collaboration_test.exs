@@ -32,16 +32,6 @@ defmodule Lux.Integration.AgentCollaborationTest do
         }
       })
     end
-
-    def child_spec(opts) do
-      %{
-        id: {__MODULE__, opts[:name] || make_ref()},
-        start: {__MODULE__, :start_link, [opts]},
-        type: :worker,
-        restart: :temporary,
-        shutdown: 5000
-      }
-    end
   end
 
   defmodule WriterAgent do
@@ -69,16 +59,6 @@ defmodule Lux.Integration.AgentCollaborationTest do
           ]
         }
       })
-    end
-
-    def child_spec(opts) do
-      %{
-        id: {__MODULE__, opts[:name] || make_ref()},
-        start: {__MODULE__, :start_link, [opts]},
-        type: :worker,
-        restart: :temporary,
-        shutdown: 5000
-      }
     end
   end
 
