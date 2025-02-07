@@ -224,7 +224,7 @@ defmodule MyApp.Prisms.RiskAssessment do
   end
 end
 ```
-[Learn more about Prisms](guides/prisms.md)
+[Learn more about Prisms](guides/prisms.livemd)
 
 ### 4. Beams 🌟
 Composable workflow orchestrators:
@@ -404,7 +404,7 @@ We welcome contributions! Here's how you can help:
 3. 🧪 Add tests and examples
 4. 🔧 Submit pull requests
 
-See our [Contributing Guide](CONTRIBUTING.md) for details.
+See our [Contributing Guide](guides/contributing.md) for details.
 
 ## Community
 

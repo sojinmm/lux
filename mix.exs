@@ -74,12 +74,19 @@ defmodule Lux.MixProject do
 
   defp docs do
     [
-      main: "Lux",
+      main: "readme",
       extras: [
         "README.md",
         "LICENSE",
         "CHANGELOG.md",
-        "guides/prisms.livemd"
+        "guides/beams.md",
+        "guides/prisms.livemd",
+        "guides/contributing.md"
+      ],
+      groups_for_extras: [
+        "guides/beams.md",
+        "guides/prisms.livemd",
+        "guides/contributing.md"
       ]
     ]
   end
