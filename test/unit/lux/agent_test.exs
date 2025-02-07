@@ -146,14 +146,14 @@ defmodule Lux.AgentTest do
   end
 
   describe "memory operations" do
-    test "initializes memory on start" do
-      {:ok, pid} = MemoryAgent.start_link()
+    test "initializes memory on start", %{test: test_name} do
+      {:ok, pid} = MemoryAgent.start_link(%{name: "Test Agent #{test_name}"})
       agent = :sys.get_state(pid)
       assert is_pid(agent.memory_pid)
     end
 
-    test "stores and retrieves interactions" do
-      {:ok, pid} = MemoryAgent.start_link()
+    test "stores and retrieves interactions", %{test: test_name} do
+      {:ok, pid} = MemoryAgent.start_link(%{name: "Test Agent #{test_name}"})
 
       # Send a message
       {:ok, response} = MemoryAgent.send_message(pid, "Hello")
