@@ -152,17 +152,20 @@ defmodule Lux.Company.Runner do
       progress = trunc((index + 1) / length(plan.steps) * 100)
       send(runner, {:plan_progress, plan_id, progress})
 
+      dbg("123")
+
       case execute_step(step, acc, company, router, hub) do
         {:ok, new_acc} -> {:cont, {:ok, new_acc}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
+    |> dbg()
   end
 
   defp execute_step(step, acc, company, router, hub) do
-    with {:ok, task} <- parse_step(step),
-         {:ok, agent} <- find_capable_agent(task, company),
-         {:ok, result} <- delegate_task(task, agent, acc, router, hub) do
+    with {:ok, task} <- parse_step(step) |> dbg(),
+         {:ok, agent} <- find_capable_agent(task, company) |> dbg(),
+         {:ok, result} <- delegate_task(task, agent, acc, router, hub) |> dbg() do
       {:ok, %{acc | results: [result | acc.results]}}
     end
   end
@@ -197,10 +200,8 @@ defmodule Lux.Company.Runner do
     end)
   end
 
-  defp delegate_task(task, agent, acc, router, hub) do
-    case agent do
-      %{id: id} when not is_nil(id) ->
-        signal_id = Lux.UUID.generate()
+  defp delegate_task(task, %{id: agent_id, name: agent_name} = _agent, acc, router, hub) when not is_nil(agent_id) do
+    signal_id = Lux.UUID.generate()
 
         signal =
           Signal.new(%{
@@ -211,13 +212,13 @@ defmodule Lux.Company.Runner do
               context: acc
             },
             sender: "company_runner",
-            recipient: id
-          })
+            recipient: agent_id
+          }) |> dbg()
 
-        opts = [router: router, hub: hub]
+    opts = [router: router, hub: hub] |> dbg()
 
-        with :ok <- Router.subscribe(signal_id, opts),
-             :ok <- Router.route(signal, opts) do
+    with :ok <- Router.subscribe(signal_id, opts) |> dbg(),
+         :ok <- Router.route(signal, opts) |> dbg() do
           receive do
             {:signal_delivered, ^signal_id} ->
               # Wait for response
@@ -226,7 +227,7 @@ defmodule Lux.Company.Runner do
                   {:ok,
                    %{
                      task: task,
-                     agent: agent.name,
+                     agent: agent_name,
                      status: :completed,
                      result: response
                    }}
@@ -239,10 +240,10 @@ defmodule Lux.Company.Runner do
               {:error, "Timeout waiting for signal delivery"}
           end
         end
+  end
 
-      _ ->
-        {:error, "Agent does not have a valid ID"}
-    end
+  defp delegate_task(_task, agent, _acc, _router, _hub) do
+    {:error, "Agent does not have a valid ID: #{inspect(agent)}"}
   end
 
   defp validate_plan_inputs(plan, params) do

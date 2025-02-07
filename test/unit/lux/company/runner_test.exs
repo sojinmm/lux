@@ -97,7 +97,7 @@ defmodule Lux.Company.RunnerTest do
       start_supervised!({Task.Supervisor, name: task_sup_name})
 
       # Start router and hub with unique names
-      start_supervised!({Local, name: router_name})
+      {:ok, _router_pid} = start_supervised(Local)
       start_supervised!({Lux.AgentHub, name: hub_name})
 
       company = TestCompany.__company__()
