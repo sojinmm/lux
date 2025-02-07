@@ -49,7 +49,14 @@ defmodule Lux.NodeJS do
   @spec eval(String.t(), eval_options()) :: {:ok, term()} | {:error, String.t()}
   def eval(code, opts \\ []) do
     {variables, opts} = Keyword.pop(opts, :variables, %{})
-    do_eval(code, variables, opts, &NodeJS.call/3)
+
+    code
+    |> do_eval(variables, opts, &NodeJS.call/3)
+    |> case do
+      {:ok, result} -> {:ok, result}
+      {:error, "Call timed out."} -> {:error, :timeout}
+      {:error, error} -> {:error, error}
+    end
   end
 
   @doc """
