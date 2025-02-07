@@ -78,6 +78,31 @@ defmodule Lux.AgentTest do
     end
   end
 
+  defmodule TestScheduledPrism do
+    @moduledoc false
+    use Lux.Prism,
+      name: "Test Scheduled Prism",
+      description: "A test prism for scheduled actions"
+
+    def handler(params, _opts) do
+      send(Process.whereis(:test_scheduler), {:prism_called, params})
+      {:ok, %{result: "scheduled prism success"}}
+    end
+  end
+
+  defmodule TestScheduledBeam do
+    @moduledoc false
+    use Lux.Beam,
+      name: "Test Scheduled Beam",
+      description: "A test beam for scheduled actions"
+
+    def steps do
+      sequence do
+        step(:test, TestScheduledPrism, %{test: "beam"})
+      end
+    end
+  end
+
   describe "new/1" do
     test "creates a new agent with default values" do
       agent = Agent.new(%{})
@@ -198,6 +223,78 @@ defmodule Lux.AgentTest do
       assert_raise RuntimeError, fn ->
         start_supervised!({SimpleAgent, %{name: name1}})
       end
+    end
+  end
+
+  describe "scheduled actions" do
+    setup do
+      # Register process to receive test messages
+      Process.register(self(), :test_scheduler)
+      :ok
+    end
+
+    test "executes scheduled prism actions" do
+      start_supervised!(
+        {SimpleAgent,
+         %{
+           name: "Scheduled Agent",
+           prisms: [TestScheduledPrism],
+           scheduled_actions: [
+             {TestScheduledPrism, 100, %{test: "prism"}, %{name: "test_prism"}}
+           ]
+         }}
+      )
+
+      # Wait for the scheduled action to run
+      assert_receive {:prism_called, %{test: "prism"}}, 200
+    end
+
+    test "executes scheduled beam actions" do
+      start_supervised!(
+        {SimpleAgent,
+         %{
+           name: "Scheduled Agent",
+           beams: [TestScheduledBeam],
+           scheduled_actions: [
+             {TestScheduledBeam, 100, %{test: "beam"}, %{name: "test_beam"}}
+           ]
+         }}
+      )
+
+      # Wait for the scheduled action to run. We match on prism_called because the beam is executed by the prism.
+      assert_receive {:prism_called, %{test: "beam"}}, 200
+    end
+
+    test "handles invalid modules gracefully" do
+      pid =
+        start_supervised!(
+          {SimpleAgent,
+           %{
+             name: "Scheduled Agent",
+             scheduled_actions: [
+               {InvalidModule, 100, %{}, %{name: "invalid"}}
+             ]
+           }}
+        )
+
+      # The agent should not crash
+      assert Process.alive?(pid)
+    end
+
+    test "uses default name when not provided" do
+      start_supervised!(
+        {SimpleAgent,
+         %{
+           name: "Scheduled Agent",
+           prisms: [TestScheduledPrism],
+           scheduled_actions: [
+             {TestScheduledPrism, 100, %{test: "default_name"}, %{}}
+           ]
+         }}
+      )
+
+      # Wait for the scheduled action to run
+      assert_receive {:prism_called, %{test: "default_name"}}, 200
     end
   end
 end

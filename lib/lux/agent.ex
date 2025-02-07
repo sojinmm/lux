@@ -14,6 +14,9 @@ defmodule Lux.Agent do
           name: atom() | nil
         }
 
+  # {module, interval_ms, input, opts}
+  @type scheduled_action :: {module(), pos_integer(), map(), map()}
+
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
@@ -26,7 +29,8 @@ defmodule Lux.Agent do
           accepts_signals: [Lux.SignalSchema.t()],
           llm_config: map(),
           memory_config: memory_config() | nil,
-          memory_pid: pid() | nil
+          memory_pid: pid() | nil,
+          scheduled_actions: [scheduled_action()]
         }
 
   defstruct id: nil,
@@ -40,6 +44,7 @@ defmodule Lux.Agent do
             accepts_signals: [],
             memory_config: nil,
             memory_pid: nil,
+            scheduled_actions: [],
             llm_config: %{
               provider: :openai,
               model: "gpt-4",
@@ -59,6 +64,8 @@ defmodule Lux.Agent do
       @behaviour Lux.Agent
 
       use GenServer
+
+      require Logger
 
       @default_values %{
         module: __MODULE__
@@ -121,6 +128,12 @@ defmodule Lux.Agent do
               agent
           end
 
+        # Schedule initial runs for all scheduled actions
+        for {module, interval_ms, input, opts} <- agent.scheduled_actions do
+          name = opts[:name] || Lux.Agent.module_to_name(module)
+          Lux.Agent.schedule_action(name, module, interval_ms, input, opts)
+        end
+
         {:ok, agent}
       end
 
@@ -135,6 +148,48 @@ defmodule Lux.Agent do
       @impl GenServer
       def handle_info({:signal, signal}, agent) do
         _ = handle_signal(agent, signal)
+        {:noreply, agent}
+      end
+
+      @impl GenServer
+      def handle_info({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
+        timeout = opts[:timeout] || 60_000
+
+        # Execute the action based on whether it's a Prism or Beam
+        Task.Supervisor.async_nolink(
+          Lux.ScheduledTasksSupervisor,
+          fn ->
+            try do
+              result =
+                case {Lux.Agent.prism?(module), Lux.Agent.beam?(module)} do
+                  {true, false} ->
+                    module.handler(input, agent)
+
+                  {false, true} ->
+                    module.run(input, agent)
+
+                  _ ->
+                    {:error, :invalid_module}
+                end
+
+              case result do
+                {:ok, _} ->
+                  Logger.info("Scheduled action #{name} completed successfully")
+
+                {:error, reason} ->
+                  Logger.warning("Scheduled action #{name} failed: #{inspect(reason)}")
+              end
+            catch
+              kind, reason ->
+                Logger.error("Scheduled action #{name} crashed: #{inspect({kind, reason})}")
+            end
+          end,
+          timeout: timeout
+        )
+
+        # Schedule the next run
+        Lux.Agent.schedule_action(name, module, interval_ms, input, opts)
+
         {:noreply, agent}
       end
 
@@ -174,7 +229,8 @@ defmodule Lux.Agent do
       prisms: Map.get(attrs, :prisms, []),
       beams: Map.get(attrs, :beams, []),
       lenses: Map.get(attrs, :lenses, []),
-      accepts_signals: Map.get(attrs, :accepts_signals, [])
+      accepts_signals: Map.get(attrs, :accepts_signals, []),
+      scheduled_actions: Map.get(attrs, :scheduled_actions, [])
     })
   end
 
@@ -275,4 +331,36 @@ defmodule Lux.Agent do
 
   defp format_value(value) when is_map(value), do: format_content(value)
   defp format_value(value), do: to_string(value)
+
+  def schedule_action(name, module, interval_ms, input, opts) do
+    Process.send_after(
+      self(),
+      {:run_scheduled_action, name, module, interval_ms, input, opts},
+      interval_ms
+    )
+  end
+
+  def module_to_name(module) do
+    module
+    |> Module.split()
+    |> List.last()
+    |> String.downcase()
+  end
+
+  def beam?(module) when is_atom(module) do
+    function_exported?(module, :steps, 0) and function_exported?(module, :run, 2)
+  end
+
+  def beam?(_), do: false
+
+  def prism?(module) when is_atom(module) do
+    function_exported?(module, :handler, 2)
+  end
+
+  def prism?(_), do: false
+
+  # implements the access protocol for this struct...
+  def fetch(agent, key) do
+    Map.get(agent, key)
+  end
 end
