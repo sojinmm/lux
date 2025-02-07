@@ -40,7 +40,7 @@ defmodule Lux.AgentHub do
   """
   def start_link(opts \\ []) do
     case Keyword.get(opts, :name) do
-      nil -> GenServer.start_link(__MODULE__, opts)
+      nil -> GenServer.start_link(__MODULE__, opts, name: __MODULE__)
       name when is_atom(name) -> GenServer.start_link(__MODULE__, opts, name: name)
     end
   end
@@ -65,9 +65,15 @@ defmodule Lux.AgentHub do
   end
 
   @doc """
+  Gets the default agent hub's pid.
+  """
+  @spec get_default() :: pid() | nil
+  def get_default, do: Process.whereis(__MODULE__)
+
+  @doc """
   Registers an agent in the hub.
   """
-  @spec register(hub(), Agent.t(), pid(), [atom()]) :: :ok | {:error, term()}
+  @spec register(hub(), pid(), [atom()]) :: :ok | {:error, term()}
   def register(hub, agent, pid, capabilities \\ []) do
     GenServer.call(hub, {:register, agent, pid, capabilities})
   end

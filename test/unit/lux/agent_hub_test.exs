@@ -20,8 +20,8 @@ defmodule Lux.AgentHubTest do
   end
 
   describe "starting hubs" do
-    test "can start an unnamed hub" do
-      assert {:ok, pid} = AgentHub.start_link()
+    test "default hub already started" do
+      assert {:error, {:already_started, pid}} = AgentHub.start_link()
       assert is_pid(pid)
     end
 
