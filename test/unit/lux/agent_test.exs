@@ -175,4 +175,29 @@ defmodule Lux.AgentTest do
       assert user_msg.metadata.role == :user
     end
   end
+
+  describe "can be started with a unique name" do
+    test "can be started with a unique name", %{test: test_name} do
+      name1 = String.replace("Test_Agent_1_#{test_name}", " ", "_")
+      name2 = String.replace("Test_Agent_2_#{test_name}", " ", "_")
+
+      # Start two agents with different names
+      pid1 = start_supervised!({SimpleAgent, %{name: name1}})
+      pid2 = start_supervised!({SimpleAgent, %{name: name2}})
+
+      # Verify they are different processes
+      assert pid1 != pid2
+
+      # Get their states to verify they have the correct names
+      agent1 = :sys.get_state(pid1)
+      agent2 = :sys.get_state(pid2)
+
+      assert agent1.name == name1
+      assert agent2.name == name2
+
+      assert_raise RuntimeError, fn ->
+        start_supervised!({SimpleAgent, %{name: name1}})
+      end
+    end
+  end
 end

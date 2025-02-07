@@ -55,7 +55,7 @@ defmodule Lux.Agent do
   @callback new(attrs :: map()) :: t()
 
   defmacro __using__(_opts) do
-    quote do
+    quote location: :keep do
       @behaviour Lux.Agent
 
       use GenServer
@@ -84,8 +84,23 @@ defmodule Lux.Agent do
       # GenServer Client API
       def start_link(attrs \\ %{}) do
         agent = new(attrs)
-        GenServer.start_link(__MODULE__, agent)
+
+        GenServer.start_link(__MODULE__, agent, name: get_name(agent))
       end
+
+      def child_spec(opts) do
+        %{
+          id: {__MODULE__, opts[:name] || :default},
+          start: {__MODULE__, :start_link, [opts]},
+          type: :worker,
+          restart: :permanent,
+          shutdown: 60_000
+        }
+      end
+
+      defp get_name(%{name: name}) when is_binary(name), do: String.to_atom(name)
+      defp get_name(%{name: nil}), do: __MODULE__
+      defp get_name(%{name: name}) when is_atom(name), do: name
 
       def send_message(pid, message, opts \\ []) do
         timeout = opts[:timeout] || 120_000
@@ -115,6 +130,12 @@ defmodule Lux.Agent do
           {:ok, response} = ok -> {:reply, ok, agent}
           {:error, _reason} = error -> {:reply, error, agent}
         end
+      end
+
+      @impl GenServer
+      def handle_info({:signal, signal}, agent) do
+        _ = handle_signal(agent, signal)
+        {:noreply, agent}
       end
 
       @impl GenServer
