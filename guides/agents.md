@@ -52,7 +52,7 @@ end
 ## Agent Configuration
 
 ### Memory Configuration
-Agents can be configured with memory to maintain state and recall previous interactions:
+Agents can be configured with memory to maintain state and recall previous interactions. Memory is particularly useful for maintaining conversation context and recalling previous decisions:
 
 ```elixir
 defmodule MyApp.Agents.MemoryAgent do
@@ -75,32 +75,108 @@ defmodule MyApp.Agents.MemoryAgent do
       }
     })
   end
+end
+```
+
+Memory is automatically used in chat interactions when enabled:
+
+```elixir
+# Start an agent with memory
+{:ok, pid} = MyApp.Agents.MemoryAgent.start_link()
+
+# Chat with memory enabled (remembers context)
+{:ok, response1} = MyApp.Agents.MemoryAgent.send_message(pid, "My name is John", use_memory: true)
+{:ok, response2} = MyApp.Agents.MemoryAgent.send_message(pid, "What's my name?", use_memory: true)
+
+# Chat without memory (no context)
+{:ok, response3} = MyApp.Agents.MemoryAgent.send_message(pid, "What's my name?", use_memory: false)
+```
+
+You can control memory context size in chat:
+```elixir
+# Limit memory context to last 3 interactions
+{:ok, response} = MyApp.Agents.MemoryAgent.send_message(
+  pid,
+  "Summarize our conversation",
+  use_memory: true,
+  max_memory_context: 3
+)
+```
+
+The memory system stores each interaction with metadata:
+- User messages are stored with `role: :user`
+- Agent responses are stored with `role: :assistant`
+- All interactions are timestamped and retrievable
+- Memory is automatically cleaned up when the agent terminates
+
+### Scheduled Actions
+Agents can perform scheduled, recurring tasks using prisms or beams. Each scheduled action runs at specified intervals and is supervised by the Lux runtime:
+
+```elixir
+defmodule MyApp.Agents.MonitorAgent do
+  use Lux.Agent
 
   @impl true
-  def chat(agent, message, opts) do
-    # Store the user's message
-    {:ok, _} = Lux.Memory.SimpleMemory.add(
-      agent.memory_pid,
-      message,
-      :interaction,
-      %{role: :user}
-    )
+  def new(opts \\ %{}) do
+    Lux.Agent.new(%{
+      name: "System Monitor",
+      description: "Monitors system health and performance",
+      goal: "Maintain system health through regular checks",
+      prisms: [MyApp.Prisms.HealthCheck, MyApp.Prisms.MetricsCollector],
+      beams: [MyApp.Beams.SystemDiagnostics],
+      scheduled_actions: [
+        # Run health check every minute
+        {MyApp.Prisms.HealthCheck, 60_000, %{scope: :full}, %{
+          name: "health_check",  # Optional name, defaults to module name
+          timeout: 30_000       # Optional timeout, defaults to 60 seconds
+        }},
+        # Run system diagnostics every 5 minutes
+        {MyApp.Beams.SystemDiagnostics, 300_000, %{deep_scan: true}, %{}}
+      ]
+    })
+  end
+end
+```
 
-    case super(agent, message, opts) do
-      {:ok, response} = ok ->
-        # Store the assistant's response
-        {:ok, _} = Lux.Memory.SimpleMemory.add(
-          agent.memory_pid,
-          response,
-          :interaction,
-          %{role: :assistant}
-        )
-        ok
-      error -> error
+Scheduled actions are defined as tuples of `{module, interval_ms, input, opts}` where:
+- `module`: The prism or beam to execute
+- `interval_ms`: Time in milliseconds between executions
+- `input`: Map of input parameters for the action
+- `opts`: Configuration options
+  - `name`: Optional name for the action (defaults to module name)
+  - `timeout`: Maximum execution time in milliseconds (defaults to 60 seconds)
+
+Each scheduled action:
+- Runs in a supervised Task
+- Automatically reschedules itself after completion
+- Has error handling and logging
+- Receives the full agent context in its execution
+
+Example prism for scheduled actions:
+```elixir
+defmodule MyApp.Prisms.HealthCheck do
+  use Lux.Prism,
+    name: "Health Check",
+    description: "System health monitoring"
+
+  def handler(params, agent) do
+    # Access agent configuration using Access protocol
+    agent_name = agent[:name]
+    
+    # Perform health check
+    with {:ok, metrics} <- check_system_health(params) do
+      Logger.info("Health check completed for #{agent_name}")
+      {:ok, metrics}
     end
   end
 end
 ```
+
+The agent runtime ensures that:
+- Failed actions don't crash the agent
+- Timeouts are properly handled
+- Actions are rescheduled even after errors
+- All executions are logged
 
 ### LLM Configuration
 Control how your agent interacts with language models:
