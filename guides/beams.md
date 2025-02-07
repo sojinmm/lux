@@ -78,20 +78,22 @@ Execute steps one after another:
 
 ```elixir
 sequence do
-  step(:first, FirstPrism, %{param: :value})
-  step(:second, SecondPrism, %{input: {:ref, "first.output"}})
-  step(:third, ThirdPrism, %{data: {:ref, "second.result"}})
+  step(:first, FirstPrism, [:input])
+  step(:second, SecondPrism, %{input: [:steps, :first, :result]})
+  step(:third, ThirdPrism, %{data: [:steps, :second, :result]})
 end
 ```
+
+> NOTE: To access previous step results, use `[:steps, :step_id, :result]`.
 
 ### Parallel Steps
 Execute steps concurrently:
 
 ```elixir
 parallel do
-  step(:analysis, AnalysisPrism, %{data: :input})
-  step(:validation, ValidationPrism, %{data: :input})
-  step(:enrichment, EnrichmentPrism, %{data: :input})
+  step(:analysis, AnalysisPrism, [:input])
+  step(:validation, ValidationPrism, [:input])
+  step(:enrichment, EnrichmentPrism, [:input])
 end
 ```
 
@@ -123,8 +125,8 @@ end
 Reference previous step outputs:
 
 ```elixir
-step(:data, DataPrism, %{value: :input_value})
-step(:process, ProcessPrism, %{data: {:ref, "data.result"}})
+step(:data, DataPrism, %{value: [:input, :value]})
+step(:process, ProcessPrism, %{data: [:steps, :data, :result]})
 ```
 
 ### Nested References
@@ -132,8 +134,8 @@ Access nested values:
 
 ```elixir
 step(:complex, ComplexPrism, %{
-  value: {:ref, "data.nested.deep.value"},
-  config: {:ref, "settings.options"}
+  value: [:steps, :data, :result, :nested, :deep, :value],
+  config: [:steps, :settings, :result, :options]
 })
 ```
 
@@ -142,9 +144,9 @@ Combine multiple references:
 
 ```elixir
 step(:combine, CombinePrism, %{
-  first: {:ref, "step1.output"},
-  second: {:ref, "step2.output"},
-  third: {:ref, "step3.output"}
+  first: [:steps, :step1, :result],
+  second: [:steps, :step2, :result],
+  third: [:steps, :step3, :result]
 })
 ```
 
