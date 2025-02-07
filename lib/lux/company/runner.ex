@@ -10,9 +10,11 @@ defmodule Lux.Company.Runner do
   """
 
   use GenServer
-  require Logger
 
   alias Lux.Signal
+  alias Lux.Signal.Router
+
+  require Logger
 
   # Client API
 
@@ -33,14 +35,17 @@ defmodule Lux.Company.Runner do
 
   @impl true
   def init({company, opts}) do
-    {:ok, %{
-      company: company,
-      running_plans: %{},  # plan_id => %{plan: plan, status: status, progress: progress}
-      plan_results: %{},   # plan_id => results
-      router: opts[:router],
-      hub: opts[:hub],
-      task_supervisor: opts[:task_supervisor] || Task.Supervisor
-    }}
+    {:ok,
+     %{
+       company: company,
+       # plan_id => %{plan: plan, status: status, progress: progress}
+       running_plans: %{},
+       # plan_id => results
+       plan_results: %{},
+       router: opts[:router],
+       hub: opts[:hub],
+       task_supervisor: opts[:task_supervisor] || Task.Supervisor
+     }}
   end
 
   @impl true
@@ -53,8 +58,8 @@ defmodule Lux.Company.Runner do
             # Start plan execution
             {:ok, pid} = start_plan_execution(plan_id, plan, params, state)
 
-            new_state = state
-              |> put_in([:running_plans, plan_id], %{
+            new_state =
+              put_in(state, [:running_plans, plan_id], %{
                 plan: plan,
                 status: :running,
                 progress: 0,
@@ -82,19 +87,24 @@ defmodule Lux.Company.Runner do
 
   @impl true
   def handle_info({:plan_progress, plan_id, progress}, state) do
-    new_state = update_in(state.running_plans[plan_id], fn plan_state ->
-      %{plan_state | progress: progress}
-    end)
+    new_state =
+      update_in(state.running_plans[plan_id], fn plan_state ->
+        %{plan_state | progress: progress}
+      end)
+
     {:noreply, new_state}
   end
 
   @impl true
   def handle_info({:plan_completed, plan_id, results}, state) do
     {_plan_state, running_plans} = Map.pop(state.running_plans, plan_id)
-    new_state = %{state |
-      running_plans: running_plans,
-      plan_results: Map.put(state.plan_results, plan_id, results)
+
+    new_state = %{
+      state
+      | running_plans: running_plans,
+        plan_results: Map.put(state.plan_results, plan_id, results)
     }
+
     Logger.info("Plan #{plan_id} completed with results: #{inspect(results)}")
     {:noreply, new_state}
   end
@@ -115,7 +125,17 @@ defmodule Lux.Company.Runner do
     Task.Supervisor.start_child(state.task_supervisor, fn ->
       try do
         # Execute plan steps sequentially
-        results = execute_plan_steps(plan, params, state.company, runner, plan_id, state.router, state.hub)
+        results =
+          execute_plan_steps(
+            plan,
+            params,
+            state.company,
+            runner,
+            plan_id,
+            state.router,
+            state.hub
+          )
+
         send(runner, {:plan_completed, plan_id, results})
       catch
         kind, error ->
@@ -149,7 +169,8 @@ defmodule Lux.Company.Runner do
 
   defp parse_step(step) do
     # Remove step number prefix (e.g., "1. ")
-    task = step
+    task =
+      step
       |> String.split(". ", parts: 2)
       |> List.last()
       |> String.downcase()
@@ -180,32 +201,35 @@ defmodule Lux.Company.Runner do
     case agent do
       %{id: id} when not is_nil(id) ->
         signal_id = Lux.UUID.generate()
-        signal = Signal.new(%{
-          id: signal_id,
-          schema_id: Lux.Schemas.TaskSignal,
-          payload: %{
-            task: task,
-            context: acc
-          },
-          sender: "company_runner",
-          recipient: id
-        })
+
+        signal =
+          Signal.new(%{
+            id: signal_id,
+            schema_id: Lux.Schemas.TaskSignal,
+            payload: %{
+              task: task,
+              context: acc
+            },
+            sender: "company_runner",
+            recipient: id
+          })
 
         opts = [router: router, hub: hub]
 
-        with :ok <- Lux.Signal.Router.subscribe(signal_id, opts),
-             :ok <- Lux.Signal.Router.route(signal, opts) do
+        with :ok <- Router.subscribe(signal_id, opts),
+             :ok <- Router.route(signal, opts) do
           receive do
             {:signal_delivered, ^signal_id} ->
               # Wait for response
               receive do
                 {:signal, %{id: response_id, payload: response}} when response_id != signal_id ->
-                  {:ok, %{
-                    task: task,
-                    agent: agent.name,
-                    status: :completed,
-                    result: response
-                  }}
+                  {:ok,
+                   %{
+                     task: task,
+                     agent: agent.name,
+                     status: :completed,
+                     result: response
+                   }}
               after
                 :timer.seconds(30) ->
                   {:error, "Timeout waiting for agent response"}
@@ -231,8 +255,10 @@ defmodule Lux.Company.Runner do
     cond do
       not MapSet.equal?(missing, MapSet.new()) ->
         {:error, "Missing required inputs: #{inspect(MapSet.to_list(missing))}"}
+
       not MapSet.equal?(extra, MapSet.new()) ->
         {:error, "Unexpected inputs provided: #{inspect(MapSet.to_list(extra))}"}
+
       true ->
         :ok
     end

@@ -1,11 +1,15 @@
 defmodule Lux.Company.RunnerTest do
   use ExUnit.Case, async: true
 
-  alias Lux.Company.{Role, Plan, Runner}
+  alias Lux.Company.Plan
+  alias Lux.Company.Role
+  alias Lux.Company.Runner
   alias Lux.Signal
+  alias Lux.Signal.Router.Local
 
   # Test modules
   defmodule TestAgent do
+    @moduledoc false
     use Lux.Agent
 
     def new(opts \\ %{}) do
@@ -20,58 +24,61 @@ defmodule Lux.Company.RunnerTest do
     @impl true
     def handle_signal(_agent, signal) do
       # Echo back a response immediately
-      response = Signal.new(%{
-        id: Lux.UUID.generate(),
-        schema_id: Lux.Schemas.TaskSignal,
-        payload: %{result: "Completed #{signal.payload.task}"},
-        sender: "test_agent",
-        recipient: signal.sender
-      })
-      Lux.Signal.Router.route(response, router: Lux.Signal.Router.Local)
+      response =
+        Signal.new(%{
+          id: Lux.UUID.generate(),
+          schema_id: Lux.Schemas.TaskSignal,
+          payload: %{result: "Completed #{signal.payload.task}"},
+          sender: "test_agent",
+          recipient: signal.sender
+        })
+
+      Lux.Signal.Router.route(response, router: Local)
       :ok
     end
   end
 
   defmodule TestCompany do
+    @moduledoc false
     use Lux.Company
 
     company do
-      name "Test Company"
-      mission "Testing the runner"
+      name("Test Company")
+      mission("Testing the runner")
 
       has_ceo "Test CEO" do
-        agent TestAgent
-        goal "Direct testing activities"
-        can "plan"
-        can "review"
+        agent(TestAgent)
+        goal("Direct testing activities")
+        can("plan")
+        can("review")
       end
 
       has_member "Test Researcher" do
-        agent TestAgent
-        goal "Research test cases"
-        can "research"
-        can "analyze"
+        agent(TestAgent)
+        goal("Research test cases")
+        can("research")
+        can("analyze")
       end
 
       has_member "Test Writer" do
-        agent TestAgent
-        goal "Write test content"
-        can "write"
-        can "edit"
+        agent(TestAgent)
+        goal("Write test content")
+        can("write")
+        can("edit")
       end
     end
 
     plan :test_plan do
       input do
-        field "test_input"
+        field("test_input")
       end
 
-      steps """
+      steps("""
       1. Research test requirements
       2. Plan test approach
       3. Write test cases
       4. Review results
-      """
+      """)
     end
   end
 
@@ -90,38 +97,43 @@ defmodule Lux.Company.RunnerTest do
       start_supervised!({Task.Supervisor, name: task_sup_name})
 
       # Start router and hub with unique names
-      start_supervised!({Lux.Signal.Router.Local, name: router_name})
+      start_supervised!({Local, name: router_name})
       start_supervised!({Lux.AgentHub, name: hub_name})
 
       company = TestCompany.__company__()
       # Add IDs to roles
-      company = %{company |
-        ceo: Map.put(company.ceo, :id, Lux.UUID.generate()),
-        members: Enum.map(company.members, &Map.put(&1, :id, Lux.UUID.generate()))
+      company = %{
+        company
+        | ceo: Map.put(company.ceo, :id, Lux.UUID.generate()),
+          members: Enum.map(company.members, &Map.put(&1, :id, Lux.UUID.generate()))
       }
 
       # Start the runner with explicit name and configuration
-      {:ok, pid} = Runner.start_link({company, %{
-        router: router_name,
-        hub: hub_name,
-        name: runner_name,
-        task_supervisor: task_sup_name
-      }})
+      {:ok, pid} =
+        Runner.start_link(
+          {company,
+           %{
+             router: router_name,
+             hub: hub_name,
+             name: runner_name,
+             task_supervisor: task_sup_name
+           }}
+        )
 
       # Register agents with the hub
       :ok = Lux.AgentHub.register(hub_name, company.ceo, self(), ["plan", "review"])
+
       Enum.each(company.members, fn member ->
         :ok = Lux.AgentHub.register(hub_name, member, self(), member.capabilities)
       end)
 
       {:ok,
-        runner: pid,
-        runner_name: runner_name,
-        company: company,
-        router: router_name,
-        hub: hub_name,
-        task_supervisor: task_sup_name
-      }
+       runner: pid,
+       runner_name: runner_name,
+       company: company,
+       router: router_name,
+       hub: hub_name,
+       task_supervisor: task_sup_name}
     end
 
     test "executes plan steps in sequence", %{runner_name: runner_name} = context do
@@ -168,10 +180,12 @@ defmodule Lux.Company.RunnerTest do
       assert String.contains?(reason, "Missing required inputs")
 
       # Extra input
-      assert {:error, reason} = Runner.run_plan(runner_name, :test_plan, %{
-        "test_input" => "example",
-        "extra" => "invalid"
-      })
+      assert {:error, reason} =
+               Runner.run_plan(runner_name, :test_plan, %{
+                 "test_input" => "example",
+                 "extra" => "invalid"
+               })
+
       assert String.contains?(reason, "Unexpected inputs provided")
     end
 
