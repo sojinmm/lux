@@ -6,6 +6,7 @@ defmodule Lux.Agents.RiskManager do
   use Lux.Agent
 
   alias Lux.Beams.Hyperliquid.TradeRiskManagementBeam
+
   require Logger
 
   def new(opts \\ %{}) do

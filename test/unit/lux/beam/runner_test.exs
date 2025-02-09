@@ -543,6 +543,7 @@ defmodule Lux.Beam.RunnerTest do
       def steps do
         sequence do
           step(:data, TestPrism, %{value: "deep_data"})
+
           step(:nested, TestPrism, %{
             level1: %{
               level2: %{
