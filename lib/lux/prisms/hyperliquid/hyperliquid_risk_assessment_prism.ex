@@ -62,10 +62,11 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
       ]
     }
 
-  require Logger
   import Lux.Python
 
-  def handler(%{portfolio: portfolio, market_data: prices, proposed_trade: trade} = input, ctx) do
+  require Logger
+
+  def handler(%{portfolio: portfolio, market_data: prices, proposed_trade: trade}, _ctx) do
     python_result =
       python variables: %{
                portfolio: portfolio,
@@ -75,23 +76,8 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
         ~PY"""
         import json
 
-        def log_debug(msg, data=None):
-            '''Helper to print debug info'''
-            print(f"DEBUG: {msg}")
-            if data:
-                print(f"DATA: {json.dumps(data, indent=2)}")
-
-        log_debug("Input data:", {
-            "portfolio": portfolio,
-            # "market_data": market_data,
-            "trade": trade
-        })
-
         def find_position(portfolio, coin):
             '''Find current position for the given coin'''
-            log_debug(f"Finding position for {coin}", {
-                "portfolio_positions": portfolio.get("assetPositions", [])
-            })
             for pos in portfolio.get("assetPositions", []):
                 if pos["position"]["coin"] == coin:
                     return pos
@@ -99,22 +85,12 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
 
         def calculate_position_size_ratio(trade, market_price, margin_summary):
             '''Calculate position size as percentage of portfolio'''
-            log_debug("Calculating position size ratio", {
-                "trade": trade,
-                "market_price": market_price,
-                "margin_summary": margin_summary
-            })
             trade_value = float(trade["sz"]) * float(market_price)
             account_value = float(margin_summary["accountValue"])
             return trade_value / account_value
 
         def calculate_leverage(portfolio, trade, market_price):
             '''Calculate current leverage including the new trade'''
-            log_debug("Calculating leverage", {
-                "portfolio": portfolio,
-                "trade": trade,
-                "market_price": market_price
-            })
             margin_summary = portfolio["crossMarginSummary"]
             current_leverage = float(margin_summary["totalNtlPos"]) / float(margin_summary["accountValue"])
 
@@ -125,10 +101,6 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
 
         def calculate_concentration(position, margin_summary):
             '''Calculate portfolio concentration for this asset'''
-            log_debug("Calculating concentration", {
-                "position": position,
-                "margin_summary": margin_summary
-            })
             if not position:
                 return 0.0
 
@@ -138,10 +110,6 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
 
         def calculate_liquidation_risk(position, market_price):
             '''Calculate risk of liquidation'''
-            log_debug("Calculating liquidation risk", {
-                "position": position,
-                "market_price": market_price
-            })
             if not position:
                 return 0.0
 
@@ -154,28 +122,14 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
 
         def calculate_unrealized_pnl(position):
             '''Calculate unrealized PnL'''
-            log_debug("Calculating unrealized PnL", {
-                "position": position
-            })
             if not position:
                 return 0.0
             return float(position["position"]["returnOnEquity"])
 
         # Main risk calculation
-        log_debug("Starting main risk calculation")
-
         current_position = find_position(portfolio, trade["coin"])
-        log_debug("Found position:", current_position)
-
-        log_debug("Getting market price", {
-            # "market_data": market_data,
-            "coin": trade["coin"]
-        })
         market_price = market_data[trade["coin"]]["markPx"]
-        log_debug(f"Market price: {market_price}")
-
         margin_summary = portfolio["crossMarginSummary"]
-        log_debug("Margin summary:", margin_summary)
 
         metrics = {
             "position_size_ratio": calculate_position_size_ratio(trade, market_price, margin_summary),
@@ -185,7 +139,6 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
             "unrealized_pnl": calculate_unrealized_pnl(current_position)
         }
 
-        log_debug("Final metrics:", metrics)
         metrics
         """
       end
@@ -194,8 +147,9 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
       %{"error" => error} ->
         Logger.error("Risk assessment failed: #{inspect(error)}")
         {:error, error}
+
       metrics when is_map(metrics) ->
-        Logger.info("Risk assessment completed", metrics: metrics)
+        Logger.info("Risk assessment completed", metrics)
         {:ok, metrics}
     end
   end

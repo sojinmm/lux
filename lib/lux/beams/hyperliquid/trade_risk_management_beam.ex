@@ -64,30 +64,22 @@ defmodule Lux.Beams.Hyperliquid.TradeRiskManagementBeam do
       properties: %{
         status: %{
           type: :string,
-          enum: ["accepted", "rejected"]
+          description: "Order status (success or rejected)"
         },
-        risk_metrics: %{
+        order_result: %{
           type: :object,
-          properties: %{
-            position_size_ratio: %{type: :number},
-            leverage: %{type: :number},
-            portfolio_concentration: %{type: :number},
-            liquidation_risk: %{type: :number},
-            unrealized_pnl: %{type: :number}
-          }
-        },
-        execution_result: %{type: :object},
-        rejection_reason: %{type: :string}
+          description: "Order execution result or rejection details"
+        }
       },
-      required: ["status", "risk_metrics"]
+      required: ["status", "order_result"]
     },
     generate_execution_log: true
 
   alias Lux.Config
-  alias Lux.Prisms.Hyperliquid.HyperliquidUserStatePrism
-  alias Lux.Prisms.Hyperliquid.HyperliquidTokenInfoPrism
   alias Lux.Prisms.Hyperliquid.HyperliquidExecuteOrderPrism
   alias Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism
+  alias Lux.Prisms.Hyperliquid.HyperliquidTokenInfoPrism
+  alias Lux.Prisms.Hyperliquid.HyperliquidUserStatePrism
 
   require Logger
 
@@ -122,9 +114,13 @@ defmodule Lux.Beams.Hyperliquid.TradeRiskManagementBeam do
           })
 
         false ->
-          sequence do
-            step(:noop, Lux.Prisms.NoOp, %{})
-          end
+          step(:noop, Lux.Prisms.NoOp, %{
+            status: "rejected",
+            order_result: %{
+              risk_metrics: [:steps, :risk_assessment, :result],
+              rejection_reason: "Failed risk assessment checks"
+            }
+          })
       end
     end
   end

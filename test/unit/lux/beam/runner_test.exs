@@ -18,6 +18,15 @@ defmodule Lux.Beam.RunnerTest do
     def handler(list, _ctx) when is_list(list) do
       {:ok, Enum.join(list, ",")}
     end
+
+    # Add handler for nested map structures
+    def handler(%{status: _status} = input, _ctx) do
+      {:ok, input}
+    end
+
+    def handler(%{level1: _} = input, _ctx) do
+      {:ok, input}
+    end
   end
 
   defmodule FailingPrism do
@@ -504,6 +513,81 @@ defmodule Lux.Beam.RunnerTest do
                  completed_at: _
                }
              ] = log.steps
+    end
+  end
+
+  describe "nested parameter resolution" do
+    defmodule NestedParamsBeam do
+      @moduledoc false
+      use Lux.Beam, generate_execution_log: true
+
+      def steps do
+        sequence do
+          step(:first_step, TestPrism, %{value: "test_data"})
+
+          step(:nested_step, TestPrism, %{
+            status: "test",
+            outer_result: %{
+              inner_value: [:steps, :first_step, :result],
+              static_value: "static"
+            }
+          })
+        end
+      end
+    end
+
+    defmodule DeepNestedBeam do
+      @moduledoc false
+      use Lux.Beam, generate_execution_log: true
+
+      def steps do
+        sequence do
+          step(:data, TestPrism, %{value: "deep_data"})
+          step(:nested, TestPrism, %{
+            level1: %{
+              level2: %{
+                level3: %{
+                  value: [:steps, :data, :result]
+                }
+              }
+            }
+          })
+        end
+      end
+    end
+
+    test "resolves parameters in nested maps" do
+      expected_result = %{
+        status: "test",
+        outer_result: %{
+          inner_value: "test_data",
+          static_value: "static"
+        }
+      }
+
+      {:ok, result, log} = Runner.run(NestedParamsBeam.beam(), %{})
+      assert result == expected_result
+      nested_step = Enum.find(log.steps, &(&1.id == :nested_step))
+      assert nested_step.input == expected_result
+      assert nested_step.output == expected_result
+    end
+
+    test "handles deeply nested parameters" do
+      expected_result = %{
+        level1: %{
+          level2: %{
+            level3: %{
+              value: "deep_data"
+            }
+          }
+        }
+      }
+
+      {:ok, result, log} = Runner.run(DeepNestedBeam.beam(), %{})
+      assert result == expected_result
+      nested_step = Enum.find(log.steps, &(&1.id == :nested))
+      assert nested_step.input == expected_result
+      assert nested_step.output == expected_result
     end
   end
 end

@@ -1,0 +1,106 @@
+defmodule Lux.Agents.MarketResearcher do
+  @moduledoc """
+  An agent that analyzes market conditions and proposes trades based on research.
+  """
+
+  use Lux.Agent
+
+  def new(opts \\ %{}) do
+    Lux.Agent.new(%{
+      name: "Market Research Agent",
+      description: "Analyzes markets and proposes trading opportunities",
+      goal: "Find profitable trading opportunities through market analysis",
+      capabilities: [:market_research, :trade_proposals],
+      llm_config: %{
+        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
+        model: opts[:model] || "gpt-4o-mini",
+        temperature: 0.7,
+        json_response: true,
+        json_schema: %{
+          name: "trade_proposal",
+          schema: %{
+            type: "object",
+            properties: %{
+              coin: %{
+                type: "string",
+                description: "Trading pair symbol (e.g., 'ETH', 'BTC')"
+              },
+              is_buy: %{
+                type: "boolean",
+                description: "True for buy orders, false for sell orders"
+              },
+              sz: %{
+                type: "number",
+                description: "Position size in base currency units"
+              },
+              limit_px: %{
+                type: "number",
+                description: "Limit price for the order"
+              },
+              order_type: %{
+                type: "object",
+                properties: %{
+                  limit: %{
+                    type: "object",
+                    properties: %{
+                      tif: %{
+                        type: "string",
+                        enum: ["Gtc"],
+                        description: "Time in force - Good till cancelled"
+                      }
+                    },
+                    required: ["tif"],
+                    additionalProperties: false
+                  }
+                },
+                required: ["limit"],
+                additionalProperties: false
+              },
+              reduce_only: %{
+                type: "boolean",
+                description: "Whether this order can only reduce position size"
+              },
+              rationale: %{
+                type: "string",
+                description: "Detailed explanation of the trade recommendation"
+              }
+            },
+            required: [
+              "coin",
+              "is_buy",
+              "sz",
+              "limit_px",
+              "order_type",
+              "reduce_only",
+              "rationale"
+            ],
+            additionalProperties: false
+          },
+          strict: true
+        },
+        messages: [
+          %{
+            role: "system",
+            content: """
+            You are a Market Research Agent specialized in analyzing cryptocurrency markets
+            and proposing trades. Your recommendations must be in valid JSON format and include:
+
+            1. The asset to trade (e.g., "ETH", "BTC")
+            2. The direction (buy/sell)
+            3. The size of the position
+            4. The limit price
+            5. The rationale behind the trade
+            """
+          }
+        ]
+      }
+    })
+  end
+
+  def propose_trade(agent, market_conditions) do
+    send_message(agent, """
+    Based on these market conditions, propose a trade:
+    #{Jason.encode!(market_conditions, pretty: true)}
+    """)
+  end
+end

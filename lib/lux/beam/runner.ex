@@ -264,20 +264,24 @@ defmodule Lux.Beam.Runner do
   end
 
   defp resolve_params(params, context) when is_map(params) do
-    # If params is a map, construct a new map with resolved values
+    # Recursively resolve nested maps
     Enum.reduce(params, %{}, fn {key, value}, acc ->
       Map.put(acc, key, resolve_value(value, context))
     end)
   end
 
   defp resolve_params(value, context) do
-    # If params is not a map, resolve it directly
     resolve_value(value, context)
   end
 
   # Handle access paths (must start with :input or :steps)
   defp resolve_value([root | _] = path, context) when root in [:input, :steps] do
     get_in(context, path)
+  end
+
+  # Recursively handle nested maps
+  defp resolve_value(value, context) when is_map(value) do
+    resolve_params(value, context)
   end
 
   # Handle all other values as literals
