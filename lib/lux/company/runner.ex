@@ -163,9 +163,9 @@ defmodule Lux.Company.Runner do
   end
 
   defp execute_step(step, acc, company, router, hub) do
-    with {:ok, task} <- parse_step(step) |> dbg(),
-         {:ok, agent} <- find_capable_agent(task, company) |> dbg(),
-         {:ok, result} <- delegate_task(task, agent, acc, router, hub) |> dbg() do
+    with {:ok, task} <- step |> parse_step() |> dbg(),
+         {:ok, agent} <- task |> find_capable_agent(company) |> dbg(),
+         {:ok, result} <- task |> delegate_task(agent, acc, router, hub) |> dbg() do
       {:ok, %{acc | results: [result | acc.results]}}
     end
   end
@@ -200,46 +200,49 @@ defmodule Lux.Company.Runner do
     end)
   end
 
-  defp delegate_task(task, %{id: agent_id, name: agent_name} = _agent, acc, router, hub) when not is_nil(agent_id) do
+  defp delegate_task(task, %{id: agent_id, name: agent_name} = _agent, acc, router, hub)
+       when not is_nil(agent_id) do
     signal_id = Lux.UUID.generate()
 
-        signal =
-          Signal.new(%{
-            id: signal_id,
-            schema_id: Lux.Schemas.TaskSignal,
-            payload: %{
-              task: task,
-              context: acc
-            },
-            sender: "company_runner",
-            recipient: agent_id
-          }) |> dbg()
+    signal =
+      %{
+        id: signal_id,
+        schema_id: Lux.Schemas.TaskSignal,
+        payload: %{
+          task: task,
+          context: acc
+        },
+        sender: "company_runner",
+        recipient: agent_id
+      }
+      |> Signal.new()
+      |> dbg()
 
-    opts = [router: router, hub: hub] |> dbg()
+    opts = dbg(router: router, hub: hub)
 
-    with :ok <- Router.subscribe(signal_id, opts) |> dbg(),
-         :ok <- Router.route(signal, opts) |> dbg() do
+    with :ok <- signal_id |> Router.subscribe(opts) |> dbg(),
+         :ok <- signal |> Router.route(opts) |> dbg() do
+      receive do
+        {:signal_delivered, ^signal_id} ->
+          # Wait for response
           receive do
-            {:signal_delivered, ^signal_id} ->
-              # Wait for response
-              receive do
-                {:signal, %{id: response_id, payload: response}} when response_id != signal_id ->
-                  {:ok,
-                   %{
-                     task: task,
-                     agent: agent_name,
-                     status: :completed,
-                     result: response
-                   }}
-              after
-                :timer.seconds(30) ->
-                  {:error, "Timeout waiting for agent response"}
-              end
+            {:signal, %{id: response_id, payload: response}} when response_id != signal_id ->
+              {:ok,
+               %{
+                 task: task,
+                 agent: agent_name,
+                 status: :completed,
+                 result: response
+               }}
           after
-            :timer.seconds(5) ->
-              {:error, "Timeout waiting for signal delivery"}
+            :timer.seconds(30) ->
+              {:error, "Timeout waiting for agent response"}
           end
-        end
+      after
+        :timer.seconds(5) ->
+          {:error, "Timeout waiting for signal delivery"}
+      end
+    end
   end
 
   defp delegate_task(_task, agent, _acc, _router, _hub) do
