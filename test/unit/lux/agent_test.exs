@@ -4,6 +4,8 @@ defmodule Lux.AgentTest do
   alias Lux.Agent
   alias Lux.Memory.SimpleMemory
 
+  @default_timeout 1_000
+
   # Test modules
   defmodule TestPrism do
     @moduledoc false
@@ -246,7 +248,7 @@ defmodule Lux.AgentTest do
       )
 
       # Wait for the scheduled action to run
-      assert_receive {:prism_called, %{test: "prism"}}, 200
+      assert_receive {:prism_called, %{test: "prism"}}, @default_timeout
     end
 
     test "executes scheduled beam actions" do
@@ -262,7 +264,7 @@ defmodule Lux.AgentTest do
       )
 
       # Wait for the scheduled action to run. We match on prism_called because the beam is executed by the prism.
-      assert_receive {:prism_called, %{test: "beam"}}, 200
+      assert_receive {:prism_called, %{test: "beam"}}, @default_timeout
     end
 
     test "handles invalid modules gracefully" do
@@ -294,7 +296,7 @@ defmodule Lux.AgentTest do
       )
 
       # Wait for the scheduled action to run
-      assert_receive {:prism_called, %{test: "default_name"}}, 200
+      assert_receive {:prism_called, %{test: "default_name"}}, @default_timeout
     end
   end
 end

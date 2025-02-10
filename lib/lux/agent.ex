@@ -193,6 +193,16 @@ defmodule Lux.Agent do
         {:noreply, agent}
       end
 
+      # to handle result from Task.Supervisor.async_nolink
+      def handle_info({_ref, _result}, agent) do
+        {:noreply, agent}
+      end
+
+      # to handle when the Task.Supervisor.async_nolink process is down without bringing down the agent
+      def handle_info({:DOWN, _ref, :process, _pid, :normal}, agent) do
+        {:noreply, agent}
+      end
+
       @impl GenServer
       def terminate(_reason, agent) do
         # Cleanup memory if it exists

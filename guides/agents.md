@@ -159,6 +159,8 @@ defmodule MyApp.Prisms.HealthCheck do
     name: "Health Check",
     description: "System health monitoring"
 
+  require Logger
+
   def handler(params, agent) do
     # Access agent configuration using Access protocol
     agent_name = agent[:name]
