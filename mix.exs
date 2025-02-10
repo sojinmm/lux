@@ -10,7 +10,12 @@ defmodule Lux.MixProject do
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]],
       elixirc_paths: elixirc_paths(Mix.env()),
-      aliases: aliases()
+      aliases: aliases(),
+      # Docs
+      name: "Lux",
+      source_url: "https://github.com/Spectral-Finance/lux",
+      homepage_url: "https://lux.spectrallbas.xyz",
+      docs: &docs/0
     ]
   end
 
@@ -47,6 +52,7 @@ defmodule Lux.MixProject do
       {:ex_json_schema, "~> 0.10.2"},
       {:nodejs, "~> 2.0"},
       # test and dev dependencies
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.5", only: :dev, runtime: false},
       {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
@@ -62,6 +68,25 @@ defmodule Lux.MixProject do
         "test.integration": :test,
         "test.unit": :test,
         "test.suite": :test
+      ]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: [
+        "README.md",
+        "LICENSE",
+        "CHANGELOG.md",
+        "guides/beams.md",
+        "guides/prisms.livemd",
+        "guides/contributing.md"
+      ],
+      groups_for_extras: [
+        "guides/beams.md",
+        "guides/prisms.livemd",
+        "guides/contributing.md"
       ]
     ]
   end

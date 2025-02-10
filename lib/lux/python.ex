@@ -34,6 +34,8 @@ defmodule Lux.Python do
           required(String.t()) => boolean() | String.t()
         }
 
+  @module_path Application.app_dir(:lux, "priv/python")
+
   @doc """
   Evaluates Python code with optional variable bindings and other options.
 
@@ -106,6 +108,25 @@ defmodule Lux.Python do
         raise RuntimeError, "Python error: #{error_message}"
     end
   end
+
+  @doc """
+  Returns a main module path for the Python.
+  """
+  @spec module_path() :: String.t()
+  def module_path, do: @module_path
+
+  @doc """
+  Returns dependant modules path for the Python.
+  Returns nil if it is not ready.
+  """
+  @spec module_path(atom()) :: String.t() | nil
+  def module_path(:deps),
+    do:
+      [@module_path]
+      |> Enum.concat([".venv", "lib", "*", "site-packages"])
+      |> Path.join()
+      |> Path.wildcard()
+      |> List.first()
 
   @doc """
   A macro that enables writing Python code directly in Elixir with variable bindings.

@@ -68,7 +68,7 @@ defmodule Lux.NodeJS do
   end
 
   @doc """
-  Returns a module path for the Node.js.
+  Returns a main module path for the Node.js.
   """
   @spec module_path() :: String.t()
   def module_path, do: @module_path
