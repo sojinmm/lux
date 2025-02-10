@@ -7,6 +7,8 @@ defmodule Lux.Agent do
   alias Lux.LLM
   alias Lux.LLM.OpenAI.Config
 
+  require Logger
+
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
   @type memory_config :: %{
@@ -146,72 +148,17 @@ defmodule Lux.Agent do
       end
 
       @impl GenServer
-      def handle_info({:signal, signal}, agent) do
-        _ = handle_signal(agent, signal)
-        {:noreply, agent}
+      def handle_info(input, agent) do
+        Lux.Agent.__handle_info__(input, agent)
       end
 
       @impl GenServer
-      def handle_info({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
-        timeout = opts[:timeout] || 60_000
-
-        # Execute the action based on whether it's a Prism or Beam
-        Task.Supervisor.async_nolink(
-          Lux.ScheduledTasksSupervisor,
-          fn ->
-            try do
-              result =
-                case {Lux.Agent.prism?(module), Lux.Agent.beam?(module)} do
-                  {true, false} ->
-                    module.handler(input, agent)
-
-                  {false, true} ->
-                    module.run(input, agent)
-
-                  _ ->
-                    {:error, :invalid_module}
-                end
-
-              case result do
-                {:ok, _} ->
-                  Logger.info("Scheduled action #{name} completed successfully")
-
-                {:error, reason} ->
-                  Logger.warning("Scheduled action #{name} failed: #{inspect(reason)}")
-              end
-            catch
-              kind, reason ->
-                Logger.error("Scheduled action #{name} crashed: #{inspect({kind, reason})}")
-            end
-          end,
-          timeout: timeout
-        )
-
-        # Schedule the next run
-        Lux.Agent.schedule_action(name, module, interval_ms, input, opts)
-
-        {:noreply, agent}
-      end
-
-      # to handle result from Task.Supervisor.async_nolink
-      def handle_info({_ref, _result}, agent) do
-        {:noreply, agent}
-      end
-
-      # to handle when the Task.Supervisor.async_nolink process is down without bringing down the agent
-      def handle_info({:DOWN, _ref, :process, _pid, :normal}, agent) do
-        {:noreply, agent}
-      end
-
-      @impl GenServer
-      def terminate(_reason, agent) do
-        # Cleanup memory if it exists
-        if agent.memory_pid do
-          Process.exit(agent.memory_pid, :normal)
-        end
-
+      def terminate(_reason, %{memory_pid: pid}) when is_pid(pid) do
+        Process.exit(pid, :normal)
         :ok
       end
+
+      def terminate(_reason, _agent), do: :ok
 
       defoverridable new: 1, chat: 3, handle_signal: 2
     end
@@ -368,6 +315,66 @@ defmodule Lux.Agent do
   end
 
   def prism?(_), do: false
+
+  # Implements the logic for the agent process based on Genservers.
+  # Needed for better testability and formatting and readability of the __using__ block above.
+  # Consider these internal functions.
+
+  def __handle_info__({:signal, signal}, agent) do
+    _ = handle_signal(agent, signal)
+    {:noreply, agent}
+  end
+
+  def __handle_info__({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
+    timeout = opts[:timeout] || 60_000
+
+    # Execute the action based on whether it's a Prism or Beam
+    Task.Supervisor.async_nolink(
+      Lux.ScheduledTasksSupervisor,
+      fn ->
+        try do
+          result =
+            case {Lux.Agent.prism?(module), Lux.Agent.beam?(module)} do
+              {true, false} ->
+                module.handler(input, agent)
+
+              {false, true} ->
+                module.run(input, agent)
+
+              _ ->
+                {:error, :invalid_module}
+            end
+
+          case result do
+            {:ok, _} ->
+              Logger.info("Scheduled action #{name} completed successfully")
+
+            {:error, reason} ->
+              Logger.warning("Scheduled action #{name} failed: #{inspect(reason)}")
+          end
+        catch
+          kind, reason ->
+            Logger.error("Scheduled action #{name} crashed: #{inspect({kind, reason})}")
+        end
+      end,
+      timeout: timeout
+    )
+
+    # Schedule the next run
+    Lux.Agent.schedule_action(name, module, interval_ms, input, opts)
+
+    {:noreply, agent}
+  end
+
+  # to handle result from Task.Supervisor.async_nolink
+  def __handle_info__({_ref, _result}, agent) do
+    {:noreply, agent}
+  end
+
+  # to handle when the Task.Supervisor.async_nolink process is down without bringing down the agent
+  def handle_info({:DOWN, _ref, :process, _pid, :normal}, agent) do
+    {:noreply, agent}
+  end
 
   # implements the access protocol for this struct...
   def fetch(agent, key) do
