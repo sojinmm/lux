@@ -1,5 +1,5 @@
 defmodule Lux.CompanyTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias Lux.Company.Role
 

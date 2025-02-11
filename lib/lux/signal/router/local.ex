@@ -20,29 +20,45 @@ defmodule Lux.Signal.Router.Local do
 
   @impl Router
   def start_link(opts \\ []) do
-    GenServer.start_link(__MODULE__, opts, name: opts[:name] || __MODULE__)
+    name = opts[:name] || __MODULE__
+    Logger.info("Starting Local Router with name: #{inspect(name)}")
+    GenServer.start_link(__MODULE__, opts, name: name)
   end
 
   @impl Router
   def route(signal, opts \\ []) do
     hub = Keyword.fetch!(opts, :hub)
-    GenServer.call(get_name(opts), {:route, signal, hub})
+    router_name = get_name(opts)
+    Logger.debug("Routing signal through router #{inspect(router_name)} to hub #{inspect(hub)}")
+    Logger.debug("Signal: #{inspect(signal, pretty: true)}")
+    GenServer.call(router_name, {:route, signal, hub})
   end
 
   @impl Router
   def subscribe(signal_id, opts \\ []) do
-    GenServer.call(get_name(opts), {:subscribe, signal_id, self()})
+    router_name = get_name(opts)
+    Logger.debug("Subscribing to signal #{signal_id} on router #{inspect(router_name)}")
+    GenServer.call(router_name, {:subscribe, signal_id, self()})
   end
 
   @impl Router
   def unsubscribe(signal_id, opts \\ []) do
-    GenServer.call(get_name(opts), {:unsubscribe, signal_id, self()})
+    router_name = get_name(opts)
+    Logger.debug("Unsubscribing from signal #{signal_id} on router #{inspect(router_name)}")
+    GenServer.call(router_name, {:unsubscribe, signal_id, self()})
+  end
+
+  @impl Router
+  def list_agents(opts \\ []) do
+    router_name = get_name(opts)
+    GenServer.call(router_name, :list_agents)
   end
 
   # Server Callbacks
 
   @impl GenServer
   def init(opts) do
+    Logger.info("Initializing Local Router with options: #{inspect(opts)}")
     {:ok,
      %{
        # signal_id => MapSet of subscriber pids
@@ -53,21 +69,26 @@ defmodule Lux.Signal.Router.Local do
 
   @impl GenServer
   def handle_call({:route, signal, hub}, _from, state) do
+    Logger.debug("Router handling route request for signal: #{inspect(signal.id)}")
     with {:ok, signal} <- validate_signal(signal),
          {:ok, targets} <- find_targets(signal, hub) do
       router_name = state.opts[:name] || __MODULE__
 
       # Deliver synchronously to ensure notifications are sent
-      deliver_to_targets(signal, targets, router_name)
+      delivery_results = deliver_to_targets(signal, targets, router_name)
+      Logger.debug("Signal delivery results: #{inspect(delivery_results)}")
 
       {:reply, :ok, state}
     else
-      error -> {:reply, error, state}
+      error ->
+        Logger.error("Router failed to route signal: #{inspect(error)}")
+        {:reply, error, state}
     end
   end
 
   @impl GenServer
   def handle_call({:subscribe, signal_id, subscriber}, _from, state) do
+    Logger.debug("Router handling subscribe request for signal #{signal_id} from #{inspect(subscriber)}")
     subscribers = Map.get(state.subscribers, signal_id, MapSet.new())
     new_subscribers = MapSet.put(subscribers, subscriber)
     {:reply, :ok, put_in(state.subscribers[signal_id], new_subscribers)}
@@ -75,6 +96,7 @@ defmodule Lux.Signal.Router.Local do
 
   @impl GenServer
   def handle_call({:unsubscribe, signal_id, subscriber}, _from, state) do
+    Logger.debug("Router handling unsubscribe request for signal #{signal_id} from #{inspect(subscriber)}")
     subscribers = Map.get(state.subscribers, signal_id, MapSet.new())
     new_subscribers = MapSet.delete(subscribers, subscriber)
 
@@ -88,10 +110,15 @@ defmodule Lux.Signal.Router.Local do
     {:reply, :ok, new_state}
   end
 
+  @impl GenServer
+  def handle_call(:list_agents, _from, state) do
+    {:reply, :ok, state}
+  end
+
   # Private Functions
 
   defp get_name(opts) do
-    Keyword.get(opts, :name, __MODULE__)
+    Keyword.get(opts, :router, Keyword.get(opts, :name, __MODULE__))
   end
 
   defp validate_signal(%Signal{id: id} = signal) when not is_nil(id) do
