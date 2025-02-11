@@ -17,8 +17,8 @@ defmodule Mix.Tasks.Setup do
 
   @requirements []
 
-  @priv_python_dir "priv/python"
-  @priv_nodejs_dir "priv/node"
+  @priv_python_dir Application.app_dir(:lux, "priv/python")
+  @priv_nodejs_dir Application.app_dir(:lux, "priv/node")
 
   defp safe_cmd(cmd, args, opts) do
     System.cmd(cmd, args, opts)
@@ -31,12 +31,14 @@ defmodule Mix.Tasks.Setup do
   end
 
   @impl Mix.Task
-  def run(_opts \\ []) do
+  def run(opts \\ []) do
+    install_deps? = Keyword.get(opts, :install_deps, true)
+
     Mix.shell().info("\n==> Setting up Lux for development\n")
     # Step 1: Install Elixir dependencies
     Mix.shell().info("==> Installing Elixir dependencies...")
 
-    with :ok <- install_deps(),
+    with :ok <- install_deps(install_deps?),
          # Step 2: Check and setup Poetry
          Mix.shell().info("\n==> Checking Poetry installation..."),
          {:ok, poetry_path} <- find_poetry(),
@@ -54,7 +56,7 @@ defmodule Mix.Tasks.Setup do
 
       You can now:
       • Activate the Python virtual environment:
-          source priv/python/.venv/bin/activate
+          source #{@priv_python_dir}/python/.venv/bin/activate
 
       • Run tests:
           mix test.unit         # Run Elixir unit tests
@@ -114,7 +116,9 @@ defmodule Mix.Tasks.Setup do
     """)
   end
 
-  defp install_deps do
+  defp install_deps(false), do: :ok
+
+  defp install_deps(_) do
     case safe_cmd("mix", ["deps.get"], into: IO.stream()) do
       {:error, :not_found} ->
         Mix.raise("Could not find 'mix' command")
@@ -150,9 +154,7 @@ defmodule Mix.Tasks.Setup do
   end
 
   defp install_python_deps(poetry_path) do
-    python_dir = Path.join(File.cwd!(), @priv_python_dir)
-
-    case safe_cmd(poetry_path, ["install"], cd: python_dir, stderr_to_stdout: true) do
+    case safe_cmd(poetry_path, ["install"], cd: @priv_python_dir, stderr_to_stdout: true) do
       {:error, :not_found} ->
         Mix.shell().error("\nFailed to execute Poetry command")
 
@@ -199,9 +201,7 @@ defmodule Mix.Tasks.Setup do
   end
 
   defp install_nodejs_deps do
-    nodejs_dir = Path.join(File.cwd!(), @priv_nodejs_dir)
-
-    case safe_cmd("npm", ["install"], cd: nodejs_dir, stderr_to_stdout: true) do
+    case safe_cmd("npm", ["install"], cd: @priv_nodejs_dir, stderr_to_stdout: true) do
       {:error, :not_found} ->
         Mix.shell().error("\nFailed to execute npm command")
 

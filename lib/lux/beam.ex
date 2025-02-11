@@ -69,7 +69,8 @@ defmodule Lux.Beam do
     def should_trade?(ctx) do
       ctx.technical.score > 0.7 && ctx.sentiment.confidence > 0.8
     end
-  end  ```
+  end
+  ```
 
   ## Complex Example: Agent Management Beam
 
@@ -168,11 +169,13 @@ defmodule Lux.Beam do
   ## Parameter References
 
   Steps can reference outputs from previous steps using the `{:ref, "step_id"}` syntax:
+
   ```elixir
   step(:analysis, AnalysisPrism, %{
     data: {:ref, "data_collection"},
     config: {:ref, "settings.analysis_config"}
-  })  ```
+  })
+  ```
 
   ## Execution Logging
 

@@ -1,14 +1,43 @@
+<!-- livebook:{"persist_outputs":true} -->
+
 # Prisms Guide
 
-Prisms are modular units of functionality that can be composed into workflows. They provide a way to encapsulate business logic, transformations, and integrations into reusable components.
+```elixir
+Mix.install(
+  [
+    {:lux, git: "https://github.com/spectral-finance/lux.git", branch: "support-doc"},
+    {:xml_builder, "~> 2.3"},
+    {:csv, "~> 3.2"},
+    {:swoosh, "~> 1.17"}
+  ],
+  start_applications: false
+)
+
+Mix.Task.run("setup", install_deps: false)
+
+Application.put_env(:venomous, :snake_manager, %{
+  python_opts: [
+    module_paths: [
+      Lux.Python.module_path(),
+      Lux.Python.module_path(:deps)
+    ],
+    python_executable: "python3"
+  ]
+})
+
+Application.ensure_all_started([:lux, :ex_unit])
+```
 
 ## Overview
 
+Prisms are modular units of functionality that can be composed into workflows. They provide a way to encapsulate business logic, transformations, and integrations into reusable components.
+
 A Prism consists of:
-- A unique identifier
-- Input and output schemas
-- A handler function
-- Optional configuration and metadata
+
+* A unique identifier
+* Input and output schemas
+* A handler function
+* Optional configuration and metadata
 
 ## Creating a Prism
 
@@ -42,8 +71,10 @@ defmodule MyApp.Prisms.TextAnalysis do
       },
       required: ["sentiment", "confidence"]
     }
+  
+  def handler(%{text: ""}, _ctx), do: {:error, :empty_text}
 
-  def handler(%{text: text, language: lang}, _ctx) do
+  def handler(_input, _ctx) do
     # Implementation
     {:ok, %{
       sentiment: "positive",
@@ -52,6 +83,12 @@ defmodule MyApp.Prisms.TextAnalysis do
     }}
   end
 end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MyApp.Prisms.TextAnalysis, <<70, 79, 82, 49, 0, 0, 12, ...>>, {:handler, 2}}
 ```
 
 ## Using Prisms
@@ -65,15 +102,19 @@ Prisms can be used directly or composed into Beams:
   language: "en"
 })
 
-# Access results
-result.sentiment    # "positive"
-result.confidence   # 0.95
-result.key_phrases  # ["great", "awesome"]
+result
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{sentiment: "positive", confidence: 0.95, key_phrases: ["great", "awesome"]}
 ```
 
 ## Prism Types
 
 ### Transformation Prisms
+
 Transform data from one format to another:
 
 ```elixir
@@ -92,14 +133,26 @@ defmodule MyApp.Prisms.DataTransformation do
   def handler(%{data: data, format: format}, _ctx) do
     case format do
       "json" -> {:ok, Jason.encode!(data)}
-      "xml" -> {:ok, XmlBuilder.document(data)}
+      "xml" -> {:ok, XmlBuilder.generate(data)}
       "csv" -> {:ok, CSV.encode(data)}
     end
   end
 end
+
+MyApp.Prisms.DataTransformation.run(%{
+  data: %{a: 1, b: 2},
+  format: "json"
+})
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, "{\"a\":1,\"b\":2}"}
 ```
 
 ### Integration Prisms
+
 Connect to external services:
 
 ```elixir
@@ -118,7 +171,7 @@ defmodule MyApp.Prisms.EmailSender do
     }
 
   def handler(params, _ctx) do
-    case Swoosh.Mailer.deliver(build_email(params)) do
+    case Swoosh.Mailer.deliver(build_email(params), []) do
       {:ok, _} -> {:ok, %{sent: true}}
       {:error, reason} -> {:error, reason}
     end
@@ -133,7 +186,14 @@ defmodule MyApp.Prisms.EmailSender do
 end
 ```
 
+<!-- livebook:{"output":true} -->
+
+```
+{:module, MyApp.Prisms.EmailSender, <<70, 79, 82, 49, 0, 0, 12, ...>>, {:build_email, 1}}
+```
+
 ### Business Logic Prisms
+
 Implement business rules and workflows:
 
 ```elixir
@@ -155,47 +215,75 @@ defmodule MyApp.Prisms.OrderProcessor do
       }
     }
 
-  def handler(%{order: order}, ctx) do
+  def handler(%{order: order}, _ctx) do
     with :ok <- validate_inventory(order.items),
          :ok <- validate_payment(order.total),
          {:ok, processed} <- apply_discounts(order) do
-      {:ok, %{
-        order_id: generate_order_id(),
-        processed_at: DateTime.utc_now(),
-        final_total: processed.total
-      }}
+      {:ok,
+       %{
+         order_id: generate_order_id(),
+         processed_at: DateTime.utc_now(),
+         final_total: processed.total
+       }}
     end
   end
+
+  defp validate_inventory(_), do: :ok
+
+  defp validate_payment(_), do: :ok
+
+  defp apply_discounts(order), do: {:ok, order}
+
+  defp generate_order_id(), do: 1
 end
+
+MyApp.Prisms.OrderProcessor.run(%{
+  order: %{
+    items: [1, 2],
+    total: 2,
+    customer: %{}
+  }
+})
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %{order_id: 1, processed_at: ~U[2025-02-08 18:22:11.925749Z], final_total: 2}}
 ```
 
 ## Best Practices
 
 1. **Input/Output Schemas**
-   - Define clear, specific schemas
-   - Document all properties
-   - Use appropriate types and constraints
-   - Include examples where helpful
+
+   * Define clear, specific schemas
+   * Document all properties
+   * Use appropriate types and constraints
+   * Include examples where helpful
 
 2. **Error Handling**
-   - Return `{:ok, result}` or `{:error, reason}`
-   - Provide meaningful error messages
-   - Handle all error cases
-   - Use pattern matching for validation
+
+   * Return `{:ok, result}` or `{:error, reason}`
+   * Provide meaningful error messages
+   * Handle all error cases
+   * Use pattern matching for validation
 
 3. **Context Usage**
-   - Use context for cross-cutting concerns
-   - Don't rely on global state
-   - Pass necessary data through context
-   - Keep context usage minimal
+
+   * Use context for cross-cutting concerns
+   * Don't rely on global state
+   * Pass necessary data through context
+   * Keep context usage minimal
 
 4. **Testing**
-   - Test happy and error paths
-   - Mock external dependencies
-   - Test with various inputs
-   - Test error conditions
+
+   * Test happy and error paths
+   * Mock external dependencies
+   * Test with various inputs
+   * Test error conditions
 
 Example test:
+
 ```elixir
 defmodule MyApp.Prisms.TextAnalysisTest do
   use ExUnit.Case, async: true
@@ -222,6 +310,24 @@ defmodule MyApp.Prisms.TextAnalysisTest do
     end
   end
 end
+
+ExUnit.run()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+Running ExUnit with seed: 616293, max_cases: 40
+
+..
+Finished in 0.00 seconds (0.00s async, 0.00s sync)
+2 tests, 0 failures
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{total: 2, failures: 0, excluded: 0, skipped: 0}
 ```
 
 ## Advanced Topics
@@ -231,12 +337,36 @@ end
 Prisms can be composed together:
 
 ```elixir
+defmodule MyApp.Prisms.Validator do
+  use Lux.Prism,
+    name: "Validator",
+    description: "Validate input"
+  
+  def handler(input, _ctx), do: {:ok, input}
+end
+
+defmodule MyApp.Prisms.Enricher do
+  use Lux.Prism,
+    name: "Enricher",
+    description: "Enrich input"
+  
+  def handler(input, _ctx), do: {:ok, input}
+end
+
+defmodule MyApp.Prisms.Processor do
+  use Lux.Prism,
+    name: "Processor",
+    description: "Process input"
+  
+  def handler(input, _ctx), do: {:ok, input}
+end
+
 defmodule MyApp.Prisms.Pipeline do
   use Lux.Prism,
     name: "Processing Pipeline",
     description: "Chains multiple prisms"
 
-  def handler(input, ctx) do
+  def handler(input, _ctx) do
     with {:ok, validated} <- MyApp.Prisms.Validator.run(input),
          {:ok, enriched} <- MyApp.Prisms.Enricher.run(validated),
          {:ok, processed} <- MyApp.Prisms.Processor.run(enriched) do
@@ -244,6 +374,14 @@ defmodule MyApp.Prisms.Pipeline do
     end
   end
 end
+
+MyApp.Prisms.Pipeline.run(%{})
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %{}}
 ```
 
 ### Async Prisms
@@ -256,7 +394,7 @@ defmodule MyApp.Prisms.AsyncProcessor do
     name: "Async Processor",
     description: "Handles async operations"
 
-  def handler(input, ctx) do
+  def handler(_input, _ctx) do
     task = Task.async(fn ->
       # Long running operation
       Process.sleep(5000)
@@ -271,6 +409,14 @@ defmodule MyApp.Prisms.AsyncProcessor do
     end
   end
 end
+
+MyApp.Prisms.AsyncProcessor.run(%{})
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %{result: "done"}}
 ```
 
 ### Python Integration
@@ -304,7 +450,7 @@ defmodule MyApp.Prisms.SentimentAnalyzer do
 
   def handler(%{text: text, language: lang}, _ctx) do
     # Import required Python packages
-    {:ok, %{success: true}} = Lux.Python.import_package("nltk")
+    {:ok, %{"success" => true}} = Lux.Python.import_package("nltk")
     
     # Execute Python code with variable bindings
     result = python variables: %{text: text, lang: lang} do
@@ -343,6 +489,19 @@ defmodule MyApp.Prisms.SentimentAnalyzer do
   end
 end
 
+MyApp.Prisms.SentimentAnalyzer.run(%{
+  text: "hello",
+  language: "en"
+})
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %{"confidence" => 0.0, "sentiment" => "neutral"}}
+```
+
+```elixir
 defmodule MyApp.Prisms.CryptoAddressValidator do
   use Lux.Prism,
     name: "Crypto Address Validator",
@@ -361,40 +520,49 @@ defmodule MyApp.Prisms.CryptoAddressValidator do
 
   def handler(%{address: address, chain: "ethereum"}, _ctx) do
     # Import required packages
-    {:ok, %{success: true}} = Lux.Python.import_package("web3")
-    {:ok, %{success: true}} = Lux.Python.import_package("eth_utils")
+    {:ok, %{"success" => true}} = Lux.Python.import_package("web3")
+    {:ok, %{"success" => true}} = Lux.Python.import_package("eth_utils")
 
     result = python variables: %{address: address} do
       ~PY"""
       from eth_utils import is_address, to_checksum_address
-
-      try:
-          checksum_address = to_checksum_address(address)
-          is_valid = is_address(checksum_address)
-          {"is_valid": is_valid, "normalized_address": checksum_address}
-      except ValueError:
-          {"is_valid": False, "normalized_address": None}
+      
+      checksum_address = to_checksum_address(address)
+      is_valid = is_address(checksum_address)
+      {"is_valid": is_valid, "normalized_address": checksum_address}
       """
     end
 
     {:ok, result}
   end
 end
+
+MyApp.Prisms.CryptoAddressValidator.run(%{
+  address: "0xd3CdA913deB6f67967B99D67aCDFa1712C293601",
+  chain: "ethereum"
+})
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:ok, %{"is_valid" => true, "normalized_address" => "0xd3CdA913deB6f67967B99D67aCDFa1712C293601"}}
 ```
 
 The Python integration supports:
-- Direct Python code execution with `~PY` sigils
-- Variable binding between Elixir and Python
-- Package management with `import_package/1`
-- Error handling and timeouts
-- Multi-line Python code with proper indentation
-- Access to the full Python ecosystem
+
+* Direct Python code execution with `~PY` sigils
+* Variable binding between Elixir and Python
+* Package management with `import_package/1`
+* Error handling and timeouts
+* Multi-line Python code with proper indentation
+* Access to the full Python ecosystem
 
 Best practices for Python integration:
+
 1. Always handle package imports explicitly
 2. Use proper error handling for Python code execution
 3. Keep Python code focused and modular
 4. Leverage Python's scientific and ML libraries when appropriate
 5. Use type hints and docstrings in Python code
 6. Follow both Elixir and Python style guides
- 
