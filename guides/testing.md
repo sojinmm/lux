@@ -16,8 +16,8 @@ mix test.unit
 # Run integration tests only (requires API keys)
 mix test.integration
 
-# Run all tests sequentially (requires API keys)
-mix test.suite
+# Run python tests
+mix python.test
 ```
 
 ## Test Organization

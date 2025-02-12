@@ -344,56 +344,125 @@ The Python code is executed in an isolated environment and has access to all ins
 ## Development Setup
 
 ### Prerequisites
+
+- **macOS** or **Linux** (Ubuntu/Debian or RHEL/CentOS recommended)
 - [asdf](https://asdf-vm.com/) version manager
-- That's it! Everything else will be installed automatically
+  - macOS: `brew install asdf`
+  - Linux: 
+    ```bash
+    git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1
+    # Add to your shell config (~/.bashrc, ~/.zshrc, etc.):
+    . "$HOME/.asdf/asdf.sh"
+    . "$HOME/.asdf/completions/asdf.bash"
+    ```
 
 ### Quick Setup
+
+We provide a Makefile to automate the setup process. Here's how to get started:
+
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/spectrallabs/lux.git
 cd lux
 
-# Install Elixir, Erlang, Python and Node.js with the correct versions
-asdf install
+# 2. View available setup commands
+make help
 
-# Install all dependencies (Elixir and Python)
-mix setup
+# 3. For macOS users:
+make setup-mac    # Install macOS-specific dependencies first
+make setup        # Then run the complete setup
 
-# Optionally, run tests
-mix test.suite
+# 3. For Linux users:
+make setup-linux  # Install Linux-specific dependencies first
+make setup        # Then run the complete setup
+
+# 4. Run tests to verify installation
+make test
 ```
 
-### Setup Python environment
+The setup process will:
+- Install required asdf plugins (erlang, elixir, nodejs, python, poetry)
+- Install all tools with correct versions
+- Set up system dependencies
+- Install Elixir dependencies
+- Configure Python environment
+- Create necessary environment files
 
-```sh
+### Manual Setup (if needed)
+
+If you prefer to set up manually or encounter issues with the automated setup:
+
+1. **Install asdf plugins**:
+```bash
+asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
+asdf plugin add elixir https://github.com/asdf-vm/asdf-elixir.git
+asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+asdf plugin add python https://github.com/danhper/asdf-python.git
+asdf plugin add poetry https://github.com/asdf-community/asdf-poetry.git
+```
+
+2. **macOS-specific setup**:
+```bash
+# Install Xcode Command Line Tools
+xcode-select --install
+
+# Install Homebrew dependencies
+brew install autoconf automake libtool wxmac fop openssl@3
+
+# Configure OpenSSL for Erlang compilation
+export KERL_CONFIGURE_OPTIONS="--with-ssl=$(brew --prefix openssl@3)"
+echo 'export KERL_CONFIGURE_OPTIONS="--with-ssl=$(brew --prefix openssl@3)"' >> ~/.zshrc
+# Or if using bash:
+echo 'export KERL_CONFIGURE_OPTIONS="--with-ssl=$(brew --prefix openssl@3)"' >> ~/.bashrc
+```
+
+3. **Install tools with asdf**:
+```bash
+asdf install
+```
+
+4. **Install Elixir dependencies**:
+```bash
+mix local.hex --force
+mix local.rebar --force
+mix deps.get
+```
+
+5. **Set up Python environment**:
+```bash
 cd priv/python
-poetry shell
 poetry install
 ```
 
-### Setup environment variables
-
-The application uses environment-specific configuration files:
-- `dev.envrc` for development
-- `test.envrc` for testing
-- `prod.envrc` for production
-
-1. Create the appropriate `.envrc` file for your environment.
-
-```sh
-# For development
+6. **Configure environment**:
+```bash
+# Copy environment files
 cp dev.envrc dev.override.envrc
-
-# For testing
 cp test.envrc test.override.envrc
 ```
 
-These files are optional and can be used for local-specific configurations that shouldn't be committed to version control.
-- `dev.override.envrc`
-- `test.override.envrc`
-- `prod.override.envrc`
+### Troubleshooting
 
-3. Fill in required API keys in your environment file
+If you encounter issues during setup:
+
+1. **Erlang compilation fails**:
+   - Ensure all system dependencies are installed
+   - Check OpenSSL configuration (especially on macOS)
+   - Try removing and reinstalling: `asdf uninstall erlang && asdf install erlang`
+
+2. **Python/Poetry issues**:
+   - Ensure you're in the correct directory for poetry commands
+   - Try removing and recreating the virtual environment
+
+3. **Test failures**:
+   - Ensure all environment variables are set correctly
+   - Check that all dependencies are installed
+   - Try running specific test files to isolate issues
+
+For more help:
+- Open an issue on GitHub
+- Join our Discord community
+- Check our troubleshooting guide (coming soon)
 
 ## Contributing
 
