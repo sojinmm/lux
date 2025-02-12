@@ -36,9 +36,7 @@ defmodule Lux.MixProject do
   defp aliases do
     [
       "test.unit": "test --include unit",
-      "test.integration": "test --include integration",
-      # run all tests
-      "test.suite": "test --include unit --include integration"
+      "test.integration": "test --include integration"
     ]
   end
 
@@ -66,8 +64,7 @@ defmodule Lux.MixProject do
     [
       preferred_envs: [
         "test.integration": :test,
-        "test.unit": :test,
-        "test.suite": :test
+        "test.unit": :test
       ]
     ]
   end
