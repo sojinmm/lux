@@ -356,17 +356,20 @@ defmodule Lux.Beam do
 
   defp transform_branch_blocks(blocks) when is_list(blocks) do
     Enum.map(blocks, fn {:->, _, [[condition], consequent]} ->
-      {condition, consequent}
+      {transform_condition(condition), consequent}
     end)
   end
 
   defp transform_branch_blocks({:->, _, [[condition], consequent]}) do
-    [{condition, consequent}]
+    [{transform_condition(condition), consequent}]
   end
 
   defp transform_branch_blocks({:__block__, _, blocks}) do
     transform_branch_blocks(blocks)
   end
+
+  defp transform_condition({:_, _, _}), do: :_
+  defp transform_condition(condition), do: condition
 
   @doc """
   Validates a beam definition at compile time

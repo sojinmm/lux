@@ -45,7 +45,7 @@ defmodule Lux.Signal do
               timestamp: DateTime.utc_now(),
               metadata: attrs[:metadata] || %{},
               schema_id: @schema_module,
-              payload: attrs[:payload] || %{}
+              payload: Map.get(attrs, :payload, %{})
             })
           )
           |> @schema_module.validate()
