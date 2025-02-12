@@ -56,16 +56,13 @@ setup-linux: ## Install Linux-specific dependencies
 	fi
 
 setup-deps: ## Install project dependencies
-	@echo "Installing Elixir dependencies..."
+	@echo "Installing project dependencies..."
 	@mix local.hex --force
 	@mix local.rebar --force
-	@mix deps.get
-	@echo "Setting up Python environment..."
-	@cd priv/python && poetry install
-	@echo "Creating environment files..."
-	@if [ ! -f dev.override.envrc ]; then cp dev.envrc dev.override.envrc; fi
-	@if [ ! -f test.override.envrc ]; then cp test.envrc test.override.envrc; fi
+	@mix setup 
 
 test: ## Run test suite
 	@echo "Running test suite..."
-	@mix test.unit 
+	@mix test.unit
+	@mix python.test 
+	@mix test.integration
