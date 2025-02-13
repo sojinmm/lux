@@ -201,5 +201,3 @@ To extend this example, you could:
 * Include position tracking
 * Add portfolio management
 * Implement backtesting capabilities
-
-<!-- livebook:{"offset":6202,"stamp":{"token":"XCP.IacsCeHwuM9rZHuP03QQcg7rcNf8_AtospsBH8lxfrRnT0yt7wKve3W3gz0dYNFxjx1cYpkaBU9sFvHeBp9CwmevKFS5N0FeIuTObqK2-Ul8st0VkRD8LW8mXLPasSQGq_b0ebVLLMYTTrjfokUNAlaV_scdWLf0U7Ml2YjYqxAnDfbenugpkoYeqDnK9dFOjzlSYYeB46RITqx6RRh2n2Yocgzf6VdRMG-ybiZOwBavsA","version":2}} -->
