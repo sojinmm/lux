@@ -151,8 +151,8 @@ import Lux.Beam
 
 sequence do
   step(:first, FirstPrism, %{param: :value})
-  step(:second, SecondPrism, %{input: {:ref, "first.output"}})
-  step(:third, ThirdPrism, %{data: {:ref, "second.result"}})
+  step(:second, SecondPrism, [:steps, :first, :result])
+  step(:third, ThirdPrism, [:steps, :third, :result])
 end
 ```
 
@@ -187,7 +187,7 @@ end
        track: false,
        store_io: false
      },
-     params: %{input: {:ref, "first.output"}}
+     params: [:steps, :first, :result]
    },
    %{
      id: :third,
@@ -201,7 +201,7 @@ end
        track: false,
        store_io: false
      },
-     params: %{data: {:ref, "second.result"}}
+     params: [:steps, :third, :result]
    }
  ]}
 ```
@@ -383,7 +383,7 @@ Reference previous step outputs:
 
 ```elixir
 step(:data, DataPrism, %{value: :input_value})
-step(:process, ProcessPrism, %{data: {:ref, "data.result"}})
+step(:process, ProcessPrism, %{data: [:steps, :data, :result]})
 ```
 
 <!-- livebook:{"output":true} -->
@@ -401,7 +401,7 @@ step(:process, ProcessPrism, %{data: {:ref, "data.result"}})
     track: false,
     store_io: false
   },
-  params: %{data: {:ref, "data.result"}}
+  params: %{data: [:steps, :data, :result]}
 }
 ```
 
@@ -411,8 +411,8 @@ Access nested values:
 
 ```elixir
 step(:complex, ComplexPrism, %{
-  value: {:ref, "data.nested.deep.value"},
-  config: {:ref, "settings.options"}
+  value: [:steps, :data, :result, :nested, :value],
+  config: [:steps, :settings, :result]
 })
 ```
 
@@ -431,7 +431,7 @@ step(:complex, ComplexPrism, %{
     track: false,
     store_io: false
   },
-  params: %{value: {:ref, "data.nested.deep.value"}, config: {:ref, "settings.options"}}
+  params: %{value: [:steps, :data, :result, :nested, :value], config: [:steps, :settings, :result]}
 }
 ```
 
@@ -441,9 +441,9 @@ Combine multiple references:
 
 ```elixir
 step(:combine, CombinePrism, %{
-  first: {:ref, "step1.output"},
-  second: {:ref, "step2.output"},
-  third: {:ref, "step3.output"}
+  first: [:steps, :step1, :result],
+  second: [:steps, :step2, :result],
+  third: [:steps, :step3, :result]
 })
 ```
 
@@ -463,9 +463,9 @@ step(:combine, CombinePrism, %{
     store_io: false
   },
   params: %{
-    first: {:ref, "step1.output"},
-    second: {:ref, "step2.output"},
-    third: {:ref, "step3.output"}
+    first: [:steps, :step1, :result],
+    second: [:steps, :step2, :result],
+    third: [:steps, :step3, :result]
   }
 }
 ```
@@ -655,6 +655,10 @@ end
 
 defmodule MyApp.Prisms.OperationPrism do
   use Lux.Prism
+  
+  def handler(:ok, _ctx) do
+    {:ok, %{type: :temporary}}
+  end
 
   def handler(_input, _ctx) do
     {:error, %{type: :temporary}}
@@ -688,23 +692,23 @@ defmodule MyApp.Beams.ErrorHandlingBeam do
 
   def steps do
     sequence do
-      step(:operation, MyApp.Prisms.OperationPrism, %{})
+      step(:operation, MyApp.Prisms.OperationPrism, [:input])
       
       branch {__MODULE__, :handle_error} do
         :retry ->
-          step(:retry, RetryPrism, %{
-            original_input: {:ref, "operation.input"},
-            error: {:ref, "operation.error"}
+          step(:retry, MyApp.Prisms.RetryPrism, %{
+            original_input: [:steps, :operatoin, :input],
+            error: [:steps, :operatoin, :error]
           })
 
         :fallback ->
-          step(:fallback, FallbackPrism, %{
-            error: {:ref, "operation.error"}
+          step(:fallback, MyApp.Prisms.FallbackPrism, %{
+            error: [:steps, :operatoin, :error]
           })
 
         :fail ->
-          step(:error, ErrorPrism, %{
-            error: {:ref, "operation.error"},
+          step(:error, MyApp.Prisms.ErrorPrism, %{
+            error: [:steps, :operatoin, :error],
             context: :context
           })
       end
@@ -712,7 +716,7 @@ defmodule MyApp.Beams.ErrorHandlingBeam do
   end
 
   def handle_error(ctx) do
-    case ctx.steps.operation.error do
+    case ctx.steps.operation.result do
       %{type: :temporary} -> :retry
       %{type: :permanent} -> :fallback
       _ -> :fail
@@ -720,13 +724,21 @@ defmodule MyApp.Beams.ErrorHandlingBeam do
   end
 end
 
-MyApp.Beams.ErrorHandlingBeam.run(%{})
+defmodule MyApp.Prisms.RetryPrism do
+  use Lux.Prism
+  
+  def handler(_input, _ctx) do
+    {:ok, %{type: :retried}}
+  end
+end
+
+MyApp.Beams.ErrorHandlingBeam.run(:ok)
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-{:error, %{type: :temporary}, nil}
+{:ok, %{type: :retried}, nil}
 ```
 
 ## Best Practices
