@@ -101,10 +101,4 @@ defmodule Lux.Agents.RiskManager do
         {:ok, %{status: "rejected", reason: reason}}
     end
   end
-
-  def handle_signal(_agent, _signal) do
-    dbg()
-    Logger.info("Risk Manager ignoring signal: #{inspect(_signal)}")
-    :ignore
-  end
 end

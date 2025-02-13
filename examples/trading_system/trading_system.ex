@@ -8,6 +8,7 @@ defmodule Examples.TradingSystem do
   alias Lux.AgentHub
   alias Lux.Signal
   alias Lux.Signal.Router.Local
+  alias Lux.Signals.TradeProposal
 
   require Logger
 
@@ -45,7 +46,7 @@ defmodule Examples.TradingSystem do
     # Get trade proposal from researcher and send to risk manager
     with {:ok, signal} <- MarketResearcher.propose_trade(researcher_pid, market_conditions) do
       # Create a signal to send to the risk manager
-      trade_signal = Signal.new(%{
+      {:ok, trade_signal} = TradeProposal.new(%{
         payload: signal,
         sender: researcher.id,
         recipient: risk_manager.id

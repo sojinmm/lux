@@ -4,7 +4,6 @@ defmodule Lux.Agents.MarketResearcher do
   """
 
   use Lux.Agent
-  alias Lux.Signals.TradeProposal
 
   require Logger
 
@@ -114,9 +113,11 @@ defmodule Lux.Agents.MarketResearcher do
            #{Jason.encode!(market_conditions, pretty: true)}
 
            Respond with a complete trade proposal including ALL required fields.
-           """),
-         {:ok, decoded_proposal} <- Jason.decode(trade_proposal, keys: :atoms) do
-      TradeProposal.new(%{payload: decoded_proposal})
+           """) do
+      {:ok, Jason.decode!(trade_proposal, keys: :atoms)}
     end
   end
+
+  @impl true
+  def handle_signal(_agent, _signal), do: :ignore
 end
