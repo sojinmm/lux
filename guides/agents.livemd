@@ -14,7 +14,7 @@ Mix.install(
         default: "gpt-4o-mini"
       ],
       api_keys: [
-        openai: System.get_env("OPENAI_API_KEY")
+        openai: System.fetch_env!("LB_OPENAI_API_KEY")
       ]
     ]
   ],
@@ -100,6 +100,7 @@ MyApp.Agents.Assistant.send_message(pid, "Hello!")
 ## Agent Configuration
 
 ### Memory Configuration
+
 Agents can be configured with memory to maintain state and recall previous interactions. Memory is particularly useful for maintaining conversation context and recalling previous decisions:
 
 ```elixir
@@ -141,6 +142,7 @@ Memory is automatically used in chat interactions when enabled:
 ```
 
 You can control memory context size in chat:
+
 ```elixir
 # Limit memory context to last 3 interactions
 {:ok, response} = MyApp.Agents.MemoryAgent.send_message(
@@ -152,12 +154,14 @@ You can control memory context size in chat:
 ```
 
 The memory system stores each interaction with metadata:
-- User messages are stored with `role: :user`
-- Agent responses are stored with `role: :assistant`
-- All interactions are timestamped and retrievable
-- Memory is automatically cleaned up when the agent terminates
+
+* User messages are stored with `role: :user`
+* Agent responses are stored with `role: :assistant`
+* All interactions are timestamped and retrievable
+* Memory is automatically cleaned up when the agent terminates
 
 ### Scheduled Actions
+
 Agents can perform scheduled, recurring tasks using prisms or beams. Each scheduled action runs at specified intervals and is supervised by the Lux runtime:
 
 ```elixir
@@ -187,20 +191,23 @@ end
 ```
 
 Scheduled actions are defined as tuples of `{module, interval_ms, input, opts}` where:
-- `module`: The prism or beam to execute
-- `interval_ms`: Time in milliseconds between executions
-- `input`: Map of input parameters for the action
-- `opts`: Configuration options
-  - `name`: Optional name for the action (defaults to module name)
-  - `timeout`: Maximum execution time in milliseconds (defaults to 60 seconds)
+
+* `module`: The prism or beam to execute
+* `interval_ms`: Time in milliseconds between executions
+* `input`: Map of input parameters for the action
+* `opts`: Configuration options
+  * `name`: Optional name for the action (defaults to module name)
+  * `timeout`: Maximum execution time in milliseconds (defaults to 60 seconds)
 
 Each scheduled action:
-- Runs in a supervised Task
-- Automatically reschedules itself after completion
-- Has error handling and logging
-- Receives the full agent context in its execution
+
+* Runs in a supervised Task
+* Automatically reschedules itself after completion
+* Has error handling and logging
+* Receives the full agent context in its execution
 
 Example prism for scheduled actions:
+
 ```elixir
 defmodule MyApp.Prisms.HealthCheck do
   use Lux.Prism,
@@ -233,10 +240,11 @@ MyApp.Agents.MemoryAgent.chat(agent, "Hello!")
 ```
 
 The agent runtime ensures that:
-- Failed actions don't crash the agent
-- Timeouts are properly handled
-- Actions are rescheduled even after errors
-- All executions are logged
+
+* Failed actions don't crash the agent
+* Timeouts are properly handled
+* Actions are rescheduled even after errors
+* All executions are logged
 
 ### LLM Configuration
 
