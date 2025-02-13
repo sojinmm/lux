@@ -12,6 +12,7 @@ defmodule Lux.Agents.RiskManager do
   def new(opts \\ %{}) do
     Lux.Agent.new(%{
       name: "Risk Management Agent",
+      module: __MODULE__,
       description: "Evaluates and executes trades based on risk assessment",
       goal: "Ensure trades meet risk management criteria before execution",
       capabilities: [:risk_management, :trade_execution],
@@ -101,4 +102,7 @@ defmodule Lux.Agents.RiskManager do
         {:ok, %{status: "rejected", reason: reason}}
     end
   end
+
+  @impl true
+  def handle_signal(_agent, _signal), do: :ignore
 end

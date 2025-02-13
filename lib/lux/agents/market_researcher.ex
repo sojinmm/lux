@@ -10,6 +10,7 @@ defmodule Lux.Agents.MarketResearcher do
   def new(opts \\ %{}) do
     Lux.Agent.new(%{
       name: "Market Research Agent",
+      module: __MODULE__,
       description: "Analyzes markets and proposes trading opportunities",
       goal: "Find profitable trading opportunities through market analysis",
       capabilities: [:market_research, :trade_proposals],
