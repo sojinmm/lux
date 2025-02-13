@@ -1,4 +1,5 @@
 defmodule Lux.Schemas.TradeProposalSchema do
+  @moduledoc false
   use Lux.SignalSchema,
     name: "trade_proposal",
     version: "1.0.0",

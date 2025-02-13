@@ -6,6 +6,7 @@ defmodule Lux.Agents.RiskManager do
   use Lux.Agent
 
   alias Lux.Beams.Hyperliquid.TradeRiskManagementBeam
+  alias Lux.Schemas.TradeProposalSchema
 
   require Logger
 
@@ -16,7 +17,7 @@ defmodule Lux.Agents.RiskManager do
       description: "Evaluates and executes trades based on risk assessment",
       goal: "Ensure trades meet risk management criteria before execution",
       capabilities: [:risk_management, :trade_execution],
-      accepts_signals: [Lux.Schemas.TradeProposalSchema],
+      accepts_signals: [TradeProposalSchema],
       llm_config: %{
         api_key: opts[:api_key] || Lux.Config.openai_api_key(),
         model: opts[:model] || "gpt-4o-mini",
@@ -63,7 +64,7 @@ defmodule Lux.Agents.RiskManager do
   end
 
   @impl true
-  def handle_signal(agent, %{schema_id: Lux.Schemas.TradeProposalSchema} = signal) do
+  def handle_signal(agent, %{schema_id: TradeProposalSchema} = signal) do
     Logger.info("Evaluating trade proposal: #{inspect(signal)}")
 
     # First get agent's opinion on the trade
