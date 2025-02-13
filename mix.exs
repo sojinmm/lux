@@ -36,9 +36,7 @@ defmodule Lux.MixProject do
   defp aliases do
     [
       "test.unit": "test --include unit",
-      "test.integration": "test --include integration",
-      # run all tests
-      "test.suite": "test --include unit --include integration"
+      "test.integration": "test --include integration"
     ]
   end
 
@@ -66,8 +64,7 @@ defmodule Lux.MixProject do
     [
       preferred_envs: [
         "test.integration": :test,
-        "test.unit": :test,
-        "test.suite": :test
+        "test.unit": :test
       ]
     ]
   end
@@ -77,16 +74,19 @@ defmodule Lux.MixProject do
       main: "readme",
       extras: [
         "README.md",
-        "LICENSE",
-        "CHANGELOG.md",
-        "guides/beams.md",
+        "guides/agents.livemd",
+        "guides/beams.livemd",
         "guides/prisms.livemd",
-        "guides/contributing.md"
+        "guides/signals.livemd",
+        "guides/multi_agent_collaboration.livemd",
+        "guides/testing.md",
+        "guides/cursor_development.md",
+        "guides/contributing.md",
+        "CHANGELOG.md",
+        "LICENSE"
       ],
       groups_for_extras: [
-        "guides/beams.md",
-        "guides/prisms.livemd",
-        "guides/contributing.md"
+        Guides: Path.wildcard("guides/*.livemd")
       ]
     ]
   end

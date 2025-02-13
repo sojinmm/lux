@@ -56,12 +56,11 @@ defmodule Mix.Tasks.Setup do
 
       You can now:
       • Activate the Python virtual environment:
-          source #{@priv_python_dir}/python/.venv/bin/activate
+          source #{@priv_python_dir}/.venv/bin/activate
 
       • Run tests:
           mix test.unit         # Run Elixir unit tests
           mix test.integration  # Run Elixir integration tests
-          mix test.suite        # Run all Elixir tests
           mix python.test       # Run Python tests
 
       • Generate documentation:
