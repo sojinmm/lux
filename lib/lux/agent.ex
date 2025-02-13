@@ -275,19 +275,12 @@ defmodule Lux.Agent do
 
   # Helper function to format map content into a readable string
   defp format_content(content) when is_map(content) do
-    Enum.map_join(content, "\n", fn {k, v} -> "#{k}: #{format_value(v)}" end)
+    Jason.encode!(content)
   end
 
   defp format_content(result) when is_list(result) do
     Enum.map_join(result, "\n", fn element -> format_content(element) end)
   end
-
-  defp format_value(value) when is_list(value) do
-    Enum.map_join(value, ", ", &format_value/1)
-  end
-
-  defp format_value(value) when is_map(value), do: format_content(value)
-  defp format_value(value), do: to_string(value)
 
   def schedule_action(name, module, interval_ms, input, opts) do
     Process.send_after(

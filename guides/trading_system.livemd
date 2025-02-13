@@ -1,0 +1,203 @@
+# Trading System Example
+
+## Environment Setup
+
+Before running this livebook, you'll need to set up the following environment variables in your Livebook settings:
+
+```
+LB_OPENAI_API_KEY=""        # Your OpenAI API key
+LB_HYPERLIQUID_PRIVATE_KEY="" # Your Hyperliquid private key
+LB_HYPERLIQUID_ADDRESS=""     # Your Hyperliquid wallet address
+LB_HYPERLIQUID_API_URL="https://api.hyperliquid.xyz"
+```
+
+Note: In Livebook, environment variables are prefixed with `LB_` to avoid conflicts with system environment variables.
+
+To set these environment variables in Livebook:
+
+1. Navigate to the "Secrets" section in Livebook
+2. Add each variable with its corresponding value (including the `LB_` prefix)
+3. Enable it for this current session
+
+These variables will be automatically loaded into the Elixir runtime when the notebook starts.
+
+## Installation
+
+```elixir
+Mix.install(
+  [
+    {:lux, git: "https://github.com/spectral-finance/lux.git", branch: "feat/initial-hedge-fund-workflows"}
+  ],
+  start_applications: false
+)
+
+# Load environment variables into runtime
+System.put_env("OPENAI_API_KEY", System.fetch_env!("LB_OPENAI_API_KEY"))
+System.put_env("HYPERLIQUID_PRIVATE_KEY", System.fetch_env!("LB_HYPERLIQUID_PRIVATE_KEY"))
+System.put_env("HYPERLIQUID_ADDRESS", System.fetch_env!("LB_HYPERLIQUID_ADDRESS"))
+System.put_env("HYPERLIQUID_API_URL", System.fetch_env!("LB_HYPERLIQUID_API_URL"))
+
+# Configure the application
+Application.put_env(:lux, :env, :dev)
+Application.put_env(:lux, :api_keys, [
+  openai: System.get_env("OPENAI_API_KEY"),
+  alchemy: "not_used",
+  openweather: "not_used",
+  transpose: "not_used"
+])
+
+Application.put_env(:lux, :accounts, [
+  hyperliquid_private_key: System.get_env("HYPERLIQUID_PRIVATE_KEY"),
+  hyperliquid_address: System.get_env("HYPERLIQUID_ADDRESS"),
+  hyperliquid_api_url: System.get_env("HYPERLIQUID_API_URL")
+])
+
+Application.ensure_all_started(:lux)
+```
+
+## Overview
+
+This example demonstrates a simple trading system built with Lux agents. The system consists of:
+
+* A Market Researcher agent that analyzes market conditions and proposes trades
+* A Risk Manager agent that evaluates trade proposals
+* An Agent Hub that coordinates communication between agents
+* A Local Signal Router for message passing
+
+## Running the Trading System
+
+Here's the complete trading system implementation:
+
+```elixir
+defmodule ExampleApp.TradingSystem do
+  @moduledoc """
+  Simple interface for running the trading system.
+  """
+
+  alias Lux.Agents.MarketResearcher
+  alias Lux.Agents.RiskManager
+  alias Lux.AgentHub
+  alias Lux.Signal.Router.Local
+  alias Lux.Signals.TradeProposal
+
+  require Logger
+
+  @doc """
+  Runs one iteration of market analysis and trading.
+  """
+  def run do
+    # Start the agent hub
+    {:ok, hub} = AgentHub.start_link(name: :trading_hub)
+
+    # Start the signal router
+    {:ok, router} = Local.start_link(name: :trading_router)
+
+    # Start both agents
+    {:ok, researcher_pid} = MarketResearcher.start_link()
+    {:ok, risk_manager_pid} = RiskManager.start_link()
+
+    # Get agent states
+    researcher = :sys.get_state(researcher_pid)
+    risk_manager = :sys.get_state(risk_manager_pid)
+
+    # Register agents with their capabilities
+    :ok = AgentHub.register(hub, researcher, researcher_pid, [:market_research, :analysis])
+    :ok = AgentHub.register(hub, risk_manager, risk_manager_pid, [:risk_management])
+
+    # Example market conditions (replace with real data)
+    market_conditions = %{
+      "ETH" => %{
+        "price" => 2800.0,
+        "24h_volume" => 1_000_000,
+        "volatility" => 0.15
+      }
+    }
+
+    # Get trade proposal from researcher and send to risk manager
+    with {:ok, signal} <- MarketResearcher.propose_trade(researcher_pid, market_conditions) do
+      # Create a signal to send to the risk manager
+      {:ok, trade_signal} = TradeProposal.new(%{
+        payload: signal,
+        sender: researcher.id,
+        recipient: risk_manager.id
+      })
+
+      signal_id = trade_signal.id
+
+      # Subscribe to signal delivery events
+      :ok = Local.subscribe(signal_id, name: router)
+
+      # Update researcher status to busy while processing
+      :ok = AgentHub.update_status(hub, researcher.id, :busy)
+
+      # Route the signal through the local router
+      :ok = Local.route(trade_signal, name: router, hub: hub)
+
+      # Wait for signal delivery confirmation
+      receive do
+        {:signal_delivered, ^signal_id} ->
+          Logger.info("Trade signal delivered successfully")
+          :ok = AgentHub.update_status(hub, researcher.id, :available)
+
+        {:signal_failed, ^signal_id, reason} ->
+          Logger.error("Failed to deliver trade signal: #{inspect(reason)}")
+          :ok = AgentHub.update_status(hub, researcher.id, :available)
+      after
+        5000 ->
+          Logger.error("Timeout waiting for signal delivery")
+          :ok = AgentHub.update_status(hub, researcher.id, :available)
+          {:error, :timeout}
+      end
+    end
+  end
+end
+```
+
+Let's try running the trading system:
+
+```elixir
+Examples.TradingSystem.run()
+```
+
+## How It Works
+
+1. **System Setup**
+
+   * The system starts by initializing an AgentHub and Local Router
+   * Two agents are created: MarketResearcher and RiskManager
+   * Agents are registered with their capabilities in the hub
+
+2. **Market Analysis**
+
+   * The MarketResearcher analyzes market conditions
+   * If a trading opportunity is found, it creates a trade proposal
+
+3. **Signal Routing**
+
+   * Trade proposals are wrapped in a TradeProposal signal
+   * The Local Router handles delivery between agents
+   * The system monitors signal delivery status
+
+4. **Risk Management**
+
+   * The RiskManager receives and evaluates trade proposals
+   * It applies risk management rules before approving trades
+
+This example demonstrates core Lux concepts including:
+
+* Agent-based architecture
+* Signal-based communication
+* Capability registration
+* Status management
+* Error handling
+
+## Next Steps
+
+To extend this example, you could:
+
+* Add more sophisticated market analysis
+* Implement additional risk management rules
+* Add trade execution functionality
+* Include position tracking
+* Add portfolio management
+* Implement backtesting capabilities
