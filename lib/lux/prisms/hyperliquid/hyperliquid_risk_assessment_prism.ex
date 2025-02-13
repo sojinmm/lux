@@ -87,15 +87,18 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
             '''Calculate position size as percentage of portfolio'''
             trade_value = float(trade["sz"]) * float(market_price)
             account_value = float(margin_summary["accountValue"])
-            return trade_value / account_value
+            return trade_value / account_value if account_value != 0 else 0.0
 
         def calculate_leverage(portfolio, trade, market_price):
             '''Calculate current leverage including the new trade'''
             margin_summary = portfolio["crossMarginSummary"]
-            current_leverage = float(margin_summary["totalNtlPos"]) / float(margin_summary["accountValue"])
-
-            trade_value = float(trade["sz"]) * float(market_price)
             account_value = float(margin_summary["accountValue"])
+
+            if account_value == 0:
+                return 0.0
+
+            current_leverage = float(margin_summary["totalNtlPos"]) / account_value
+            trade_value = float(trade["sz"]) * float(market_price)
 
             return (trade_value + current_leverage * account_value) / account_value
 
@@ -106,7 +109,7 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
 
             position_value = float(position["position"]["positionValue"])
             account_value = float(margin_summary["accountValue"])
-            return position_value / account_value
+            return position_value / account_value if account_value != 0 else 0.0
 
         def calculate_liquidation_risk(position, market_price):
             '''Calculate risk of liquidation'''
@@ -118,7 +121,7 @@ defmodule Lux.Prisms.Hyperliquid.HyperliquidRiskAssessmentPrism do
                 return 0.0
 
             current_price = float(market_price)
-            return abs(float(liq_price) - current_price) / current_price
+            return abs(float(liq_price) - current_price) / current_price if current_price != 0 else 0.0
 
         def calculate_unrealized_pnl(position):
             '''Calculate unrealized PnL'''
