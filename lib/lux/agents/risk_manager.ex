@@ -15,6 +15,7 @@ defmodule Lux.Agents.RiskManager do
       description: "Evaluates and executes trades based on risk assessment",
       goal: "Ensure trades meet risk management criteria before execution",
       capabilities: [:risk_management, :trade_execution],
+      accepts_signals: [Lux.Schemas.TradeProposalSchema],
       llm_config: %{
         api_key: opts[:api_key] || Lux.Config.openai_api_key(),
         model: opts[:model] || "gpt-4o-mini",
@@ -60,14 +61,15 @@ defmodule Lux.Agents.RiskManager do
     })
   end
 
-  def evaluate_trade(agent, %{"coin" => _coin} = trade_proposal) do
-    Logger.info("Evaluating trade proposal: #{inspect(trade_proposal)}")
+  @impl true
+  def handle_signal(agent, %{schema_id: Lux.Schemas.TradeProposalSchema} = signal) do
+    Logger.info("Evaluating trade proposal: #{inspect(signal)}")
 
     # First get agent's opinion on the trade
     {:ok, evaluation} =
-      send_message(agent, """
+      chat(agent, """
       Evaluate this trade proposal:
-      #{Jason.encode!(trade_proposal, pretty: true)}
+      #{Jason.encode!(signal.payload)}
 
       Consider:
       1. Does the rationale make sense?
@@ -83,7 +85,7 @@ defmodule Lux.Agents.RiskManager do
         # Run the trade through the risk management beam
         case TradeRiskManagementBeam.run(%{
                address: Lux.Config.hyperliquid_account_address(),
-               trade: Map.delete(trade_proposal, "rationale")
+               trade: Map.delete(signal.payload, "rationale")
              }) do
           {:ok, result, _metadata} ->
             Logger.info("Risk management beam result: #{inspect(result)}")
@@ -98,5 +100,11 @@ defmodule Lux.Agents.RiskManager do
         Logger.info("LLM rejected trade: #{inspect(reason)}")
         {:ok, %{status: "rejected", reason: reason}}
     end
+  end
+
+  def handle_signal(_agent, _signal) do
+    dbg()
+    Logger.info("Risk Manager ignoring signal: #{inspect(_signal)}")
+    :ignore
   end
 end

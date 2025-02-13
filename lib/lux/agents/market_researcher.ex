@@ -4,6 +4,9 @@ defmodule Lux.Agents.MarketResearcher do
   """
 
   use Lux.Agent
+  alias Lux.Signals.TradeProposal
+
+  require Logger
 
   def new(opts \\ %{}) do
     Lux.Agent.new(%{
@@ -49,12 +52,10 @@ defmodule Lux.Agents.MarketResearcher do
                         description: "Time in force - Good till cancelled"
                       }
                     },
-                    required: ["tif"],
-                    additionalProperties: false
+                    required: ["tif"]
                   }
                 },
-                required: ["limit"],
-                additionalProperties: false
+                required: ["limit"]
               },
               reduce_only: %{
                 type: "boolean",
@@ -73,23 +74,32 @@ defmodule Lux.Agents.MarketResearcher do
               "order_type",
               "reduce_only",
               "rationale"
-            ],
-            additionalProperties: false
-          },
-          strict: true
+            ]
+          }
         },
         messages: [
           %{
             role: "system",
             content: """
             You are a Market Research Agent specialized in analyzing cryptocurrency markets
-            and proposing trades. Your recommendations must be in valid JSON format and include:
+            and proposing trades. Your recommendations must be in valid JSON format and include
+            ALL of the following fields:
 
-            1. The asset to trade (e.g., "ETH", "BTC")
-            2. The direction (buy/sell)
-            3. The size of the position
-            4. The limit price
-            5. The rationale behind the trade
+            {
+              "coin": "string (e.g., 'ETH', 'BTC')",
+              "is_buy": boolean,
+              "sz": number,
+              "limit_px": number,
+              "order_type": {
+                "limit": {
+                  "tif": "Gtc"
+                }
+              },
+              "reduce_only": boolean,
+              "rationale": "string explaining the trade"
+            }
+
+            Always include every field with appropriate values based on your analysis.
             """
           }
         ]
@@ -98,9 +108,15 @@ defmodule Lux.Agents.MarketResearcher do
   end
 
   def propose_trade(agent, market_conditions) do
-    send_message(agent, """
-    Based on these market conditions, propose a trade:
-    #{Jason.encode!(market_conditions, pretty: true)}
-    """)
+    with {:ok, trade_proposal} <-
+           send_message(agent, """
+           Based on these market conditions, propose a trade:
+           #{Jason.encode!(market_conditions, pretty: true)}
+
+           Respond with a complete trade proposal including ALL required fields.
+           """),
+         {:ok, decoded_proposal} <- Jason.decode(trade_proposal, keys: :atoms) do
+      TradeProposal.new(%{payload: decoded_proposal})
+    end
   end
 end
