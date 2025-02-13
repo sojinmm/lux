@@ -30,8 +30,8 @@ defmodule Lux.MixProject do
   defp extra_applications(:dev), do: [:logger, :crypto, :wx, :observer, :runtime_tools]
   defp extra_applications(_), do: [:logger, :crypto]
 
-  defp elixirc_paths(:test), do: ["lib", "test/", "examples"]
-  defp elixirc_paths(_), do: ["lib", "examples"]
+  defp elixirc_paths(:test), do: ["lib", "test/"]
+  defp elixirc_paths(_), do: ["lib"]
 
   defp aliases do
     [
