@@ -381,7 +381,7 @@ defmodule Lux.Agent do
   end
 
   # to handle when the Task.Supervisor.async_nolink process is down without bringing down the agent
-  def handle_info({:DOWN, _ref, :process, _pid, :normal}, agent) do
+  def __handle_info__({:DOWN, _ref, :process, _pid, :normal}, agent) do
     {:noreply, agent}
   end
 
