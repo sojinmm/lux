@@ -1,5 +1,3 @@
-<!-- livebook:{"persist_outputs":true} -->
-
 # Multi-Agent Collaboration Guide
 
 ```elixir
@@ -14,7 +12,7 @@ Mix.install(
         default: "gpt-4o-mini"
       ],
       api_keys: [
-        openai: "<OPENAI_API_KEY>"
+        openai: System.fetch_env!("LB_OPENAI_API_KEY")
       ]
     ]
   ]
@@ -92,8 +90,6 @@ defmodule MyApp.Agents.Writer do
     })
   end
 end
-
-Kino.nothing()
 ```
 
 ## Starting and Registering Agents
@@ -105,104 +101,14 @@ Let's start the agents.
 {:ok, writer_pid} = Kino.start_child({MyApp.Agents.Writer, []})
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, #PID<0.495.0>}
-```
-
 You can check agent's state with `get_state/1` function.
 
 ```elixir
 researcher = :sys.get_state(researcher_pid)
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-%Lux.Agent{
-  id: "552294bb-a2c6-4a6d-ae04-56391529b563",
-  name: "Research Assistant",
-  description: "Specialized in research and analysis",
-  goal: "Find and analyze information accurately",
-  module: Lux.Agent,
-  prisms: [],
-  beams: [],
-  lenses: [],
-  accepts_signals: [],
-  memory_config: nil,
-  memory_pid: nil,
-  scheduled_actions: [],
-  llm_config: %Lux.LLM.OpenAI.Config{
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4o-mini",
-    api_key: "<OPENAI_API_KEY>",
-    temperature: 0.7,
-    frequency_penalty: 0.0,
-    reasoning_mode: false,
-    reasoning_effort: "medium",
-    receive_timeout: 60000,
-    seed: nil,
-    n: 1,
-    json_response: true,
-    json_schema: nil,
-    max_tokens: nil,
-    tool_choice: nil,
-    user: nil,
-    messages: [
-      %{
-        role: "system",
-        content: "You are a Research Assistant specialized in finding and analyzing information.\nWork with other agents to provide comprehensive research results.\n"
-      }
-    ]
-  }
-}
-```
-
 ```elixir
 writer = :sys.get_state(writer_pid)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-%Lux.Agent{
-  id: "e308afd4-d69b-4639-9eb0-56e0847c53b7",
-  name: "Content Writer",
-  description: "Specialized in content creation",
-  goal: "Create engaging content from research",
-  module: Lux.Agent,
-  prisms: [],
-  beams: [],
-  lenses: [],
-  accepts_signals: [],
-  memory_config: nil,
-  memory_pid: nil,
-  scheduled_actions: [],
-  llm_config: %Lux.LLM.OpenAI.Config{
-    endpoint: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4o-mini",
-    api_key: "<OPENAI_API_KEY>",
-    temperature: 0.7,
-    frequency_penalty: 0.0,
-    reasoning_mode: false,
-    reasoning_effort: "medium",
-    receive_timeout: 60000,
-    seed: nil,
-    n: 1,
-    json_response: true,
-    json_schema: nil,
-    max_tokens: nil,
-    tool_choice: nil,
-    user: nil,
-    messages: [
-      %{
-        role: "system",
-        content: "You are a Content Writer specialized in creating engaging content.\nWork with researchers to transform their findings into compelling articles.\n"
-      }
-    ]
-  }
-}
 ```
 
 Start your own agent hub.
@@ -211,12 +117,6 @@ Start your own agent hub.
 
 ```elixir
 {:ok, hub} = Kino.start_child({Lux.AgentHub, [name: :my_hub]})
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, #PID<0.498.0>}
 ```
 
 Register agents with their capabilities
@@ -239,12 +139,6 @@ Register agents with their capabilities
   )
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-:ok
-```
-
 ## Finding and Using Agents
 
 You can find agents by their capabilities.
@@ -253,163 +147,14 @@ You can find agents by their capabilities.
 research_agents = Lux.AgentHub.find_by_capability(hub, :research)
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-[
-  %{
-    pid: #PID<0.494.0>,
-    status: :available,
-    agent: %Lux.Agent{
-      id: "552294bb-a2c6-4a6d-ae04-56391529b563",
-      name: "Research Assistant",
-      description: "Specialized in research and analysis",
-      goal: "Find and analyze information accurately",
-      module: Lux.Agent,
-      prisms: [],
-      beams: [],
-      lenses: [],
-      accepts_signals: [],
-      memory_config: nil,
-      memory_pid: nil,
-      scheduled_actions: [],
-      llm_config: %Lux.LLM.OpenAI.Config{
-        endpoint: "https://api.openai.com/v1/chat/completions",
-        model: "gpt-4o-mini",
-        api_key: "<OPENAI_API_KEY>",
-        temperature: 0.7,
-        frequency_penalty: 0.0,
-        reasoning_mode: false,
-        reasoning_effort: "medium",
-        receive_timeout: 60000,
-        seed: nil,
-        n: 1,
-        json_response: true,
-        json_schema: nil,
-        max_tokens: nil,
-        tool_choice: nil,
-        user: nil,
-        messages: [
-          %{
-            role: "system",
-            content: "You are a Research Assistant specialized in finding and analyzing information.\nWork with other agents to provide comprehensive research results.\n"
-          }
-        ]
-      }
-    },
-    capabilities: [:research, :analysis],
-    last_updated: ~U[2025-02-12 14:17:34.989602Z]
-  }
-]
-```
-
 ```elixir
 writing_agents = Lux.AgentHub.find_by_capability(hub, :writing)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-[
-  %{
-    pid: #PID<0.495.0>,
-    status: :available,
-    agent: %Lux.Agent{
-      id: "e308afd4-d69b-4639-9eb0-56e0847c53b7",
-      name: "Content Writer",
-      description: "Specialized in content creation",
-      goal: "Create engaging content from research",
-      module: Lux.Agent,
-      prisms: [],
-      beams: [],
-      lenses: [],
-      accepts_signals: [],
-      memory_config: nil,
-      memory_pid: nil,
-      scheduled_actions: [],
-      llm_config: %Lux.LLM.OpenAI.Config{
-        endpoint: "https://api.openai.com/v1/chat/completions",
-        model: "gpt-4o-mini",
-        api_key: "<OPENAI_API_KEY>",
-        temperature: 0.7,
-        frequency_penalty: 0.0,
-        reasoning_mode: false,
-        reasoning_effort: "medium",
-        receive_timeout: 60000,
-        seed: nil,
-        n: 1,
-        json_response: true,
-        json_schema: nil,
-        max_tokens: nil,
-        tool_choice: nil,
-        user: nil,
-        messages: [
-          %{
-            role: "system",
-            content: "You are a Content Writer specialized in creating engaging content.\nWork with researchers to transform their findings into compelling articles.\n"
-          }
-        ]
-      }
-    },
-    capabilities: [:writing, :editing],
-    last_updated: ~U[2025-02-12 14:17:34.989740Z]
-  }
-]
 ```
 
 Or you can get specific agent info with `id`
 
 ```elixir
 {:ok, researcher_info} = Lux.AgentHub.get_agent_info(hub, researcher.id)
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok,
- %{
-   pid: #PID<0.494.0>,
-   status: :available,
-   agent: %Lux.Agent{
-     id: "552294bb-a2c6-4a6d-ae04-56391529b563",
-     name: "Research Assistant",
-     description: "Specialized in research and analysis",
-     goal: "Find and analyze information accurately",
-     module: Lux.Agent,
-     prisms: [],
-     beams: [],
-     lenses: [],
-     accepts_signals: [],
-     memory_config: nil,
-     memory_pid: nil,
-     scheduled_actions: [],
-     llm_config: %Lux.LLM.OpenAI.Config{
-       endpoint: "https://api.openai.com/v1/chat/completions",
-       model: "gpt-4o-mini",
-       api_key: "<OPENAI_API_KEY>",
-       temperature: 0.7,
-       frequency_penalty: 0.0,
-       reasoning_mode: false,
-       reasoning_effort: "medium",
-       receive_timeout: 60000,
-       seed: nil,
-       n: 1,
-       json_response: true,
-       json_schema: nil,
-       max_tokens: nil,
-       tool_choice: nil,
-       user: nil,
-       messages: [
-         %{
-           role: "system",
-           content: "You are a Research Assistant specialized in finding and analyzing information.\nWork with other agents to provide comprehensive research results.\n"
-         }
-       ]
-     }
-   },
-   capabilities: [:research, :analysis],
-   last_updated: ~U[2025-02-12 14:17:34.989602Z]
- }}
 ```
 
 ## Coordinating Work Between Agents
@@ -525,16 +270,12 @@ defmodule MyApp.Workflows.ContentCreation do
     end
   end
 end
-
-Kino.nothing()
 ```
 
 ```elixir
 MyApp.Workflows.ContentCreation.create_article("""
 AI & Blockchain
 """)
-
-Kino.nothing()
 ```
 
 ## Advanced Topics
