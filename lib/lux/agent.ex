@@ -9,6 +9,8 @@ defmodule Lux.Agent do
 
   require Logger
 
+  @behaviour Access
+
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
   @type memory_config :: %{
@@ -384,7 +386,12 @@ defmodule Lux.Agent do
   end
 
   # implements the access protocol for this struct...
-  def fetch(agent, key) do
-    Map.get(agent, key)
-  end
+  @impl Access
+  defdelegate fetch(agent, key), to: Map
+
+  @impl Access
+  defdelegate get_and_update(data, key, function), to: Map
+
+  @impl Access
+  defdelegate pop(data, key), to: Map
 end
