@@ -78,6 +78,7 @@ defmodule Lux.MixProject do
         "guides/beams.livemd",
         "guides/prisms.livemd",
         "guides/signals.livemd",
+        "guides/lenses.livemd",
         "guides/multi_agent_collaboration.livemd",
         "guides/trading_system.livemd",
         "guides/testing.md",
