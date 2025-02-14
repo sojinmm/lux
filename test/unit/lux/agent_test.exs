@@ -41,19 +41,14 @@ defmodule Lux.AgentTest do
 
   defmodule MemoryAgent do
     @moduledoc false
-    use Lux.Agent
-
-    def new(_opts \\ %{}) do
-      Agent.new(%{
-        name: "Memory Agent",
-        description: "An agent with memory capabilities",
-        goal: "Remember and use past interactions",
-        memory_config: %{
-          backend: SimpleMemory,
-          name: :test_memory
-        }
-      })
-    end
+    use Lux.Agent,
+      name: "Memory Agent",
+      description: "An agent with memory capabilities",
+      goal: "Remember and use past interactions",
+      memory_config: %{
+        backend: SimpleMemory,
+        name: :test_memory
+      }
 
     # We override the chat functions to store the messages in memory here and do not actually call any LLM...
     @impl true
@@ -157,7 +152,7 @@ defmodule Lux.AgentTest do
                  max_tokens: 1000
                }
              } =
-               SimpleAgent.new(%{
+               Agent.new(%{
                  name: "Simple Agent",
                  description: "A simple agent that keeps things simple.",
                  goal: "You have one simple goal. Not making things too complicated.",
@@ -175,7 +170,7 @@ defmodule Lux.AgentTest do
   describe "memory operations" do
     test "initializes memory on start", %{test: test_name} do
       {:ok, pid} = MemoryAgent.start_link(%{name: "Test Agent #{test_name}"})
-      agent = :sys.get_state(pid)
+      agent = MemoryAgent.get_state(pid)
       assert is_pid(agent.memory_pid)
     end
 
