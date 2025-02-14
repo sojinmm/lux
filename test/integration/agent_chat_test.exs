@@ -29,63 +29,49 @@ defmodule Lux.Integration.AgentChatTest do
     @moduledoc """
     An example agent that can engage in chat conversations.
     """
-    use Lux.Agent
+    use Lux.Agent,
+      name: "Chat Assistant",
+      description: "A helpful chat assistant that can engage in conversations",
+      goal: "Help users by engaging in meaningful conversations and providing assistance. You keep your responses short and concise.",
+      prisms: [ TestPrism ],
+      llm_config: %{
+        receive_timeout: 30_000,
+      },
+      memory_config: %{
+        backend: SimpleMemory,
+        name: :test_memory
+      }
+  end
 
-    @impl true
-    def new(opts) do
-      llm_config = %{
-        api_key: opts[:api_key] || Application.get_env(:lux, :api_keys)[:integration_openai],
-        model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:cheapest],
-        receive_timeout: opts[:receive_timeout] || 30_000,
+  describe "agent chat" do
+    setup do
+      name = "Research Assistant"
+      description = "An AI research assistant specialized in scientific literature and analysis"
+      goal = "Help researchers find, understand, and analyze scientific papers"
+      config = %{
+        api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
+        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+        temperature: 0.0,
+        seed: @seed,
+        receive_timeout: 30_000,
         messages: [
           %{
             role: "system",
             content: """
-            You are #{opts[:name] || "Chat Assistant"}. #{opts[:description] || "A helpful chat assistant that can engage in conversations"}
-            Your goal is: #{opts[:goal] || "Help users by engaging in meaningful conversations and providing assistance"}
+            You are #{name}. #{description}
+            Your goal is: #{goal}
             Respond to the user's message in a helpful and engaging way.
             """
           }
         ]
       }
 
-      Lux.Agent.new(%{
-        name: opts[:name] || "Chat Assistant",
-        description:
-          opts[:description] || "A helpful chat assistant that can engage in conversations",
-        goal:
-          opts[:goal] ||
-            "Help users by engaging in meaningful conversations and providing assistance. You keep your responses short and concise.",
-        module: __MODULE__,
-        prisms: [
-          TestPrism
-        ],
-        llm_config: llm_config,
-        memory_config: %{
-          backend: SimpleMemory,
-          name: :test_memory
-        }
-      })
-    end
-  end
-
-  describe "agent chat" do
-    setup do
-      config = %{
-        api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
-        temperature: 0.0,
-        max_tokens: 50,
-        seed: @seed
-      }
-
       # Create and start a new chat agent
       {:ok, pid} =
         ChatAgent.start_link(%{
-          name: "Research Assistant",
-          description:
-            "An AI research assistant specialized in scientific literature and analysis",
-          goal: "Help researchers find, understand, and analyze scientific papers",
+          name: name,
+          description: description,
+          goal: goal,
           llm_config: config
         })
 
@@ -93,7 +79,7 @@ defmodule Lux.Integration.AgentChatTest do
     end
 
     test "can chat with the agent", %{pid: pid} do
-      {:ok, response} = ChatAgent.send_message(pid, "Can you define petricor?")
+      {:ok, response} = ChatAgent.send_message(pid, "Can you define petrichor?")
 
       assert is_binary(response)
       assert String.length(response) > 0
@@ -124,20 +110,33 @@ defmodule Lux.Integration.AgentChatTest do
 
   describe "chat with memory" do
     setup do
+      name = "Memory-Enabled Assistant"
+      description = "An assistant that remembers past interactions"
+      goal = "Help users while maintaining context of conversations"
       config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.0,
         max_tokens: 50,
-        seed: @seed
+        seed: @seed,
+        messages: [
+          %{
+            role: "system",
+            content: """
+            You are #{name}. #{description}
+            Your goal is: #{goal}
+            Respond to the user's message in a helpful and engaging way.
+            """
+          }
+        ]
       }
 
       # Create and start a new chat agent with memory
       {:ok, pid} =
         ChatAgent.start_link(%{
-          name: "Memory-Enabled Assistant",
-          description: "An assistant that remembers past interactions",
-          goal: "Help users while maintaining context of conversations",
+          name: name,
+          description: description,
+          goal: goal,
           llm_config: config,
           memory_config: %{
             backend: SimpleMemory,

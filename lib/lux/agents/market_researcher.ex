@@ -3,109 +3,102 @@ defmodule Lux.Agents.MarketResearcher do
   An agent that analyzes market conditions and proposes trades based on research.
   """
 
-  use Lux.Agent
-
   require Logger
 
-  def new(opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "Market Research Agent",
-      module: __MODULE__,
-      description: "Analyzes markets and proposes trading opportunities",
-      goal: "Find profitable trading opportunities through market analysis",
-      capabilities: [:market_research, :trade_proposals],
-      llm_config: %{
-        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-        model: opts[:model] || "gpt-4o-mini",
-        temperature: 0.7,
-        json_response: true,
-        json_schema: %{
-          name: "trade_proposal",
-          schema: %{
-            type: "object",
-            properties: %{
-              coin: %{
-                type: "string",
-                description: "Trading pair symbol (e.g., 'ETH', 'BTC')"
-              },
-              is_buy: %{
-                type: "boolean",
-                description: "True for buy orders, false for sell orders"
-              },
-              sz: %{
-                type: "number",
-                description: "Position size in base currency units"
-              },
-              limit_px: %{
-                type: "number",
-                description: "Limit price for the order"
-              },
-              order_type: %{
-                type: "object",
-                properties: %{
-                  limit: %{
-                    type: "object",
-                    properties: %{
-                      tif: %{
-                        type: "string",
-                        enum: ["Gtc"],
-                        description: "Time in force - Good till cancelled"
-                      }
-                    },
-                    required: ["tif"]
-                  }
-                },
-                required: ["limit"]
-              },
-              reduce_only: %{
-                type: "boolean",
-                description: "Whether this order can only reduce position size"
-              },
-              rationale: %{
-                type: "string",
-                description: "Detailed explanation of the trade recommendation"
-              }
+  use Lux.Agent,
+    name: "Market Research Agent",
+    description: "Analyzes markets and proposes trading opportunities",
+    goal: "Find profitable trading opportunities through market analysis",
+    capabilities: [:market_research, :trade_proposals],
+    llm_config: %{
+      model: "gpt-4o-mini",
+      temperature: 0.7,
+      json_response: true,
+      json_schema: %{
+        name: "trade_proposal",
+        schema: %{
+          type: "object",
+          properties: %{
+            coin: %{
+              type: "string",
+              description: "Trading pair symbol (e.g., 'ETH', 'BTC')"
             },
-            required: [
-              "coin",
-              "is_buy",
-              "sz",
-              "limit_px",
-              "order_type",
-              "reduce_only",
-              "rationale"
-            ]
-          }
-        },
-        messages: [
-          %{
-            role: "system",
-            content: """
-            You are a Market Research Agent specialized in analyzing cryptocurrency markets
-            and proposing trades. Your recommendations must be in valid JSON format and include
-            ALL of the following fields:
-
-            {
-              "coin": "string (e.g., 'ETH', 'BTC')",
-              "is_buy": boolean,
-              "sz": number,
-              "limit_px": number,
-              "order_type": {
-                "limit": {
-                  "tif": "Gtc"
+            is_buy: %{
+              type: "boolean",
+              description: "True for buy orders, false for sell orders"
+            },
+            sz: %{
+              type: "number",
+              description: "Position size in base currency units"
+            },
+            limit_px: %{
+              type: "number",
+              description: "Limit price for the order"
+            },
+            order_type: %{
+              type: "object",
+              properties: %{
+                limit: %{
+                  type: "object",
+                  properties: %{
+                    tif: %{
+                      type: "string",
+                      enum: ["Gtc"],
+                      description: "Time in force - Good till cancelled"
+                    }
+                  },
+                  required: ["tif"]
                 }
               },
-              "reduce_only": boolean,
-              "rationale": "string explaining the trade"
+              required: ["limit"]
+            },
+            reduce_only: %{
+              type: "boolean",
+              description: "Whether this order can only reduce position size"
+            },
+            rationale: %{
+              type: "string",
+              description: "Detailed explanation of the trade recommendation"
             }
+          },
+          required: [
+            "coin",
+            "is_buy",
+            "sz",
+            "limit_px",
+            "order_type",
+            "reduce_only",
+            "rationale"
+          ]
+        }
+      },
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are a Market Research Agent specialized in analyzing cryptocurrency markets
+          and proposing trades. Your recommendations must be in valid JSON format and include
+          ALL of the following fields:
 
-            Always include every field with appropriate values based on your analysis.
-            """
+          {
+            "coin": "string (e.g., 'ETH', 'BTC')",
+            "is_buy": boolean,
+            "sz": number,
+            "limit_px": number,
+            "order_type": {
+              "limit": {
+                "tif": "Gtc"
+              }
+            },
+            "reduce_only": boolean,
+            "rationale": "string explaining the trade"
           }
-        ]
-      }
-    })
-  end
+
+          Always include every field with appropriate values based on your analysis.
+          """
+        }
+      ]
+    }
 
   def propose_trade(agent, market_conditions) do
     with {:ok, trade_proposal} <-

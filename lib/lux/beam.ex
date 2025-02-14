@@ -257,13 +257,13 @@ defmodule Lux.Beam do
       alias Lux.Beam
 
       @beam %Beam{
-        id: unquote(opts[:id]) || Lux.UUID.generate(),
-        name: unquote(opts[:name]),
+        id: Keyword.get(unquote(opts), :id, Lux.UUID.generate()),
+        name: Keyword.get(unquote(opts), :name, __MODULE__ |> Module.split() |> Enum.join(".")),
         description: unquote(opts[:description]),
         input_schema: unquote(opts[:input_schema]),
         output_schema: unquote(opts[:output_schema]),
-        timeout: unquote(opts[:timeout] || :timer.minutes(5)),
-        generate_execution_log: unquote(opts[:generate_execution_log] || false),
+        timeout: Keyword.get(unquote(opts), :timeout, :timer.minutes(5)),
+        generate_execution_log: Keyword.get(unquote(opts), :generate_execution_log, false),
         definition: nil
       }
 

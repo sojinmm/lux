@@ -38,57 +38,45 @@ Here's an example of creating two agents that work together:
 
 ```elixir
 defmodule MyApp.Agents.Researcher do
-  use Lux.Agent
-
-  def new(opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "Research Assistant",
-      description: "Specialized in research and analysis",
-      goal: "Find and analyze information accurately",
-      capabilities: [:research, :analysis],
-      llm_config: %{
-        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-        model: "gpt-4o-mini",
-        temperature: 0.7,
-        messages: [
-          %{
-            role: "system",
-            content: """
-            You are a Research Assistant specialized in finding and analyzing information.
-            Work with other agents to provide comprehensive research results.
-            """
-          }
-        ]
-      }
-    })
-  end
+  use Lux.Agent,
+    name: "Research Assistant",
+    description: "Specialized in research and analysis",
+    goal: "Find and analyze information accurately",
+    capabilities: [:research, :analysis],
+    llm_config: %{
+      model: "gpt-4o-mini",
+      max_tokens: 500,
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are a Research Assistant specialized in finding and analyzing information.
+          Work with other agents to provide comprehensive research results.
+          """
+        }
+      ]
+    }
 end
 
 defmodule MyApp.Agents.Writer do
-  use Lux.Agent
-
-  def new(opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "Content Writer",
-      description: "Specialized in content creation",
-      goal: "Create engaging content from research",
-      capabilities: [:writing, :editing],
-      llm_config: %{
-        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-        model: "gpt-4o-mini",
-        temperature: 0.7,
-        messages: [
-          %{
-            role: "system",
-            content: """
-            You are a Content Writer specialized in creating engaging content.
-            Work with researchers to transform their findings into compelling articles.
-            """
-          }
-        ]
-      }
-    })
-  end
+  use Lux.Agent,
+    name: "Content Writer",
+    description: "Specialized in content creation",
+    goal: "Create engaging content from research",
+    capabilities: [:writing, :editing],
+    llm_config: %{
+      model: "gpt-4o-mini",
+      max_tokens: 500,
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are a Content Writer specialized in creating engaging content.
+          Work with researchers to transform their findings into compelling articles.
+          """
+        }
+      ]
+    }
 end
 ```
 
@@ -97,18 +85,21 @@ end
 Let's start the agents.
 
 ```elixir
-{:ok, researcher_pid} = Kino.start_child({MyApp.Agents.Researcher, []})
-{:ok, writer_pid} = Kino.start_child({MyApp.Agents.Writer, []})
+alias MyApp.Agents.Researcher
+alias MyApp.Agents.Writer
+
+{:ok, researcher_pid} = Kino.start_child({Researcher, []})
+{:ok, writer_pid} = Kino.start_child({Writer, []})
 ```
 
 You can check agent's state with `get_state/1` function.
 
 ```elixir
-researcher = :sys.get_state(researcher_pid)
+researcher = Researcher.get_state(researcher_pid)
 ```
 
 ```elixir
-writer = :sys.get_state(writer_pid)
+writer = Writer.get_state(writer_pid)
 ```
 
 Start your own agent hub.
@@ -169,7 +160,7 @@ frame = Kino.Frame.new() |> Kino.render()
 
 # 2. Start with a research task
 {:ok, research_response} = 
-  MyApp.Agents.Researcher.send_message(
+  Researcher.send_message(
     researcher_pid,
     "Research the impact of AI on healthcare"
   )
@@ -184,7 +175,7 @@ Kino.Frame.append(frame, research_response)
 
 # 5. Send research to writer for content creation
 {:ok, article} = 
-  MyApp.Agents.Writer.send_message(
+  Writer.send_message(
     writer_pid,
     """
     Create an engaging blog post based on this research:
@@ -220,6 +211,10 @@ Kino.nothing()
    * Implement retry mechanisms for failed communications
    * Monitor agent health
 
+```elixir
+Lux.AgentHub.find_by_capability(hub, :research)
+```
+
 ## Example: Research and Writing Pipeline
 
 Here's a complete example of a research and writing pipeline:
@@ -239,7 +234,7 @@ defmodule MyApp.Workflows.ContentCreation do
         :ok = AgentHub.update_status(hub, researcher.id, :busy)
         
         # Get research
-        {:ok, research} = MyApp.Agents.Researcher.send_message(
+        {:ok, research} = Researcher.send_message(
           researcher_pid,
           "Research #{topic} comprehensively"
         )
@@ -251,7 +246,7 @@ defmodule MyApp.Workflows.ContentCreation do
         case AgentHub.find_by_capability(hub, :writing) do
           [%{pid: writer_pid} | _] ->
             # Create content
-            {:ok, article} = MyApp.Agents.Writer.send_message(
+            {:ok, article} = Writer.send_message(
               writer_pid,
               """
               Create an engaging article based on this research:

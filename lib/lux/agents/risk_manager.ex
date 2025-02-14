@@ -2,66 +2,58 @@ defmodule Lux.Agents.RiskManager do
   @moduledoc """
   An agent that evaluates trade proposals for risk and executes approved trades.
   """
+  use Lux.Agent,
+    name: "Risk Management Agent",
+    description: "Evaluates and executes trades based on risk assessment",
+    goal: "Ensure trades meet risk management criteria before execution",
+    capabilities: [:risk_management, :trade_execution],
+    accepts_signals: [Lux.Schemas.TradeProposalSchema],
+    llm_config: %{
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      json_response: true,
+      json_schema: %{
+        name: "risk_evaluation",
+        schema: %{
+          type: "object",
+          properties: %{
+            execute_trade: %{
+              type: "boolean",
+              description: "Whether to proceed with trade execution"
+            },
+            reasoning: %{
+              type: "string",
+              description: "Detailed explanation of the decision"
+            }
+          },
+          required: ["execute_trade", "reasoning"],
+          additionalProperties: false
+        },
+        strict: true
+      },
+      messages: [
+        %{
+          role: "system",
+          content: """
+          You are a Risk Management Agent responsible for evaluating trade proposals
+          and executing trades that meet risk criteria. You will:
 
-  use Lux.Agent
+          1. Review trade proposals and their rationale
+          2. Use the Risk Management Beam to evaluate trades
+          3. Execute approved trades
+          4. Provide feedback on rejected trades
+
+          Respond with a structured evaluation including whether to execute the trade
+          and your reasoning.
+          """
+        }
+      ]
+    }
 
   alias Lux.Beams.Hyperliquid.TradeRiskManagementBeam
   alias Lux.Schemas.TradeProposalSchema
 
   require Logger
-
-  def new(opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "Risk Management Agent",
-      module: __MODULE__,
-      description: "Evaluates and executes trades based on risk assessment",
-      goal: "Ensure trades meet risk management criteria before execution",
-      capabilities: [:risk_management, :trade_execution],
-      accepts_signals: [TradeProposalSchema],
-      llm_config: %{
-        api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-        model: opts[:model] || "gpt-4o-mini",
-        temperature: 0.3,
-        json_response: true,
-        json_schema: %{
-          name: "risk_evaluation",
-          schema: %{
-            type: "object",
-            properties: %{
-              execute_trade: %{
-                type: "boolean",
-                description: "Whether to proceed with trade execution"
-              },
-              reasoning: %{
-                type: "string",
-                description: "Detailed explanation of the decision"
-              }
-            },
-            required: ["execute_trade", "reasoning"],
-            additionalProperties: false
-          },
-          strict: true
-        },
-        messages: [
-          %{
-            role: "system",
-            content: """
-            You are a Risk Management Agent responsible for evaluating trade proposals
-            and executing trades that meet risk criteria. You will:
-
-            1. Review trade proposals and their rationale
-            2. Use the Risk Management Beam to evaluate trades
-            3. Execute approved trades
-            4. Provide feedback on rejected trades
-
-            Respond with a structured evaluation including whether to execute the trade
-            and your reasoning.
-            """
-          }
-        ]
-      }
-    })
-  end
 
   @impl true
   def handle_signal(agent, %{schema_id: TradeProposalSchema} = signal) do

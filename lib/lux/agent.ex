@@ -101,7 +101,9 @@ defmodule Lux.Agent do
 
       # GenServer Client API
       def start_link(attrs \\ %{}) do
-        agent = struct(@agent, attrs)
+        attrs = Map.new(attrs)
+        llm_config = struct(Config, Map.get(attrs, :llm_config, %{}))
+        agent = struct(@agent, Map.put(attrs, :llm_config, llm_config))
 
         GenServer.start_link(__MODULE__, agent, name: get_name(agent))
       end
