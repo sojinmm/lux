@@ -108,23 +108,22 @@ defmodule Lux.NodeJSTest do
 
   describe "web3 integration" do
     test "loads and uses web3 library" do
-      assert {:ok, %{"success" => true}} = import_package("web3")
+      assert {:ok, %{"success" => true}} = import_package("flatten", update_lock_file: false)
 
       result =
-        nodejs variables: %{address: "0xd3cda913deb6f67967b99d67acdfa1712c293601"} do
+        nodejs variables: %{data: [1, [2, [3]]]} do
           ~JS"""
-          import {validator} from 'web3'
+          import flatten from 'flatten'
 
-          export const main = ({address}) => {
+          export const main = ({data}) => {
             return {
-              address,
-              valid: validator.isAddress(address, true)
+              result: flatten(data),
             };
           }
           """
         end
 
-      assert {:ok, %{"address" => _, "valid" => true}} = result
+      assert {:ok, %{"result" => [1, 2, 3]}} = result
     end
   end
 end
