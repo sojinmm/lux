@@ -138,8 +138,13 @@ defmodule Lux.Agent do
         agent =
           case agent.memory_config do
             %{backend: backend} = config when not is_nil(backend) ->
-              {:ok, pid} = backend.initialize(name: config[:name])
-              %{agent | memory_pid: pid}
+              case Process.whereis(config[:name]) do
+                nil ->
+                  {:ok, pid} = backend.initialize(name: config[:name])
+                  %{agent | memory_pid: pid}
+                pid ->
+                  %{agent | memory_pid: pid}
+                end
 
             _ ->
               agent
