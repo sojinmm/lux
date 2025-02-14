@@ -114,7 +114,7 @@ defmodule Lux.PrismTest do
       end
 
       prism = DefaultNamePrism.view()
-      assert prism.name == "DefaultNamePrism"
+      assert prism.name == "Lux.PrismTest.DefaultNamePrism"
     end
   end
 end
