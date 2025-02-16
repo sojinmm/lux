@@ -103,8 +103,13 @@ defmodule Lux.Agent do
 
       # GenServer Client API
       def start_link(attrs \\ %{}) do
+        # Convert keyword list to map if needed
         attrs = Map.new(attrs)
-        llm_config = struct(Config, Map.get(attrs, :llm_config, %{}))
+
+        llm_config = attrs
+        |> Map.get(:llm_config, %{})
+        |> Config.new()
+
         agent = struct(@agent, Map.put(attrs, :llm_config, llm_config))
 
         GenServer.start_link(__MODULE__, agent, name: get_name(agent))
@@ -184,31 +189,6 @@ defmodule Lux.Agent do
 
       defoverridable chat: 3, handle_signal: 2
     end
-  end
-
-  @doc """
-  Creates a new agent from the given attributes
-  """
-  def new(attrs) when is_map(attrs) do
-    struct(__MODULE__, %{
-      id: Map.get(attrs, :id, Lux.UUID.generate()),
-      name: Map.get(attrs, :name, "Anonymous Agent"),
-      description: Map.get(attrs, :description, ""),
-      goal: Map.get(attrs, :goal, ""),
-      module: Map.get(attrs, :module, __MODULE__),
-      memory_config: Map.get(attrs, :memory_config),
-      memory_pid: nil,
-      llm_config: struct(Config, Map.get(attrs, :llm_config, %{})),
-      prisms: Map.get(attrs, :prisms, []),
-      beams: Map.get(attrs, :beams, []),
-      lenses: Map.get(attrs, :lenses, []),
-      accepts_signals: Map.get(attrs, :accepts_signals, []),
-      scheduled_actions: Map.get(attrs, :scheduled_actions, [])
-    })
-  end
-
-  def new(attrs) when is_list(attrs) do
-    attrs |> Map.new() |> new()
   end
 
   def handle_signal(agent, signal) do
