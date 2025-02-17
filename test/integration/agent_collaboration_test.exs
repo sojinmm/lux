@@ -58,15 +58,18 @@ defmodule Lux.Integration.AgentCollaborationTest do
 
       llm_config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+        model: Application.get_env(:lux, :open_ai_models)[:cheapest]
       }
 
       # Start both agents with unique names
       researcher_name = :"researcher_#{:erlang.unique_integer([:positive])}"
       writer_name = :"writer_#{:erlang.unique_integer([:positive])}"
 
-      {:ok, researcher_pid} = start_supervised({ResearchAgent, name: researcher_name, llm_config: llm_config})
-      {:ok, writer_pid} = start_supervised({WriterAgent, name: writer_name, llm_config: llm_config})
+      {:ok, researcher_pid} =
+        start_supervised({ResearchAgent, name: researcher_name, llm_config: llm_config})
+
+      {:ok, writer_pid} =
+        start_supervised({WriterAgent, name: writer_name, llm_config: llm_config})
 
       researcher = :sys.get_state(researcher_pid)
       writer = :sys.get_state(writer_pid)

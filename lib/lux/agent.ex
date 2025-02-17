@@ -4,12 +4,12 @@ defmodule Lux.Agent do
   The actual execution and supervision is handled by the Lux runtime.
   """
 
+  @behaviour Access
+
   alias Lux.LLM
   alias Lux.LLM.OpenAI.Config
 
   require Logger
-
-  @behaviour Access
 
   @type scheduled_beam :: {module(), String.t(), keyword()}
   @type collaboration_protocol :: :ask | :tell | :delegate | :request_review
@@ -106,9 +106,10 @@ defmodule Lux.Agent do
         # Convert keyword list to map if needed
         attrs = Map.new(attrs)
 
-        llm_config = attrs
-        |> Map.get(:llm_config, %{})
-        |> Config.new()
+        llm_config =
+          attrs
+          |> Map.get(:llm_config, %{})
+          |> Config.new()
 
         agent = struct(@agent, Map.put(attrs, :llm_config, llm_config))
 
@@ -149,9 +150,10 @@ defmodule Lux.Agent do
                 nil ->
                   {:ok, pid} = backend.initialize(name: config[:name])
                   %{agent | memory_pid: pid}
+
                 pid ->
                   %{agent | memory_pid: pid}
-                end
+              end
 
             _ ->
               agent

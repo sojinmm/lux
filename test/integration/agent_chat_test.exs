@@ -32,10 +32,11 @@ defmodule Lux.Integration.AgentChatTest do
     use Lux.Agent,
       name: "Chat Assistant",
       description: "A helpful chat assistant that can engage in conversations",
-      goal: "Help users by engaging in meaningful conversations and providing assistance. You keep your responses short and concise.",
-      prisms: [ TestPrism ],
+      goal:
+        "Help users by engaging in meaningful conversations and providing assistance. You keep your responses short and concise.",
+      prisms: [TestPrism],
       llm_config: %{
-        receive_timeout: 30_000,
+        receive_timeout: 30_000
       },
       memory_config: %{
         backend: SimpleMemory,
@@ -48,6 +49,7 @@ defmodule Lux.Integration.AgentChatTest do
       name = "Research Assistant"
       description = "An AI research assistant specialized in scientific literature and analysis"
       goal = "Help researchers find, understand, and analyze scientific papers"
+
       config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
@@ -113,6 +115,7 @@ defmodule Lux.Integration.AgentChatTest do
       name = "Memory-Enabled Assistant"
       description = "An assistant that remembers past interactions"
       goal = "Help users while maintaining context of conversations"
+
       config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],

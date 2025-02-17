@@ -57,11 +57,14 @@ defmodule Lux.LLM.OpenAI do
               messages: []
 
     def new(attrs \\ %{}) do
-      attrs = %{
-        model: Application.get_env(:lux, :open_ai_models)[:default],
-        api_key: Application.get_env(:lux, :api_keys)[:openai],
-      }
-      |> Map.merge(Map.new(attrs))
+      attrs =
+        Map.merge(
+          %{
+            model: Application.get_env(:lux, :open_ai_models)[:default],
+            api_key: Application.get_env(:lux, :api_keys)[:openai]
+          },
+          Map.new(attrs)
+        )
 
       struct(__MODULE__, attrs)
     end
