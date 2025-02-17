@@ -7,7 +7,6 @@ defmodule Lux.Agent do
   @behaviour Access
 
   alias Lux.LLM
-  alias Lux.LLM.OpenAI.Config
 
   require Logger
 
@@ -84,11 +83,7 @@ defmodule Lux.Agent do
         memory_config: Keyword.get(unquote(opts), :memory_config),
         memory_pid: nil,
         scheduled_actions: Keyword.get(unquote(opts), :scheduled_actions, []),
-        llm_config:
-          struct(
-            Config,
-            Keyword.get(unquote(opts), :llm_config, %{})
-          )
+        llm_config: Keyword.get(unquote(opts), :llm_config, %{})
       }
 
       @impl Agent
@@ -105,13 +100,10 @@ defmodule Lux.Agent do
       def start_link(attrs \\ %{}) do
         # Convert keyword list to map if needed
         attrs = Map.new(attrs)
+        llm_config = attrs |> Map.get(:llm_config, %{}) |> Map.new()
+        updated_llm_config = Map.merge(@agent.llm_config, llm_config)
 
-        llm_config =
-          attrs
-          |> Map.get(:llm_config, %{})
-          |> Config.new()
-
-        agent = struct(@agent, Map.put(attrs, :llm_config, llm_config))
+        agent = struct(@agent, Map.put(attrs, :llm_config, updated_llm_config))
 
         GenServer.start_link(__MODULE__, agent, name: get_name(agent))
       end
