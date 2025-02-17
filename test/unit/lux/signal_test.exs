@@ -7,7 +7,7 @@ defmodule Lux.SignalTest do
     test "creates a signal from a map" do
       attrs = %{
         id: "test-1",
-        schema_id: "schema-1",
+        schema_id: Schema1,
         payload: %{message: "Hello"},
         metadata: %{created_at: "2024-01-01"},
         sender: "agent-1",
@@ -18,7 +18,7 @@ defmodule Lux.SignalTest do
 
       assert %Signal{} = signal
       assert signal.id == "test-1"
-      assert signal.schema_id == "schema-1"
+      assert signal.schema_id == Schema1
       assert signal.payload == %{message: "Hello"}
       assert signal.metadata == %{created_at: "2024-01-01"}
       assert signal.sender == "agent-1"
@@ -28,7 +28,7 @@ defmodule Lux.SignalTest do
     test "initializes empty metadata when not provided" do
       attrs = %{
         id: "test-1",
-        schema_id: "schema-1",
+        schema_id: Schema1,
         payload: %{message: "Hello"}
       }
 
