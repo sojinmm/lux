@@ -19,6 +19,7 @@ defmodule Lux.Agent do
 
   # {module, interval_ms, input, opts}
   @type scheduled_action :: {module(), pos_integer(), map(), map()}
+  @type signal_handler :: {module(), module()}
 
   @type t :: %__MODULE__{
           id: String.t(),
@@ -33,7 +34,8 @@ defmodule Lux.Agent do
           llm_config: map(),
           memory_config: memory_config() | nil,
           memory_pid: pid() | nil,
-          scheduled_actions: [scheduled_action()]
+          scheduled_actions: [scheduled_action()],
+          signal_handlers: [signal_handler()]
         }
 
   defstruct id: nil,
@@ -48,6 +50,7 @@ defmodule Lux.Agent do
             memory_config: nil,
             memory_pid: nil,
             scheduled_actions: [],
+            signal_handlers: [],
             llm_config: %{
               provider: :openai,
               model: "gpt-4",
@@ -58,9 +61,17 @@ defmodule Lux.Agent do
   @callback chat(t(), message :: String.t(), opts :: keyword()) ::
               {:ok, String.t()} | {:error, term()}
 
-  @callback handle_signal(t(), Lux.Signal.t()) :: {:ok, term()} | :ignore | {:error, term()}
-
   defmacro __using__(opts) do
+    signal_handler_functions =
+      for {schema, prism} <- Keyword.get(opts, :signal_handlers, []) do
+        quote do
+          def handle_signal(agent, %{schema_id: schema_id} = signal)
+              when schema_id == unquote(schema) do
+            unquote(prism).handler(signal, agent)
+          end
+        end
+      end
+
     quote location: :keep do
       @behaviour Lux.Agent
 
@@ -91,10 +102,9 @@ defmodule Lux.Agent do
         Agent.chat(agent, message, opts)
       end
 
-      @impl Agent
-      def handle_signal(agent, signal) do
-        :ignore
-      end
+      unquote(signal_handler_functions)
+
+      def handle_signal(_agent, _signal), do: :ignore
 
       # GenServer Client API
       def start_link(attrs \\ %{}) do
@@ -169,6 +179,12 @@ defmodule Lux.Agent do
       end
 
       @impl GenServer
+      def handle_info({:signal, signal}, agent) do
+        _ = handle_signal(agent, signal)
+        {:noreply, agent}
+      end
+
+      @impl GenServer
       def handle_info(input, agent) do
         Agent.__handle_info__(input, agent)
       end
@@ -181,7 +197,7 @@ defmodule Lux.Agent do
 
       def terminate(_reason, _agent), do: :ok
 
-      defoverridable chat: 3, handle_signal: 2
+      defoverridable chat: 3
     end
   end
 
@@ -298,15 +314,6 @@ defmodule Lux.Agent do
   end
 
   def prism?(_), do: false
-
-  # Implements the logic for the agent process based on Genservers.
-  # Needed for better testability and formatting and readability of the __using__ block above.
-  # Consider these internal functions.
-
-  def __handle_info__({:signal, signal}, agent) do
-    _ = handle_signal(agent, signal)
-    {:noreply, agent}
-  end
 
   def __handle_info__({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
     timeout = opts[:timeout] || 60_000
