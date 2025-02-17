@@ -62,10 +62,13 @@ defmodule Lux.LLM.OpenAI do
     config =
       struct(
         Config,
-        Map.merge(config, %{
-          model: Application.get_env(:lux, :open_ai_models)[:default],
-          api_key: Application.get_env(:lux, :api_keys)[:openai]
-        })
+        Map.merge(
+          %{
+            model: Application.get_env(:lux, :open_ai_models)[:default],
+            api_key: Application.get_env(:lux, :api_keys)[:openai]
+          },
+          config
+        )
       )
 
     messages = config.messages ++ build_messages(prompt)
