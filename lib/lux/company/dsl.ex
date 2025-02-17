@@ -1,39 +1,86 @@
 defmodule Lux.Company.DSL do
   @moduledoc """
-  Provides the DSL for defining companies and their structure.
+  A simple DSL for defining companies with a CEO, custom roles, and objectives.
 
-  ## Examples
+  ## Example
 
-      company do
-        name("Test Company")
-        mission("Testing")
+      defmodule MyApp.Companies.ContentTeam do
+        use Lux.Company.DSL
 
-        has_ceo "CEO" do
-          goal("Lead the company")
-          can("plan")
-          can("review")
-          # Local agent
-          agent(TestCEO)
-        end
+        company do
+          name "Content Creation Team"
+          mission "Create engaging content efficiently"
 
-        has_member "Remote Member" do
-          goal("Do remote work")
-          can("work")
-          # Remote agent
-          agent("agent-123", hub: RemoteHub)
+          # Every company has a CEO
+          has_ceo "Content Director" do
+            agent MyApp.Agents.ContentDirector
+            goal "Direct content creation and review"
+            can "plan"
+            can "review"
+            can "approve"
+          end
+
+          # Group member roles together
+          members do
+            has_role "Lead Researcher" do
+              agent {"researcher-123", :research_hub}
+              goal "Research and analyze topics"
+              can "research"
+              can "analyze"
+              can "summarize"
+            end
+
+            has_role "Senior Writer" do
+              agent MyApp.Agents.Writer
+              goal "Create and edit content"
+              can "write"
+              can "edit"
+              can "draft"
+            end
+          end
+
+          # Define objectives
+          objective :create_blog_post do
+            description "Create a well-researched blog post"
+            success_criteria "Published post with >1000 views"
+            steps [
+              "Research the topic",
+              "Create an outline",
+              "Write first draft",
+              "Review and edit",
+              "Publish"
+            ]
+          end
         end
       end
   """
 
+  defmacro __using__(_opts) do
+    quote do
+      import Lux.Company.DSL
+      Module.register_attribute(__MODULE__, :company_config, accumulate: false)
+      @before_compile Lux.Company.DSL
+    end
+  end
+
+  defmacro __before_compile__(_env) do
+    quote do
+      def __company__ do
+        @company_config
+      end
+    end
+  end
+
   defmacro company(do: block) do
     quote do
-      @company_config %Lux.Company{
+      @company_config %{
         id: Lux.UUID.generate(),
         name: nil,
         mission: nil,
+        module: __MODULE__,
         ceo: nil,
-        members: [],
-        plans: %{}
+        roles: [],
+        objectives: []
       }
       unquote(block)
     end
@@ -53,11 +100,14 @@ defmodule Lux.Company.DSL do
 
   defmacro has_ceo(name, do: block) do
     quote do
-      var!(current_role) = %Lux.Company.Role{
+      var!(current_role) = %{
         type: :ceo,
-        name: unquote(name),
         id: Lux.UUID.generate(),
-        capabilities: []
+        name: unquote(name),
+        goal: nil,
+        capabilities: [],
+        agent: nil,
+        hub: nil
       }
 
       unquote(block)
@@ -65,40 +115,27 @@ defmodule Lux.Company.DSL do
     end
   end
 
-  defmacro has_member(name, do: block) do
+  defmacro members(do: block) do
     quote do
-      var!(current_role) = %Lux.Company.Role{
-        type: :member,
-        name: unquote(name),
+      var!(role_group) = :member
+      unquote(block)
+    end
+  end
+
+  defmacro has_role(name, do: block) do
+    quote do
+      var!(current_role) = %{
+        type: var!(role_group),
         id: Lux.UUID.generate(),
-        capabilities: []
+        name: unquote(name),
+        goal: nil,
+        capabilities: [],
+        agent: nil,
+        hub: nil
       }
 
       unquote(block)
-      @company_config Map.update!(@company_config, :members, &(&1 ++ [var!(current_role)]))
-    end
-  end
-
-  @doc """
-  Specifies the agent for a role.
-
-  Can be used in two ways:
-  1. With a module for local agents: `agent(TestAgent)`
-  2. With an ID and hub for remote agents: `agent("agent-123", hub: RemoteHub)`
-  """
-  defmacro agent({:__aliases__, _, _} = module) do
-    quote do
-      var!(current_role) = Map.put(var!(current_role), :agent, unquote(module))
-    end
-  end
-
-  defmacro agent(id, opts) when is_binary(id) do
-    quote do
-      hub = Keyword.get(unquote(opts), :hub)
-      var!(current_role) =
-        var!(current_role)
-        |> Map.put(:agent, {unquote(id), hub})
-        |> Map.put(:hub, hub)
+      @company_config Map.update!(@company_config, :roles, &[var!(current_role) | &1])
     end
   end
 
@@ -110,59 +147,69 @@ defmodule Lux.Company.DSL do
 
   defmacro can(capability) do
     quote do
-      var!(current_role) =
-        Map.update!(
-          var!(current_role),
-          :capabilities,
-          &[unquote(capability) | &1]
-        )
+      var!(current_role) = Map.update!(
+        var!(current_role),
+        :capabilities,
+        &[unquote(capability) | &1]
+      )
     end
   end
 
-  defmacro plan(name, do: block) do
+  defmacro agent(value) do
     quote do
-      var!(current_plan) = %Lux.Company.Plan{
+      {hub, agent_ref} = case unquote(value) do
+        {id, hub} when is_binary(id) and is_atom(hub) -> {hub, unquote(value)}
+        module when is_atom(module) -> {nil, module}
+      end
+      var!(current_role) = Map.merge(var!(current_role), %{
+        agent: agent_ref,
+        hub: hub
+      })
+    end
+  end
+
+  defmacro objective(name, do: block) do
+    quote do
+      var!(current_objective) = %Lux.Company.Objective{
+        id: Lux.UUID.generate(),
         name: unquote(name),
-        inputs: [],
+        description: nil,
+        success_criteria: nil,
         steps: []
       }
 
       unquote(block)
 
-      @company_config Map.update!(
-                        @company_config,
-                        :plans,
-                        &Map.put(&1, unquote(name), var!(current_plan))
-                      )
+      @company_config Map.update!(@company_config, :objectives, &[var!(current_objective) | &1])
     end
   end
 
-  defmacro input(do: block) do
+  defmacro description(value) do
     quote do
-      unquote(block)
+      var!(current_objective) = Map.put(var!(current_objective), :description, unquote(value))
     end
   end
 
-  defmacro field(name) do
+  defmacro success_criteria(value) do
     quote do
-      var!(current_plan) =
-        Map.update!(
-          var!(current_plan),
-          :inputs,
-          &[unquote(name) | &1]
-        )
+      var!(current_objective) = Map.put(var!(current_objective), :success_criteria, unquote(value))
     end
   end
 
-  defmacro steps(value) do
+  defmacro steps(value) when is_list(value) do
     quote do
-      steps =
-        unquote(value)
+      var!(current_objective) = Map.put(var!(current_objective), :steps, unquote(value))
+    end
+  end
+
+  defmacro steps(value) when is_binary(value) do
+    quote do
+      steps = unquote(value)
         |> String.split("\n")
         |> Enum.map(&String.trim/1)
         |> Enum.reject(&(&1 == ""))
 
-      var!(current_plan) = Map.put(var!(current_plan), :steps, steps)
+      var!(current_objective) = Map.put(var!(current_objective), :steps, steps)
     end
   end
 end
