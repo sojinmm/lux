@@ -8,58 +8,46 @@ defmodule Lux.Integration.AgentCollaborationTest do
   # Example agents for testing collaboration
   defmodule ResearchAgent do
     @moduledoc false
-    use Lux.Agent
-
-    def new(opts \\ %{}) do
-      Agent.new(%{
-        name: opts[:name] || "Research Assistant",
-        description: "An AI research assistant specialized in finding and analyzing information",
-        goal: "Help find and analyze relevant information",
-        capabilities: opts[:capabilities] || [:research, :analysis],
-        llm_config: %{
-          model: "gpt-3.5-turbo",
-          temperature: 0.7,
-          api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-          messages: [
-            %{
-              role: "system",
-              content: """
-              You are a Research Assistant focused on finding and analyzing information.
-              When you receive questions, analyze them carefully and provide detailed responses.
-              """
-            }
-          ]
-        }
-      })
-    end
+    use Lux.Agent,
+      name: "Research Assistant",
+      description: "An AI research assistant specialized in finding and analyzing information",
+      goal: "Help find and analyze relevant information",
+      capabilities: [:research, :analysis],
+      llm_config: %{
+        model: "gpt-3.5-turbo",
+        temperature: 0.7,
+        messages: [
+          %{
+            role: "system",
+            content: """
+            You are a Research Assistant focused on finding and analyzing information.
+            When you receive questions, analyze them carefully and provide detailed responses.
+            """
+          }
+        ]
+      }
   end
 
   defmodule WriterAgent do
     @moduledoc false
-    use Lux.Agent
-
-    def new(opts \\ %{}) do
-      Agent.new(%{
-        name: opts[:name] || "Content Writer",
-        description: "An AI writer that can create engaging content",
-        goal: "Create well-written content based on research",
-        capabilities: opts[:capabilities] || [:writing, :editing],
-        llm_config: %{
-          model: "gpt-3.5-turbo",
-          temperature: 0.7,
-          api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-          messages: [
-            %{
-              role: "system",
-              content: """
-              You are a Content Writer focused on creating engaging content.
-              When you receive research information, transform it into well-written content.
-              """
-            }
-          ]
-        }
-      })
-    end
+    use Lux.Agent,
+      name: "Content Writer",
+      description: "An AI writer that can create engaging content",
+      goal: "Create well-written content based on research",
+      capabilities: [:writing, :editing],
+      llm_config: %{
+        model: "gpt-3.5-turbo",
+        temperature: 0.7,
+        messages: [
+          %{
+            role: "system",
+            content: """
+            You are a Content Writer focused on creating engaging content.
+            When you receive research information, transform it into well-written content.
+            """
+          }
+        ]
+      }
   end
 
   describe "multi-agent collaboration" do
@@ -68,12 +56,20 @@ defmodule Lux.Integration.AgentCollaborationTest do
       hub_name = :"test_hub_#{:erlang.unique_integer([:positive])}"
       {:ok, _hub} = start_supervised({AgentHub, name: hub_name})
 
+      llm_config = %{
+        api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
+        model: Application.get_env(:lux, :open_ai_models)[:cheapest]
+      }
+
       # Start both agents with unique names
       researcher_name = :"researcher_#{:erlang.unique_integer([:positive])}"
       writer_name = :"writer_#{:erlang.unique_integer([:positive])}"
 
-      {:ok, researcher_pid} = start_supervised({ResearchAgent, name: researcher_name})
-      {:ok, writer_pid} = start_supervised({WriterAgent, name: writer_name})
+      {:ok, researcher_pid} =
+        start_supervised({ResearchAgent, name: researcher_name, llm_config: llm_config})
+
+      {:ok, writer_pid} =
+        start_supervised({WriterAgent, name: writer_name, llm_config: llm_config})
 
       researcher = :sys.get_state(researcher_pid)
       writer = :sys.get_state(writer_pid)

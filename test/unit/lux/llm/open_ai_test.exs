@@ -166,7 +166,7 @@ defmodule Lux.LLM.OpenAITest do
 
   describe "call/3" do
     test "makes correct API call with tools" do
-      config = %OpenAI.Config{
+      config = %{
         api_key: "test_key",
         model: "gpt-3.5-turbo"
       }
@@ -241,7 +241,7 @@ defmodule Lux.LLM.OpenAITest do
     end
 
     test "handles tool call responses with successful tool call (prism)" do
-      config = %OpenAI.Config{
+      config = %{
         api_key: "test_key",
         model: "gpt-3.5-turbo"
       }

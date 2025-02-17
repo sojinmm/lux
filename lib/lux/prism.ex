@@ -99,7 +99,7 @@ defmodule Lux.Prism do
 
       # Store the configuration at compile time
       @prism_config %{
-        name: Keyword.get(unquote(opts), :name, __MODULE__ |> Module.split() |> List.last()),
+        name: Keyword.get(unquote(opts), :name, __MODULE__ |> Module.split() |> Enum.join(".")),
         description: Keyword.get(unquote(opts), :description, ""),
         input_schema: Keyword.get(unquote(opts), :input_schema),
         output_schema: Keyword.get(unquote(opts), :output_schema),

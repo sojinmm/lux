@@ -7,18 +7,27 @@ defmodule Lux.Signal.Router.LocalTest do
   require Logger
 
   # Single test agent module for all tests
-  defmodule TestAgent do
+  defmodule TestAgent1 do
     @moduledoc false
-    use Lux.Agent
+    use Lux.Agent,
+      name: "Test Agent",
+      description: "A test agent",
+      goal: "Help with testing",
+      capabilities: []
 
-    def new(opts \\ %{}) do
-      Lux.Agent.new(%{
-        name: opts[:name] || "Test Agent",
-        description: "A test agent",
-        goal: "Help with testing",
-        capabilities: opts[:capabilities] || []
-      })
+    @impl true
+    def handle_signal(_agent, _signal) do
+      :ok
     end
+  end
+
+  defmodule TestAgent2 do
+    @moduledoc false
+    use Lux.Agent,
+      name: "Test Agent",
+      description: "A test agent",
+      goal: "Help with testing",
+      capabilities: []
 
     @impl true
     def handle_signal(_agent, _signal) do
@@ -73,8 +82,8 @@ defmodule Lux.Signal.Router.LocalTest do
       start_supervised!({Local, name: router_name})
 
       # Start test agents with unique names
-      {:ok, agent1_pid} = start_supervised({TestAgent, name: :"agent1_#{unique_id}"})
-      {:ok, agent2_pid} = start_supervised({TestAgent, name: :"agent2_#{unique_id}"})
+      {:ok, agent1_pid} = start_supervised({TestAgent1, name: :"agent1_#{unique_id}"})
+      {:ok, agent2_pid} = start_supervised({TestAgent2, name: :"agent2_#{unique_id}"})
 
       # Get agent states
       agent1 = :sys.get_state(agent1_pid)

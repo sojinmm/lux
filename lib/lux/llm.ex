@@ -23,7 +23,7 @@ defmodule Lux.LLM do
 
   @type prompt :: String.t()
   @type tools :: [Lux.Prism.t() | Lux.Beam.t() | Lux.Lens.t()]
-  @type options :: any()
+  @type options :: map() | keyword()
 
   @callback call(prompt(), tools(), options()) :: {:ok, Response.t()} | {:error, String.t()}
 
