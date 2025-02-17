@@ -2,6 +2,29 @@ defmodule Lux.Agent do
   @moduledoc """
   A Agent defines an autonomous agent's capabilities, behaviors and goals.
   The actual execution and supervision is handled by the Lux runtime.
+
+  Agents can be configured with different templates that provide specialized behaviors:
+  - :company_agent - Adds company-specific signal handling
+  - (other templates to be added)
+
+  ## Example
+      defmodule MyCompanyAgent do
+        use Lux.Agent,
+          template: :company_agent,
+          template_opts: %{
+            llm_config: %{temperature: 0.7}
+          } do
+
+          def init(opts) do
+            {:ok, opts}
+          end
+
+          # Can override template functions if needed
+          def handle_task_assignment(signal, context) do
+            # Custom implementation
+          end
+        end
+      end
   """
 
   alias Lux.LLM
@@ -61,7 +84,7 @@ defmodule Lux.Agent do
 
   @callback new(attrs :: map()) :: t()
 
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     quote location: :keep do
       @behaviour Lux.Agent
 
@@ -69,9 +92,45 @@ defmodule Lux.Agent do
 
       require Logger
 
+      # First evaluate the user's block if provided
+      unquote(opts[:do])
+
       @default_values %{
         module: __MODULE__
       }
+
+      # Then inject template-specific functions
+      case unquote(opts[:template]) do
+        :company_agent ->
+          # Inject company signal handler functions
+          use Lux.Agent.Companies.SignalHandler
+
+          # Store template options in module attribute at compile time
+          @template_opts (
+                           opts = unquote(opts[:template_opts])
+
+                           cond do
+                             is_nil(opts) -> %{}
+                             is_list(opts) -> Map.new(opts)
+                             is_map(opts) -> opts
+                             true -> %{}
+                           end
+                         )
+
+          @impl Lux.Agent
+          def handle_signal(signal, context) do
+            context = Map.merge(context, @template_opts)
+            Lux.Agent.Companies.SignalHandler.DefaultImplementation.handle_signal(signal, context)
+          end
+
+        _ ->
+          @template_opts %{}
+
+          @impl Lux.Agent
+          def handle_signal(_signal, _context) do
+            :ignore
+          end
+      end
 
       @impl Lux.Agent
       def new(attrs) do
@@ -85,15 +144,9 @@ defmodule Lux.Agent do
         Lux.Agent.chat(agent, message, opts)
       end
 
-      @impl Lux.Agent
-      def handle_signal(agent, signal) do
-        :ignore
-      end
-
       # GenServer Client API
       def start_link(attrs \\ %{}) do
         agent = new(attrs)
-
         GenServer.start_link(__MODULE__, agent, name: get_name(agent))
       end
 

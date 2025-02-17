@@ -58,6 +58,7 @@ defmodule Lux.Company.DSL do
   defmacro __using__(_opts) do
     quote do
       import Lux.Company.DSL
+
       Module.register_attribute(__MODULE__, :company_config, accumulate: false)
       @before_compile Lux.Company.DSL
     end
@@ -147,24 +148,28 @@ defmodule Lux.Company.DSL do
 
   defmacro can(capability) do
     quote do
-      var!(current_role) = Map.update!(
-        var!(current_role),
-        :capabilities,
-        &[unquote(capability) | &1]
-      )
+      var!(current_role) =
+        Map.update!(
+          var!(current_role),
+          :capabilities,
+          &[unquote(capability) | &1]
+        )
     end
   end
 
   defmacro agent(value) do
     quote do
-      {hub, agent_ref} = case unquote(value) do
-        {id, hub} when is_binary(id) and is_atom(hub) -> {hub, unquote(value)}
-        module when is_atom(module) -> {nil, module}
-      end
-      var!(current_role) = Map.merge(var!(current_role), %{
-        agent: agent_ref,
-        hub: hub
-      })
+      {hub, agent_ref} =
+        case unquote(value) do
+          {id, hub} when is_binary(id) and is_atom(hub) -> {hub, unquote(value)}
+          module when is_atom(module) -> {nil, module}
+        end
+
+      var!(current_role) =
+        Map.merge(var!(current_role), %{
+          agent: agent_ref,
+          hub: hub
+        })
     end
   end
 
@@ -192,7 +197,8 @@ defmodule Lux.Company.DSL do
 
   defmacro success_criteria(value) do
     quote do
-      var!(current_objective) = Map.put(var!(current_objective), :success_criteria, unquote(value))
+      var!(current_objective) =
+        Map.put(var!(current_objective), :success_criteria, unquote(value))
     end
   end
 
@@ -204,7 +210,8 @@ defmodule Lux.Company.DSL do
 
   defmacro steps(value) when is_binary(value) do
     quote do
-      steps = unquote(value)
+      steps =
+        unquote(value)
         |> String.split("\n")
         |> Enum.map(&String.trim/1)
         |> Enum.reject(&(&1 == ""))

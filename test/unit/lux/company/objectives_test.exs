@@ -1,8 +1,10 @@
 defmodule Lux.Company.ObjectivesTest do
   use ExUnit.Case, async: true
-  @moduletag :unit
 
-  alias Lux.Company.{Objective, Objectives}
+  alias Lux.Company.Objective
+  alias Lux.Company.Objectives
+
+  @moduletag :unit
 
   describe "create/1" do
     test "creates an objective with required attributes" do
@@ -44,10 +46,11 @@ defmodule Lux.Company.ObjectivesTest do
 
   describe "assign_agent/2" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
 
       %{objective: objective}
     end
@@ -67,10 +70,11 @@ defmodule Lux.Company.ObjectivesTest do
 
   describe "start/1" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
 
       %{objective: objective}
     end
@@ -95,10 +99,12 @@ defmodule Lux.Company.ObjectivesTest do
 
   describe "update_progress/2" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       {:ok, with_agent} = Objectives.assign_agent(objective, "agent-123")
       {:ok, started} = Objectives.start(with_agent)
 
@@ -118,10 +124,12 @@ defmodule Lux.Company.ObjectivesTest do
 
   describe "complete/1" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       {:ok, with_agent} = Objectives.assign_agent(objective, "agent-123")
       {:ok, started} = Objectives.start(with_agent)
 
@@ -136,20 +144,24 @@ defmodule Lux.Company.ObjectivesTest do
     end
 
     test "prevents completing non-in-progress objectives" do
-      {:ok, pending} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, pending} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       assert {:error, :invalid_status} = Objectives.complete(pending)
     end
   end
 
   describe "fail/2" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       {:ok, with_agent} = Objectives.assign_agent(objective, "agent-123")
       {:ok, started} = Objectives.start(with_agent)
 
@@ -165,20 +177,24 @@ defmodule Lux.Company.ObjectivesTest do
     end
 
     test "prevents failing non-in-progress objectives" do
-      {:ok, pending} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, pending} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       assert {:error, :invalid_status} = Objectives.fail(pending)
     end
   end
 
   describe "status checks" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       {:ok, with_agent} = Objectives.assign_agent(objective, "agent-123")
 
       %{
@@ -215,10 +231,12 @@ defmodule Lux.Company.ObjectivesTest do
 
   describe "duration/1" do
     setup do
-      {:ok, objective} = Objectives.create(%{
-        name: :test_objective,
-        description: "Test objective"
-      })
+      {:ok, objective} =
+        Objectives.create(%{
+          name: :test_objective,
+          description: "Test objective"
+        })
+
       {:ok, with_agent} = Objectives.assign_agent(objective, "agent-123")
 
       %{objective: with_agent}

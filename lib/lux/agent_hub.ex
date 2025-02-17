@@ -16,9 +16,10 @@ defmodule Lux.AgentHub do
   """
 
   use GenServer
-  require Logger
 
   alias Lux.Agent
+
+  require Logger
 
   @type agent_status :: :available | :busy | :offline
   @type agent_info :: %{
@@ -75,7 +76,10 @@ defmodule Lux.AgentHub do
   """
   @spec register(hub(), pid(), [atom()]) :: :ok | {:error, term()}
   def register(hub, agent, pid, capabilities \\ []) do
-    Logger.debug("Registering agent #{inspect(agent.id)} with capabilities #{inspect(capabilities)} in hub #{inspect(hub)}")
+    Logger.debug(
+      "Registering agent #{inspect(agent.id)} with capabilities #{inspect(capabilities)} in hub #{inspect(hub)}"
+    )
+
     GenServer.call(hub, {:register, agent, pid, capabilities})
   end
 
@@ -84,7 +88,10 @@ defmodule Lux.AgentHub do
   """
   @spec update_status(hub(), String.t(), agent_status()) :: :ok | {:error, term()}
   def update_status(hub, agent_id, status) when status in [:available, :busy, :offline] do
-    Logger.debug("Updating status for agent #{inspect(agent_id)} to #{inspect(status)} in hub #{inspect(hub)}")
+    Logger.debug(
+      "Updating status for agent #{inspect(agent_id)} to #{inspect(status)} in hub #{inspect(hub)}"
+    )
+
     GenServer.call(hub, {:update_status, agent_id, status})
   end
 
@@ -126,6 +133,7 @@ defmodule Lux.AgentHub do
   @impl true
   def handle_call({:register, agent, pid, capabilities}, _from, state) do
     Logger.debug("Hub handling register request for agent: #{inspect(agent.id)}")
+
     agent_info = %{
       agent: agent,
       pid: pid,
@@ -143,7 +151,10 @@ defmodule Lux.AgentHub do
 
   @impl true
   def handle_call({:update_status, agent_id, status}, _from, state) do
-    Logger.debug("Hub handling status update for agent #{inspect(agent_id)} to #{inspect(status)}")
+    Logger.debug(
+      "Hub handling status update for agent #{inspect(agent_id)} to #{inspect(status)}"
+    )
+
     case Map.get(state, agent_id) do
       nil ->
         Logger.warning("Attempted to update status for unknown agent: #{inspect(agent_id)}")
@@ -170,6 +181,7 @@ defmodule Lux.AgentHub do
   @impl true
   def handle_call({:find_by_capability, capability}, _from, state) do
     Logger.debug("Hub searching for agents with capability: #{inspect(capability)}")
+
     agents =
       state
       |> Map.values()
@@ -182,10 +194,12 @@ defmodule Lux.AgentHub do
   @impl true
   def handle_call({:get_agent_info, agent_id}, _from, state) do
     Logger.debug("Hub handling get_agent_info request for agent: #{inspect(agent_id)}")
+
     case Map.get(state, agent_id) do
       nil ->
         Logger.warning("Attempted to get info for unknown agent: #{inspect(agent_id)}")
         {:reply, {:error, :not_found}, state}
+
       info ->
         Logger.debug("Found agent info: #{inspect(info)}")
         {:reply, {:ok, info}, state}
@@ -194,11 +208,15 @@ defmodule Lux.AgentHub do
 
   @impl true
   def handle_info({:DOWN, _ref, :process, pid, reason}, state) do
-    Logger.debug("Received DOWN message for process #{inspect(pid)} with reason: #{inspect(reason)}")
+    Logger.debug(
+      "Received DOWN message for process #{inspect(pid)} with reason: #{inspect(reason)}"
+    )
+
     # Find and mark the agent as offline when its process goes down
     case Enum.find(state, fn {_, info} -> info.pid == pid end) do
       {agent_id, agent_info} ->
         Logger.debug("Marking agent #{inspect(agent_id)} as offline")
+
         updated_state =
           Map.put(state, agent_id, %{
             agent_info

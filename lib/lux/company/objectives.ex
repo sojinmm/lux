@@ -38,14 +38,15 @@ defmodule Lux.Company.Objectives do
       {:error, :invalid_attributes}
   """
   def create(attrs) when is_map(attrs) do
-    objective = struct(Objective, %{
-      id: Map.get(attrs, :id, Lux.UUID.generate()),
-      name: Map.fetch!(attrs, :name),
-      description: Map.fetch!(attrs, :description),
-      success_criteria: Map.get(attrs, :success_criteria, ""),
-      steps: Map.get(attrs, :steps, []),
-      metadata: Map.get(attrs, :metadata, %{})
-    })
+    objective =
+      struct(Objective, %{
+        id: Map.get(attrs, :id, Lux.UUID.generate()),
+        name: Map.fetch!(attrs, :name),
+        description: Map.fetch!(attrs, :description),
+        success_criteria: Map.get(attrs, :success_criteria, ""),
+        steps: Map.get(attrs, :steps, []),
+        metadata: Map.get(attrs, :metadata, %{})
+      })
 
     {:ok, objective}
   rescue
@@ -93,10 +94,7 @@ defmodule Lux.Company.Objectives do
     if objective.assigned_agents == [] do
       {:error, :no_agents_assigned}
     else
-      {:ok, %{objective |
-        status: :in_progress,
-        started_at: DateTime.utc_now()
-      }}
+      {:ok, %{objective | status: :in_progress, started_at: DateTime.utc_now()}}
     end
   end
 
@@ -133,11 +131,7 @@ defmodule Lux.Company.Objectives do
       {:error, :invalid_status}
   """
   def complete(%Objective{status: :in_progress} = objective) do
-    {:ok, %{objective |
-      status: :completed,
-      progress: 100,
-      completed_at: DateTime.utc_now()
-    }}
+    {:ok, %{objective | status: :completed, progress: 100, completed_at: DateTime.utc_now()}}
   end
 
   def complete(%Objective{}), do: {:error, :invalid_status}
@@ -156,11 +150,7 @@ defmodule Lux.Company.Objectives do
   def fail(%Objective{status: :in_progress} = objective, reason \\ nil) do
     metadata = Map.put(objective.metadata, :failure_reason, reason)
 
-    {:ok, %{objective |
-      status: :failed,
-      completed_at: DateTime.utc_now(),
-      metadata: metadata
-    }}
+    {:ok, %{objective | status: :failed, completed_at: DateTime.utc_now(), metadata: metadata}}
   end
 
   def fail(%Objective{}, _), do: {:error, :invalid_status}
@@ -206,9 +196,11 @@ defmodule Lux.Company.Objectives do
       nil
   """
   def duration(%Objective{started_at: nil}), do: nil
+
   def duration(%Objective{started_at: started_at, completed_at: nil}) do
     DateTime.diff(DateTime.utc_now(), started_at)
   end
+
   def duration(%Objective{started_at: started_at, completed_at: completed_at}) do
     DateTime.diff(completed_at, started_at)
   end

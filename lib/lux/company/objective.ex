@@ -13,18 +13,18 @@ defmodule Lux.Company.Objective do
   """
 
   @type t :: %__MODULE__{
-    id: String.t(),
-    name: atom(),
-    description: String.t(),
-    success_criteria: String.t(),
-    steps: [String.t()],
-    status: status(),
-    assigned_agents: [String.t()],
-    progress: integer(),
-    started_at: DateTime.t() | nil,
-    completed_at: DateTime.t() | nil,
-    metadata: map()
-  }
+          id: String.t(),
+          name: atom(),
+          description: String.t(),
+          success_criteria: String.t(),
+          steps: [String.t()],
+          status: status(),
+          assigned_agents: [String.t()],
+          progress: integer(),
+          started_at: DateTime.t() | nil,
+          completed_at: DateTime.t() | nil,
+          metadata: map()
+        }
 
   @type status :: :pending | :in_progress | :completed | :failed
 
@@ -46,14 +46,15 @@ defmodule Lux.Company.Objective do
   Creates a new objective with the given attributes.
   """
   def new(attrs) when is_map(attrs) do
-    objective = struct(__MODULE__, %{
-      id: Map.get(attrs, :id, Lux.UUID.generate()),
-      name: Map.fetch!(attrs, :name),
-      description: Map.fetch!(attrs, :description),
-      success_criteria: Map.get(attrs, :success_criteria, ""),
-      steps: Map.get(attrs, :steps, []),
-      metadata: Map.get(attrs, :metadata, %{})
-    })
+    objective =
+      struct(__MODULE__, %{
+        id: Map.get(attrs, :id, Lux.UUID.generate()),
+        name: Map.fetch!(attrs, :name),
+        description: Map.fetch!(attrs, :description),
+        success_criteria: Map.get(attrs, :success_criteria, ""),
+        steps: Map.get(attrs, :steps, []),
+        metadata: Map.get(attrs, :metadata, %{})
+      })
 
     {:ok, objective}
   end
@@ -78,10 +79,7 @@ defmodule Lux.Company.Objective do
     if objective.assigned_agents == [] do
       {:error, :no_agents_assigned}
     else
-      {:ok, %{objective |
-        status: :in_progress,
-        started_at: DateTime.utc_now()
-      }}
+      {:ok, %{objective | status: :in_progress, started_at: DateTime.utc_now()}}
     end
   end
 
@@ -102,11 +100,7 @@ defmodule Lux.Company.Objective do
   Completes the objective if it's in progress.
   """
   def complete(%__MODULE__{status: :in_progress} = objective) do
-    {:ok, %{objective |
-      status: :completed,
-      progress: 100,
-      completed_at: DateTime.utc_now()
-    }}
+    {:ok, %{objective | status: :completed, progress: 100, completed_at: DateTime.utc_now()}}
   end
 
   def complete(%__MODULE__{}), do: {:error, :invalid_status}
@@ -115,15 +109,13 @@ defmodule Lux.Company.Objective do
   Marks the objective as failed with an optional reason.
   """
   def fail(objective, reason \\ nil)
+
   def fail(%__MODULE__{status: :in_progress} = objective, reason) do
     metadata = Map.put(objective.metadata, :failure_reason, reason)
 
-    {:ok, %{objective |
-      status: :failed,
-      completed_at: DateTime.utc_now(),
-      metadata: metadata
-    }}
+    {:ok, %{objective | status: :failed, completed_at: DateTime.utc_now(), metadata: metadata}}
   end
+
   def fail(%__MODULE__{}, _), do: {:error, :invalid_status}
 
   @doc """
@@ -159,9 +151,11 @@ defmodule Lux.Company.Objective do
   Returns nil if the objective hasn't started.
   """
   def duration(%__MODULE__{started_at: nil}), do: nil
+
   def duration(%__MODULE__{started_at: started_at, completed_at: nil}) do
     DateTime.diff(DateTime.utc_now(), started_at)
   end
+
   def duration(%__MODULE__{started_at: started_at, completed_at: completed_at}) do
     DateTime.diff(completed_at, started_at)
   end

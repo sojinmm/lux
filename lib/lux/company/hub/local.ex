@@ -4,12 +4,14 @@ defmodule Lux.Company.Hub.Local do
   Uses an ETS table to store company registrations.
   """
 
+  @behaviour Lux.Company.Hub
+
   use GenServer
-  require Logger
+
   alias Lux.Company
   alias Lux.Company.Hub
 
-  @behaviour Hub
+  require Logger
 
   # Client API
 
@@ -18,10 +20,15 @@ defmodule Lux.Company.Hub.Local do
     # For module registration, call __company__ to get the struct
     company_struct = company.__company__()
     # Ensure it's a proper Company struct with module field set
-    company_struct = struct!(Company, Map.merge(Map.from_struct(company_struct), %{
-      module: company,
-      id: generate_company_id()
-    }))
+    company_struct =
+      struct!(
+        Company,
+        Map.merge(Map.from_struct(company_struct), %{
+          module: company,
+          id: generate_company_id()
+        })
+      )
+
     GenServer.call(hub, {:register_company, company_struct.id, company_struct})
   end
 
@@ -78,23 +85,29 @@ defmodule Lux.Company.Hub.Local do
     case :ets.lookup(state.table, company_id) do
       [{^company_id, %Company{} = company}] ->
         {:reply, {:ok, company}, state}
+
       [] ->
         {:reply, {:error, :not_found}, state}
     end
   end
 
   def handle_call(:list_companies, _from, state) do
-    companies = :ets.tab2list(state.table)
-    |> Enum.map(fn {_id, %Company{} = company} -> company end)
+    companies =
+      state.table
+      |> :ets.tab2list()
+      |> Enum.map(fn {_id, %Company{} = company} -> company end)
+
     {:reply, {:ok, companies}, state}
   end
 
   def handle_call({:search_companies, query, opts}, _from, state) do
     name_filter = Keyword.get(opts, :name)
 
-    results = :ets.tab2list(state.table)
-    |> Enum.map(fn {_id, %Company{} = company} -> company end)
-    |> filter_companies(query, name_filter)
+    results =
+      state.table
+      |> :ets.tab2list()
+      |> Enum.map(fn {_id, %Company{} = company} -> company end)
+      |> filter_companies(query, name_filter)
 
     {:reply, {:ok, results}, state}
   end
@@ -104,6 +117,7 @@ defmodule Lux.Company.Hub.Local do
       [{^company_id, %Company{}}] ->
         true = :ets.delete(state.table, company_id)
         {:reply, :ok, state}
+
       [] ->
         {:reply, {:error, :not_found}, state}
     end
@@ -116,15 +130,16 @@ defmodule Lux.Company.Hub.Local do
   end
 
   defp filter_companies(companies, query, name_filter) do
-    companies
-    |> Enum.filter(fn %Company{} = company ->
-      name_matches = case name_filter do
-        nil -> true
-        name -> String.downcase(company.name) =~ String.downcase(name)
-      end
+    Enum.filter(companies, fn %Company{} = company ->
+      name_matches =
+        case name_filter do
+          nil -> true
+          name -> String.downcase(company.name) =~ String.downcase(name)
+        end
 
-      query_matches = String.downcase(company.name) =~ String.downcase(query) or
-                     String.downcase(company.mission) =~ String.downcase(query)
+      query_matches =
+        String.downcase(company.name) =~ String.downcase(query) or
+          String.downcase(company.mission) =~ String.downcase(query)
 
       name_matches and query_matches
     end)

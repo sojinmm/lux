@@ -59,6 +59,7 @@ defmodule Lux.Signal.Router.Local do
   @impl GenServer
   def init(opts) do
     Logger.info("Initializing Local Router with options: #{inspect(opts)}")
+
     {:ok,
      %{
        # signal_id => MapSet of subscriber pids
@@ -70,6 +71,7 @@ defmodule Lux.Signal.Router.Local do
   @impl GenServer
   def handle_call({:route, signal, hub}, _from, state) do
     Logger.debug("Router handling route request for signal: #{inspect(signal.id)}")
+
     with {:ok, signal} <- validate_signal(signal),
          {:ok, targets} <- find_targets(signal, hub) do
       router_name = state.opts[:name] || __MODULE__
@@ -88,7 +90,10 @@ defmodule Lux.Signal.Router.Local do
 
   @impl GenServer
   def handle_call({:subscribe, signal_id, subscriber}, _from, state) do
-    Logger.debug("Router handling subscribe request for signal #{signal_id} from #{inspect(subscriber)}")
+    Logger.debug(
+      "Router handling subscribe request for signal #{signal_id} from #{inspect(subscriber)}"
+    )
+
     subscribers = Map.get(state.subscribers, signal_id, MapSet.new())
     new_subscribers = MapSet.put(subscribers, subscriber)
     {:reply, :ok, put_in(state.subscribers[signal_id], new_subscribers)}
@@ -96,7 +101,10 @@ defmodule Lux.Signal.Router.Local do
 
   @impl GenServer
   def handle_call({:unsubscribe, signal_id, subscriber}, _from, state) do
-    Logger.debug("Router handling unsubscribe request for signal #{signal_id} from #{inspect(subscriber)}")
+    Logger.debug(
+      "Router handling unsubscribe request for signal #{signal_id} from #{inspect(subscriber)}"
+    )
+
     subscribers = Map.get(state.subscribers, signal_id, MapSet.new())
     new_subscribers = MapSet.delete(subscribers, subscriber)
 

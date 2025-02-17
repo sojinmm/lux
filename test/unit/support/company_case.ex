@@ -5,19 +5,22 @@ defmodule Lux.CompanyCase do
   """
 
   use ExUnit.CaseTemplate
+
   alias Lux.Company
   alias Lux.Company.Hub.Local
 
   using do
     quote do
-      @moduletag :unit
-      # Import helpers
       import Lux.CompanyCase
 
-      # Alias common test modules
       alias Lux.Company
       alias Lux.Company.Hub
       alias Lux.Company.Hub.Local
+
+      @moduletag :unit
+      # Import helpers
+
+      # Alias common test modules
     end
   end
 

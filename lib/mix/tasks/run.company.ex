@@ -17,9 +17,11 @@ defmodule Mix.Tasks.Run.Company do
     Mix.Task.run("app.start")
 
     # Convert the string to a module atom
-    module = String.split(company_module, ".")
-    |> Enum.map(&String.to_atom/1)
-    |> Enum.reduce(&Module.concat/2)
+    module =
+      company_module
+      |> String.split(".")
+      |> Enum.map(&String.to_atom/1)
+      |> Enum.reduce(&Module.concat/2)
 
     # Start the company
     case Lux.Company.start_link(module) do
@@ -27,6 +29,7 @@ defmodule Mix.Tasks.Run.Company do
         IO.puts("Started company #{company_module} (#{inspect(pid)})")
         # Keep the process running
         Process.sleep(:infinity)
+
       {:error, reason} ->
         Mix.raise("Failed to start company: #{inspect(reason)}")
     end

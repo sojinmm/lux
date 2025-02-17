@@ -3,6 +3,7 @@ defmodule Lux.AgentTest do
 
   alias Lux.Agent
   alias Lux.Memory.SimpleMemory
+  alias Lux.Schemas.Companies.TaskSignal
 
   @default_timeout 1_000
 
@@ -102,6 +103,30 @@ defmodule Lux.AgentTest do
       sequence do
         step(:test, TestScheduledPrism, %{test: "beam"})
       end
+    end
+  end
+
+  defmodule CompanyAgent do
+    @moduledoc false
+    use Lux.Agent,
+      template: :company_agent,
+      template_opts: %{
+        llm_config: %{temperature: 0.7}
+      }
+
+    @impl true
+    def handle_task_update(signal, context) do
+      {:ok,
+       %Lux.Signal{
+         id: "response-1",
+         schema_id: signal.schema_id,
+         payload:
+           Map.merge(signal.payload, %{
+             "type" => "status_update",
+             "status" => "in_progress"
+           }),
+         recipient: signal.sender
+       }}
     end
   end
 
@@ -297,6 +322,72 @@ defmodule Lux.AgentTest do
 
       # Wait for the scheduled action to run
       assert_receive {:prism_called, %{test: "default_name"}}, @default_timeout
+    end
+  end
+
+  describe "company agent template" do
+    test "adds signal handling capabilities" do
+      # No need to create an agent instance to test exported functions
+      assert function_exported?(CompanyAgent, :handle_signal, 2)
+      assert function_exported?(CompanyAgent, :handle_task_assignment, 2)
+      assert function_exported?(CompanyAgent, :handle_task_update, 2)
+      assert function_exported?(CompanyAgent, :handle_plan_evaluation, 2)
+      assert function_exported?(CompanyAgent, :handle_plan_update, 2)
+      assert function_exported?(CompanyAgent, :handle_plan_completion, 2)
+    end
+
+    test "properly routes signals through handler" do
+      signal = %Lux.Signal{
+        id: "test-1",
+        schema_id: TaskSignal,
+        payload: %{
+          "type" => "status_update",
+          "task_id" => "task-1",
+          "objective_id" => "obj-1",
+          "title" => "Test Task",
+          "status" => "in_progress"
+        },
+        sender: "test-sender"
+      }
+
+      context = %{
+        beams: [],
+        lenses: [],
+        prisms: []
+      }
+
+      # Test that the signal is routed through the handler
+      assert {:ok, response} = CompanyAgent.handle_signal(signal, context)
+      assert response.schema_id == TaskSignal
+      assert response.payload["type"] == "status_update"
+      assert response.payload["status"] == "in_progress"
+      assert response.recipient == signal.sender
+    end
+
+    test "includes template options in context" do
+      signal = %Lux.Signal{
+        id: "test-1",
+        schema_id: TaskSignal,
+        payload: %{
+          "type" => "status_update",
+          "task_id" => "task-1",
+          "objective_id" => "obj-1",
+          "title" => "Test Task",
+          "status" => "in_progress"
+        },
+        sender: "test-sender"
+      }
+
+      context = %{
+        beams: [],
+        lenses: [],
+        prisms: [],
+        # Different from template opts
+        llm_config: %{temperature: 0.5}
+      }
+
+      # Test that template options are merged into context
+      assert {:ok, _response} = CompanyAgent.handle_signal(signal, context)
     end
   end
 end

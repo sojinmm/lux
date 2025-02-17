@@ -1,5 +1,6 @@
 defmodule Lux.Company.Hub.LocalTest do
   use Lux.CompanyCase
+
   require Logger
 
   describe "local hub implementation" do
@@ -32,6 +33,7 @@ defmodule Lux.Company.Hub.LocalTest do
 
     test "handles company module registration", %{hub: hub} do
       defmodule TestCompany do
+        @moduledoc false
         def __company__ do
           %Lux.Company{
             name: "Test Module Company",

@@ -58,33 +58,36 @@ defmodule Lux.Company do
   """
 
   use GenServer
-  require Logger
 
-  alias Lux.Company.{Objective, Objectives}
+  alias Lux.Company.Objective
+  alias Lux.Company.Objectives
+  alias Lux.Signal.Router
+
+  require Logger
 
   @type role_type :: :ceo | :member | :contractor
   @type agent_ref :: module() | {String.t(), atom()}
 
   @type role :: %{
-    type: role_type(),
-    id: String.t(),
-    name: String.t(),
-    goal: String.t(),
-    capabilities: [String.t()],
-    agent: agent_ref() | nil,
-    hub: atom() | nil
-  }
+          type: role_type(),
+          id: String.t(),
+          name: String.t(),
+          goal: String.t(),
+          capabilities: [String.t()],
+          agent: agent_ref() | nil,
+          hub: atom() | nil
+        }
 
   @type t :: %__MODULE__{
-    id: String.t(),
-    name: String.t(),
-    mission: String.t(),
-    module: module(),
-    ceo: role(),
-    roles: [role()],
-    objectives: [Objective.t()],
-    plans: map()
-  }
+          id: String.t(),
+          name: String.t(),
+          mission: String.t(),
+          module: module(),
+          ceo: role(),
+          roles: [role()],
+          objectives: [Objective.t()],
+          plans: map()
+        }
 
   defstruct [
     :id,
@@ -110,11 +113,16 @@ defmodule Lux.Company do
 
     # Log CEO info
     Logger.info("\nCEO:")
-    Logger.info("  - #{company.ceo.name} with capabilities: #{Enum.join(company.ceo.capabilities, ", ")}")
+
+    Logger.info(
+      "  - #{company.ceo.name} with capabilities: #{Enum.join(company.ceo.capabilities, ", ")}"
+    )
+
     if company.ceo.agent, do: Logger.info("  - Using agent: #{inspect(company.ceo.agent)}")
 
     # Log other roles
     Logger.info("\nMembers:")
+
     for role <- company.roles do
       Logger.info("  - #{role.name} with capabilities: #{Enum.join(role.capabilities, ", ")}")
       if role.agent, do: Logger.info("    Using agent: #{inspect(role.agent)}")
@@ -208,6 +216,49 @@ defmodule Lux.Company do
     GenServer.call(company, {:fail_objective, objective_id, reason})
   end
 
+  @doc """
+  Runs a company with the given configuration.
+  This starts all necessary processes and initializes the company state.
+
+  ## Options
+  - `:router` - The signal router to use for agent communication (required)
+  - `:hub` - The agent hub to use for agent management (required)
+  - `:timeout` - Timeout for agent initialization (default: 30_000)
+
+  ## Example
+      {:ok, pid} = Lux.Company.run(MyApp.Companies.ContentTeam,
+        router: :signal_router,
+        hub: :agent_hub
+      )
+  """
+  def run(module, opts \\ []) when is_atom(module) do
+    # Validate required options
+    router = Keyword.fetch!(opts, :router)
+    hub = Keyword.fetch!(opts, :hub)
+    timeout = Keyword.get(opts, :timeout, 30_000)
+
+    with {:ok, pid} <- start_link(module, opts),
+         :ok <- initialize_agents(pid, timeout),
+         :ok <- start_objectives(pid) do
+      {:ok, pid}
+    end
+  end
+
+  @doc """
+  Initializes all agents in the company.
+  This ensures each agent is available and properly configured.
+  """
+  def initialize_agents(company, timeout \\ 30_000) do
+    GenServer.call(company, :initialize_agents, timeout)
+  end
+
+  @doc """
+  Starts all pending objectives that have assigned agents.
+  """
+  def start_objectives(company) do
+    GenServer.call(company, :start_objectives)
+  end
+
   @impl true
   def handle_call(:get_state, _from, state) do
     {:reply, state, state}
@@ -220,6 +271,7 @@ defmodule Lux.Company do
 
   def handle_call({:get_role, role_id}, _from, %{company: company} = state) do
     roles = [company.ceo | company.roles]
+
     case Enum.find(roles, &(&1.id == role_id)) do
       nil -> {:reply, {:error, :role_not_found}, state}
       role -> {:reply, {:ok, role}, state}
@@ -228,23 +280,32 @@ defmodule Lux.Company do
 
   def handle_call({:assign_agent, role_id, agent}, _from, %{company: company} = state) do
     roles = [company.ceo | company.roles]
+
     case Enum.find(roles, &(&1.id == role_id)) do
       nil ->
         {:reply, {:error, :role_not_found}, state}
+
       role ->
-        {hub, agent_ref} = case agent do
-          {id, hub} when is_binary(id) and is_atom(hub) -> {hub, agent}
-          module when is_atom(module) -> {nil, module}
-        end
+        {hub, agent_ref} =
+          case agent do
+            {id, hub} when is_binary(id) and is_atom(hub) -> {hub, agent}
+            module when is_atom(module) -> {nil, module}
+          end
 
         updated_role = %{role | agent: agent_ref, hub: hub}
-        new_company = if role.type == :ceo do
-          %{company | ceo: updated_role}
-        else
-          %{company | roles: Enum.map(company.roles, fn r ->
-            if r.id == role_id, do: updated_role, else: r
-          end)}
-        end
+
+        new_company =
+          if role.type == :ceo do
+            %{company | ceo: updated_role}
+          else
+            %{
+              company
+              | roles:
+                  Enum.map(company.roles, fn r ->
+                    if r.id == role_id, do: updated_role, else: r
+                  end)
+            }
+          end
 
         {:reply, {:ok, updated_role}, %{state | company: new_company}}
     end
@@ -268,7 +329,11 @@ defmodule Lux.Company do
     end
   end
 
-  def handle_call({:assign_agent_to_objective, objective_id, agent_id}, _from, %{company: company} = state) do
+  def handle_call(
+        {:assign_agent_to_objective, objective_id, agent_id},
+        _from,
+        %{company: company} = state
+      ) do
     with {:ok, objective} <- find_objective(company, objective_id),
          {:ok, _role} <- find_role_by_agent(company, agent_id) do
       if agent_id in objective.assigned_agents do
@@ -284,38 +349,48 @@ defmodule Lux.Company do
   end
 
   def handle_call({:start_objective, objective_id}, _from, %{company: company} = state) do
-    with {:ok, objective} <- find_objective(company, objective_id) do
-      if objective.status != :pending do
-        {:reply, {:error, :invalid_status}, state}
-      else
-        if objective.assigned_agents == [] do
-          {:reply, {:error, :no_agents_assigned}, state}
+    case find_objective(company, objective_id) do
+      {:ok, objective} ->
+        if objective.status == :pending do
+          if objective.assigned_agents == [] do
+            {:reply, {:error, :no_agents_assigned}, state}
+          else
+            updated_objective = %{
+              objective
+              | status: :in_progress,
+                started_at: DateTime.utc_now()
+            }
+
+            new_state = update_objective(state, updated_objective)
+            {:reply, {:ok, updated_objective}, new_state}
+          end
         else
-          updated_objective = %{objective |
-            status: :in_progress,
-            started_at: DateTime.utc_now()
-          }
-          new_state = update_objective(state, updated_objective)
-          {:reply, {:ok, updated_objective}, new_state}
+          {:reply, {:error, :invalid_status}, state}
         end
-      end
-    else
-      {:error, reason} -> {:reply, {:error, reason}, state}
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 
-  def handle_call({:update_objective_progress, objective_id, progress}, _from, %{company: company} = state)
+  def handle_call(
+        {:update_objective_progress, objective_id, progress},
+        _from,
+        %{company: company} = state
+      )
       when is_integer(progress) and progress >= 0 and progress <= 100 do
-    with {:ok, objective} <- find_objective(company, objective_id) do
-      if objective.status != :in_progress do
-        {:reply, {:error, :invalid_status}, state}
-      else
-        updated_objective = %{objective | progress: progress}
-        new_state = update_objective(state, updated_objective)
-        {:reply, {:ok, updated_objective}, new_state}
-      end
-    else
-      {:error, reason} -> {:reply, {:error, reason}, state}
+    case find_objective(company, objective_id) do
+      {:ok, objective} ->
+        if objective.status == :in_progress do
+          updated_objective = %{objective | progress: progress}
+          new_state = update_objective(state, updated_objective)
+          {:reply, {:ok, updated_objective}, new_state}
+        else
+          {:reply, {:error, :invalid_status}, state}
+        end
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 
@@ -326,12 +401,11 @@ defmodule Lux.Company do
   def handle_call({:complete_objective, objective_id}, _from, %{company: company} = state) do
     with {:ok, objective} <- find_objective(company, objective_id),
          {:ok, ceo} <- get_ceo_agent(company) do
-      if objective.status != :in_progress do
-        {:reply, {:error, :invalid_status}, state}
-      else
+      if objective.status == :in_progress do
         # Prepare context for CEO evaluation
         context = %{
-          objective: Map.take(objective, [:name, :description, :success_criteria, :steps, :progress]),
+          objective:
+            Map.take(objective, [:name, :description, :success_criteria, :steps, :progress]),
           current_progress: objective.progress,
           success_criteria: objective.success_criteria,
           metadata: objective.metadata
@@ -341,26 +415,32 @@ defmodule Lux.Company do
         case request_ceo_evaluation(ceo, context, state.opts) do
           {:ok, true} ->
             # CEO approved completion
-            updated_objective = %{objective |
-              status: :completed,
-              progress: 100,
-              completed_at: DateTime.utc_now(),
-              metadata: Map.put(objective.metadata, :approved_by, ceo.id)
+            updated_objective = %{
+              objective
+              | status: :completed,
+                progress: 100,
+                completed_at: DateTime.utc_now(),
+                metadata: Map.put(objective.metadata, :approved_by, ceo.id)
             }
+
             new_state = update_objective(state, updated_objective)
             {:reply, {:ok, updated_objective}, new_state}
 
           {:ok, false, reason} ->
             # CEO rejected completion
-            updated_objective = %{objective |
-              metadata: Map.put(objective.metadata, :completion_rejected_reason, reason)
+            updated_objective = %{
+              objective
+              | metadata: Map.put(objective.metadata, :completion_rejected_reason, reason)
             }
+
             new_state = update_objective(state, updated_objective)
             {:reply, {:error, {:completion_rejected, reason}}, new_state}
 
           {:error, reason} ->
             {:reply, {:error, {:ceo_evaluation_failed, reason}}, state}
         end
+      else
+        {:reply, {:error, :invalid_status}, state}
       end
     else
       {:error, reason} -> {:reply, {:error, reason}, state}
@@ -368,21 +448,63 @@ defmodule Lux.Company do
   end
 
   def handle_call({:fail_objective, objective_id, reason}, _from, %{company: company} = state) do
-    with {:ok, objective} <- find_objective(company, objective_id) do
-      if objective.status != :in_progress do
-        {:reply, {:error, :invalid_status}, state}
+    case find_objective(company, objective_id) do
+      {:ok, objective} ->
+        if objective.status == :in_progress do
+          metadata = Map.put(objective.metadata, :failure_reason, reason)
+
+          updated_objective = %{
+            objective
+            | status: :failed,
+              completed_at: DateTime.utc_now(),
+              metadata: metadata
+          }
+
+          new_state = update_objective(state, updated_objective)
+          {:reply, {:ok, updated_objective}, new_state}
+        else
+          {:reply, {:error, :invalid_status}, state}
+        end
+
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+    end
+  end
+
+  def handle_call(:initialize_agents, _from, %{company: company, opts: opts} = state) do
+    router = Keyword.fetch!(opts, :router)
+    hub = Keyword.fetch!(opts, :hub)
+
+    # Initialize CEO first
+    with :ok <- initialize_agent(company.ceo, router, hub) do
+      # Then initialize other roles
+      results = Enum.map(company.roles, &initialize_agent(&1, router, hub))
+
+      if Enum.all?(results, &(&1 == :ok)) do
+        {:reply, :ok, state}
       else
-        metadata = Map.put(objective.metadata, :failure_reason, reason)
-        updated_objective = %{objective |
-          status: :failed,
-          completed_at: DateTime.utc_now(),
-          metadata: metadata
-        }
-        new_state = update_objective(state, updated_objective)
-        {:reply, {:ok, updated_objective}, new_state}
+        {:reply, {:error, :agent_initialization_failed}, state}
       end
+    end
+  end
+
+  def handle_call(:start_objectives, _from, %{company: company} = state) do
+    results =
+      Enum.map(company.objectives, fn objective ->
+        if Objective.can_start?(objective) do
+          case start_objective(company, objective.id) do
+            {:ok, _} -> :ok
+            _ -> :error
+          end
+        else
+          :ok
+        end
+      end)
+
+    if Enum.all?(results, &(&1 == :ok)) do
+      {:reply, :ok, state}
     else
-      {:error, reason} -> {:reply, {:error, reason}, state}
+      {:reply, {:error, :objective_start_failed}, state}
     end
   end
 
@@ -397,7 +519,8 @@ defmodule Lux.Company do
 
   defp find_role_by_agent(company, agent_id) do
     roles = [company.ceo | company.roles]
-    case Enum.find(roles, &(agent_matches?(&1, agent_id))) do
+
+    case Enum.find(roles, &agent_matches?(&1, agent_id)) do
       nil -> {:error, :agent_not_found}
       role -> {:ok, role}
     end
@@ -412,18 +535,22 @@ defmodule Lux.Company do
   end
 
   defp update_objective(state, updated_objective) do
-    new_objectives = Enum.map(state.company.objectives, fn objective ->
-      if objective.id == updated_objective.id, do: updated_objective, else: objective
-    end)
+    new_objectives =
+      Enum.map(state.company.objectives, fn objective ->
+        if objective.id == updated_objective.id, do: updated_objective, else: objective
+      end)
+
     put_in(state.company.objectives, new_objectives)
   end
 
-  defp get_ceo_agent(%{ceo: %{agent: agent_ref, hub: hub}} = _company) when not is_nil(agent_ref) do
+  defp get_ceo_agent(%{ceo: %{agent: agent_ref, hub: hub}} = _company)
+       when not is_nil(agent_ref) do
     case agent_ref do
       {id, _hub} when is_binary(id) -> {:ok, %{id: id, hub: hub}}
       module when is_atom(module) -> {:ok, %{id: Atom.to_string(module), hub: hub}}
     end
   end
+
   defp get_ceo_agent(_), do: {:error, :no_ceo_agent}
 
   defp request_ceo_evaluation(%{id: ceo_id, hub: hub}, context, opts) do
@@ -442,10 +569,10 @@ defmodule Lux.Company do
     router = Keyword.fetch!(opts, :router)
 
     # Subscribe to response first
-    :ok = Lux.Signal.Router.subscribe(signal.id, router: router)
+    :ok = Router.subscribe(signal.id, router: router)
 
     # Then route the signal
-    case Lux.Signal.Router.route(signal, router: router, hub: hub) do
+    case Router.route(signal, router: router, hub: hub) do
       :ok ->
         # Wait for CEO's response
         receive do
@@ -458,7 +585,46 @@ defmodule Lux.Company do
         after
           30_000 -> {:error, :timeout}
         end
-      error -> error
+
+      error ->
+        error
     end
   end
+
+  defp initialize_agent(%{agent: nil}, _router, _hub), do: :ok
+
+  defp initialize_agent(%{agent: agent_ref, hub: agent_hub} = role, router, hub) do
+    # Create initialization signal
+    signal = %{
+      id: Lux.UUID.generate(),
+      schema_id: Lux.Schemas.InitSignal,
+      payload: %{
+        role: role.type,
+        goal: role.goal,
+        capabilities: role.capabilities
+      },
+      recipient: get_agent_id(agent_ref)
+    }
+
+    # Route initialization signal
+    case Router.route(signal, router: router, hub: agent_hub || hub) do
+      :ok ->
+        # Wait for acknowledgment
+        receive do
+          {:signal, response} when response.id == signal.id ->
+            case response.payload do
+              %{status: :initialized} -> :ok
+              _ -> {:error, :initialization_failed}
+            end
+        after
+          5_000 -> {:error, :timeout}
+        end
+
+      error ->
+        error
+    end
+  end
+
+  defp get_agent_id({id, _hub}) when is_binary(id), do: id
+  defp get_agent_id(module) when is_atom(module), do: Atom.to_string(module)
 end
