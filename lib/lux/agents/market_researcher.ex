@@ -111,7 +111,4 @@ defmodule Lux.Agents.MarketResearcher do
       {:ok, Jason.decode!(trade_proposal, keys: :atoms)}
     end
   end
-
-  @impl true
-  def handle_signal(_agent, _signal), do: :ignore
 end

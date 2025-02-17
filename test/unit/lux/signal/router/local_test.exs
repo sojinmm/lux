@@ -14,11 +14,6 @@ defmodule Lux.Signal.Router.LocalTest do
       description: "A test agent",
       goal: "Help with testing",
       capabilities: []
-
-    @impl true
-    def handle_signal(_agent, _signal) do
-      :ok
-    end
   end
 
   defmodule TestAgent2 do
@@ -28,11 +23,6 @@ defmodule Lux.Signal.Router.LocalTest do
       description: "A test agent",
       goal: "Help with testing",
       capabilities: []
-
-    @impl true
-    def handle_signal(_agent, _signal) do
-      :ok
-    end
   end
 
   # Helper for eventually asserting conditions
