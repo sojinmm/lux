@@ -48,20 +48,15 @@ end
 
 # Create an intelligent agent (Agent)
 defmodule MyApp.Agents.TradingAgent do
-  use Lux.Agent
-
-  def new do
-    Lux.Agent.new(%{
-      name: "Trading Agent",
-      description: "Analyzes market data and executes trades",
-      goal: "Maximize portfolio returns while managing risk",
-      prisms: [
-        MyApp.Prisms.MarketAnalysis,
-        MyApp.Prisms.RiskAssessment,
-        MyApp.Prisms.OrderExecution
-      ]
-    })
-  end
+  use Lux.Agent,
+    name: "Trading Agent",
+    description: "Analyzes market data and executes trades",
+    goal: "Maximize portfolio returns while managing risk",
+    prisms: [
+      MyApp.Prisms.MarketAnalysis,
+      MyApp.Prisms.RiskAssessment,
+      MyApp.Prisms.OrderExecution
+    ]
 
   # Handle incoming market signals
   def handle_signal(agent, %{schema_id: MyApp.Schemas.MarketSignal} = signal) do
@@ -92,28 +87,23 @@ Autonomous agents that combine intelligence and execution:
 ```elixir
 defmodule MyApp.Agents.CryptoHedgeFundCEO do
   use Lux.Agent
-
-  def new do
-    Lux.Agent.new(%{
-      name: "Crypto Hedge Fund CEO",
-      description: "Strategic decision maker for crypto investments",
-      goal: "Maximize fund performance and manage risk",
-      prisms: [
-        MyApp.Prisms.PortfolioAnalysis,
-        MyApp.Prisms.MarketResearch,
-        MyApp.Prisms.RiskManagement
+    name: "Crypto Hedge Fund CEO",
+    description: "Strategic decision maker for crypto investments",
+    goal: "Maximize fund performance and manage risk",
+    prisms: [
+      MyApp.Prisms.PortfolioAnalysis,
+      MyApp.Prisms.MarketResearch,
+      MyApp.Prisms.RiskManagement
+    ],
+    # Enable collaboration with other agents
+    collaboration_config: %{
+      trusted_agents: [
+        "trading-desk-head",
+        "risk-manager",
+        "research-analyst"
       ],
-      # Enable collaboration with other agents
-      collaboration_config: %{
-        trusted_agents: [
-          "trading-desk-head",
-          "risk-manager",
-          "research-analyst"
-        ],
-        collaboration_protocols: [:ask, :tell, :delegate]
-      }
-    })
-  end
+      collaboration_protocols: [:ask, :tell, :delegate]
+    }
   
   # Handle performance reports
   def handle_signal(agent, %{schema_id: MyApp.Schemas.PerformanceReport} = signal) do

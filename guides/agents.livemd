@@ -1,5 +1,3 @@
-<!-- livebook:{"persist_outputs":true} -->
-
 # Agents Guide
 
 ```elixir
@@ -58,43 +56,25 @@ Here's a basic example of an Agent:
 
 ```elixir
 defmodule MyApp.Agents.Assistant do
-  use Lux.Agent
-
-  @impl true
-  def new(opts \\ %{}) do
-    llm_config = %{
-      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
-      temperature: 0.7,
+  use Lux.Agent,
+    name: "Simple Assistant",
+    description: "A helpful assistant that can engage in conversations",
+    goal: "Help users by providing clear and accurate responses",
+    llm_config: %{
       messages: [
         %{
           role: "system",
           content: """
-          You are #{opts[:name] || "Simple Assistant"}, #{opts[:description] || "a helpful assistant that can engage in conversations"}.
-          Your goal is: #{opts[:goal] || "Help users by providing clear and accurate responses"}
+          You are Simple Assistant, a helpful assistant that can engage in conversations.
+          Your goal is: Help users by providing clear and accurate responses
           """
         }
       ]
     }
-
-    Lux.Agent.new(%{
-      name: opts[:name] || "Simple Assistant",
-      description: opts[:description] || "A helpful assistant that can engage in conversations",
-      goal: opts[:goal] || "Help users by providing clear and accurate responses",
-      module: __MODULE__,
-      llm_config: llm_config
-    })
-  end
 end
 
 {:ok, pid} = Kino.start_child({MyApp.Agents.Assistant, []})
 MyApp.Agents.Assistant.send_message(pid, "Hello!")
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, "response: Hello! How can I assist you today?"}
 ```
 
 ## Agent Configuration
@@ -105,40 +85,38 @@ Agents can be configured with memory to maintain state and recall previous inter
 
 ```elixir
 defmodule MyApp.Agents.MemoryAgent do
-  use Lux.Agent
-
-  @impl true
-  def new(_opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "Memory-Enabled Assistant",
-      description: "An assistant that remembers past interactions",
-      goal: "Help users while maintaining context of conversations",
-      memory_config: %{
-        backend: Lux.Memory.SimpleMemory,
-        name: :memory_agent_store
-      },
-      llm_config: %{
-        api_key: Application.get_env(:lux, :api_keys)[:openai],
-        model: Application.get_env(:lux, :open_ai_models)[:default],
-        temperature: 0.7
-      }
-    })
-  end
+  use Lux.Agent,
+    name: "Memory-Enabled Assistant",
+    description: "An assistant that remembers past interactions",
+    goal: "Help users while maintaining context of conversations",
+    memory_config: %{
+      backend: Lux.Memory.SimpleMemory,
+      name: :memory_agent_store
+    }
 end
+
+Kino.nothing()
 ```
 
 Memory is automatically used in chat interactions when enabled:
 
 ```elixir
+frame = Kino.Frame.new() |> Kino.render()
+
 # Start an agent with memory
-{:ok, pid} = MyApp.Agents.MemoryAgent.start_link()
+{:ok, pid} = Kino.start_child({MyApp.Agents.MemoryAgent, []})
 
 # Chat with memory enabled (remembers context)
 {:ok, response1} = MyApp.Agents.MemoryAgent.send_message(pid, "My name is John", use_memory: true)
+Kino.Frame.append(frame, response1)
 {:ok, response2} = MyApp.Agents.MemoryAgent.send_message(pid, "What's my name?", use_memory: true)
+Kino.Frame.append(frame, response2)
 
 # Chat without memory (no context)
 {:ok, response3} = MyApp.Agents.MemoryAgent.send_message(pid, "What's my name?", use_memory: false)
+Kino.Frame.append(frame, response3)
+
+Kino.nothing()
 ```
 
 You can control memory context size in chat:
@@ -166,28 +144,24 @@ Agents can perform scheduled, recurring tasks using prisms or beams. Each schedu
 
 ```elixir
 defmodule MyApp.Agents.MonitorAgent do
-  use Lux.Agent
-
-  @impl true
-  def new(opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "System Monitor",
-      description: "Monitors system health and performance",
-      goal: "Maintain system health through regular checks",
-      prisms: [MyApp.Prisms.HealthCheck, MyApp.Prisms.MetricsCollector],
-      beams: [MyApp.Beams.SystemDiagnostics],
-      scheduled_actions: [
-        # Run health check every minute
-        {MyApp.Prisms.HealthCheck, 60_000, %{scope: :full}, %{
-          name: "health_check",  # Optional name, defaults to module name
-          timeout: 30_000       # Optional timeout, defaults to 60 seconds
-        }},
-        # Run system diagnostics every 5 minutes
-        {MyApp.Beams.SystemDiagnostics, 300_000, %{deep_scan: true}, %{}}
-      ]
-    })
-  end
+  use Lux.Agent,
+    name: "System Monitor",
+    description: "Monitors system health and performance",
+    goal: "Maintain system health through regular checks",
+    prisms: [MyApp.Prisms.HealthCheck, MyApp.Prisms.MetricsCollector],
+    # beams: [MyApp.Beams.SystemDiagnostics],
+    scheduled_actions: [
+      # Run health check every minute
+      {MyApp.Prisms.HealthCheck, 60_000, %{scope: :full}, %{
+        name: "health_check",  # Optional name, defaults to module name
+        timeout: 30_000        # Optional timeout, defaults to 60 seconds
+      }},
+      # Run system diagnostics every 5 minutes
+      {MyApp.Beams.SystemDiagnostics, 300_000, %{deep_scan: true}, %{}}
+    ]
 end
+
+Kino.nothing()
 ```
 
 Scheduled actions are defined as tuples of `{module, interval_ms, input, opts}` where:
@@ -211,7 +185,6 @@ Example prism for scheduled actions:
 ```elixir
 defmodule MyApp.Prisms.HealthCheck do
   use Lux.Prism,
-    name: "Health Check",
     description: "System health monitoring"
 
   require Logger
@@ -219,24 +192,43 @@ defmodule MyApp.Prisms.HealthCheck do
   def handler(params, agent) do
     # Access agent configuration using Access protocol
     agent_name = agent[:name]
-    
+
     # Perform health check
     with {:ok, metrics} <- check_system_health(params) do
       Logger.info("Health check completed for #{agent_name}")
       {:ok, metrics}
     end
   end
+
+  defp check_system_health(_params), do: {:ok, %{result: "health check result"}}
 end
 
-{:ok, memory_agent_pid} = Kino.start_child({MyApp.Agents.MemoryAgent, []})
-agent = :sys.get_state(memory_agent_pid)
-MyApp.Agents.MemoryAgent.chat(agent, "Hello!")
-```
+defmodule MyApp.Prisms.MetricsCollector do
+  use Lux.Prism,
+    description: "System metrics collector"
 
-<!-- livebook:{"output":true} -->
+  require Logger
 
-```
-{:ok, "response: Hello! How can I assist you today?"}
+  def handler(params, agent) do
+    # Access agent configuration using Access protocol
+    agent_name = agent[:name]
+
+    # Perform collection
+    with {:ok, metrics} <- collect_metrics(params) do
+      Logger.info("Metrics collected by #{agent_name}")
+      {:ok, metrics}
+    end
+  end
+
+  defp collect_metrics(_params), do: {:ok, %{result: "collected metrics"}}
+end
+
+alias MyApp.Agents.MonitorAgent
+
+{:ok, monitor_agent_pid} = Kino.start_child({MonitorAgent, []})
+agent = MonitorAgent.get_state(monitor_agent_pid)
+
+MonitorAgent.chat(agent, "Can you check current status of system?")
 ```
 
 The agent runtime ensures that:
@@ -269,17 +261,6 @@ llm_config = %{
 }
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-%{
-  messages: [%{role: "system", content: "You are a helpful assistant..."}],
-  api_key: "<OPENAI_API_KEY>",
-  model: "gpt-4o-mini",
-  temperature: 0.7
-}
-```
-
 ### Structured Responses
 
 Define schemas to get structured responses from your agent:
@@ -297,43 +278,27 @@ defmodule MyApp.Schemas.ResponseSchema do
 end
 
 defmodule MyApp.Agents.StructuredAssistant do
-  use Lux.Agent
-
-  @impl true
-  def new(opts \\ %{}) do
-    llm_config = %{
-      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
-      temperature: 0.7,
+  use Lux.Agent,
+    name: "Structured Assistant",
+    description: "An assistant that provides structured responses",
+    goal: "Provide clear, structured responses to user queries",
+    response_schema: MyApp.Schemas.ResponseSchema,
+    llm_config: %{
+      api_key: Lux.Config.openai_api_key(),
       messages: [
         %{
           role: "system",
           content: """
-          You are #{opts[:name] || "Structured Assistant"}, #{opts[:description] || "an assistant that provides structured responses"}.
-          Your goal is: #{opts[:goal] || "Provide clear, structured responses to user queries"}
+          You are Structured Assistant, an assistant that provides structured responses.
+          Your goal is: Provide clear, structured responses to user queries
           """
         }
       ]
     }
-
-    Lux.Agent.new(%{
-      name: opts[:name] || "Structured Assistant",
-      description: opts[:description] || "An assistant that provides structured responses",
-      goal: opts[:goal] || "Provide clear, structured responses to user queries",
-      module: __MODULE__,
-      llm_config: llm_config
-    })
-  end
 end
 
 {:ok, pid} = Kino.start_child({MyApp.Agents.StructuredAssistant, []})
 MyApp.Agents.StructuredAssistant.send_message(pid, "What is your goal?")
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, "goal: Provide clear, structured responses to user queries."}
 ```
 
 ## Agent Types
@@ -344,46 +309,27 @@ A simple conversational agent:
 
 ```elixir
 defmodule MyApp.Agents.ChatAgent do
-  use Lux.Agent
-
-  @impl true
-  def new(opts \\ %{}) do
-    llm_config = %{
-      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
-      temperature: 0.7,
+  use Lux.Agent,
+    name: "Chat Assistant",
+    description: "A conversational assistant",
+    goal: "Engage in helpful dialogue",
+    llm_config: %{
       messages: [
         %{
           role: "system",
           content: """
-          You are #{opts[:name] || "Chat Assistant"}, #{opts[:description] || "a conversational assistant"}.
-          Your goal is: #{opts[:goal] || "Engage in helpful dialogue"}
-          
+          You are Chat Assistant, a conversational assistant.
+          Your goal is: Engage in helpful dialogue
+
           Respond to users in a clear and concise manner.
           """
         }
       ]
     }
-
-    Lux.Agent.new(%{
-      name: opts[:name] || "Chat Assistant",
-      description: opts[:description] || "A conversational assistant",
-      goal: opts[:goal] || "Engage in helpful dialogue",
-      module: __MODULE__,
-      llm_config: llm_config
-    })
-  end
 end
 
 {:ok, chat_agent_pid} = Kino.start_child({MyApp.Agents.ChatAgent, []})
 MyApp.Agents.ChatAgent.send_message(chat_agent_pid, "What can you do?")
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok,
- "response: capabilities: Provide information and answer questions, Engage in casual conversation, Assist with problem-solving, Offer suggestions and recommendations, Help with language translation, Provide summaries of topics, Assist with learning new concepts\nlimitations: Cannot provide real-time information or updates, Cannot browse the internet, Cannot provide personal opinions or feelings, Cannot perform physical tasks"}
 ```
 
 ### Personality-Driven Agent
@@ -392,20 +338,18 @@ An agent with a distinct personality:
 
 ```elixir
 defmodule MyApp.Agents.FunAgent do
-  use Lux.Agent
-
-  @impl true
-  def new(opts \\ %{}) do
-    llm_config = %{
-      api_key: opts[:api_key] || Lux.Config.openai_api_key(),
-      model: opts[:model] || Application.get_env(:lux, :open_ai_models)[:default],
+  use Lux.Agent,
+    name: "Fun Assistant",
+    description: "A playful and witty AI assistant who loves jokes",
+    goal: "Make conversations fun and engaging while being helpful",
+    llm_config: %{
       temperature: 0.8,  # Higher temperature for more creative responses
       messages: [
         %{
           role: "system",
           content: """
-          You are #{opts[:name] || "Fun Assistant"}, #{opts[:description] || "a playful and witty AI assistant who loves jokes"}.
-          Your goal is: #{opts[:goal] || "Make conversations fun and engaging while being helpful"}
+          You are Fun Assistant, a playful and witty AI assistant who loves jokes.
+          Your goal is: Make conversations fun and engaging while being helpful
           
           Keep your responses light-hearted but still helpful.
           When explaining technical concepts, use fun analogies and examples.
@@ -413,26 +357,10 @@ defmodule MyApp.Agents.FunAgent do
         }
       ]
     }
-
-    Lux.Agent.new(%{
-      name: opts[:name] || "Fun Assistant",
-      description: opts[:description] || "A playful and witty AI assistant who loves jokes",
-      goal: opts[:goal] || "Make conversations fun and engaging while being helpful",
-      module: __MODULE__,
-      llm_config: llm_config
-    })
-  end
 end
 
 {:ok, fun_agent_pid} = Kino.start_child({MyApp.Agents.FunAgent, []})
 MyApp.Agents.FunAgent.send_message(fun_agent_pid, "Hey, how are you?")
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok,
- "response: I'm feeling as bright as a new sticker on a school folder! How about you? Ready to tackle the day with a smile?"}
 ```
 
 ## Using Agents
@@ -442,13 +370,7 @@ MyApp.Agents.FunAgent.send_message(fun_agent_pid, "Hey, how are you?")
 Agents can be started as GenServers:
 
 ```elixir
-{:ok, pid} = MyApp.Agents.ChatAgent.start_link()
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, #PID<0.687.0>}
+{:ok, pid} = Kino.start_child({MyApp.Agents.MemoryAgent, [name: :another_agent]})
 ```
 
 ### Sending Messages
@@ -474,6 +396,8 @@ Kino.nothing()
 Access an agent's memory:
 
 ```elixir
+agent = MyApp.Agents.ChatAgent.get_state(pid)
+
 frame = Kino.Frame.new() |> Kino.render()
 
 # Get recent interactions
@@ -527,14 +451,7 @@ defmodule MyApp.Agents.ChatAgentTest do
   alias MyApp.Agents.ChatAgent
 
   setup do
-    config = %{
-      api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-      model: Application.get_env(:lux, :open_ai_models)[:cheapest],
-      temperature: 0.0,
-      seed: 42
-    }
-
-    {:ok, pid} = ChatAgent.start_link(%{llm_config: config})
+    {:ok, pid} = ChatAgent.start_link(%{name: :test_agent})
     {:ok, agent: pid}
   end
 
@@ -546,22 +463,6 @@ defmodule MyApp.Agents.ChatAgentTest do
 end
 
 ExUnit.run()
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-Running ExUnit with seed: 842418, max_cases: 40
-
-.
-Finished in 0.4 seconds (0.4s async, 0.00s sync)
-1 test, 0 failures
-```
-
-<!-- livebook:{"output":true} -->
-
-```
-%{total: 1, failures: 0, skipped: 0, excluded: 0}
 ```
 
 ## Advanced Features
@@ -593,30 +494,18 @@ MyApp.Agents.SignalAwareAgent.handle_signal(pid, %{
 })
 ```
 
-<!-- livebook:{"output":true} -->
-
-```
-{:ok, %{data: "this signal data"}}
-```
-
 ### Component Integration
 
 Combine agents with other Lux components:
 
 ```elixir
 defmodule MyApp.Agents.SmartAgent do
-  use Lux.Agent
-
-  @impl true
-  def new(_opts \\ %{}) do
-    Lux.Agent.new(%{
-      name: "Smart Assistant",
-      prisms: [MyApp.Prisms.DataAnalysis],
-      beams: [MyApp.Beams.TaskProcessor],
-      lenses: [MyApp.Lenses.DataViewer],
-      # ... rest of config ...
-    })
-  end
+  use Lux.Agent,
+    name: "Smart Assistant",
+    prisms: [MyApp.Prisms.DataAnalysis],
+    beams: [MyApp.Beams.TaskProcessor],
+    lenses: [MyApp.Lenses.DataViewer]
+    # ... rest of config ...
 end
 
 Kino.nothing()

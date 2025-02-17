@@ -4,8 +4,9 @@ defmodule Lux.Agent do
   The actual execution and supervision is handled by the Lux runtime.
   """
 
+  @behaviour Access
+
   alias Lux.LLM
-  alias Lux.LLM.OpenAI.Config
 
   require Logger
 
@@ -59,40 +60,50 @@ defmodule Lux.Agent do
 
   @callback handle_signal(t(), Lux.Signal.t()) :: {:ok, term()} | :ignore | {:error, term()}
 
-  @callback new(attrs :: map()) :: t()
-
-  defmacro __using__(_opts) do
+  defmacro __using__(opts) do
     quote location: :keep do
       @behaviour Lux.Agent
 
       use GenServer
 
+      alias Lux.Agent
+
       require Logger
 
-      @default_values %{
-        module: __MODULE__
+      @agent %Agent{
+        id: Keyword.get(unquote(opts), :id, Lux.UUID.generate()),
+        name: Keyword.get(unquote(opts), :name, "Anonymous Agent"),
+        description: Keyword.get(unquote(opts), :description, ""),
+        goal: Keyword.get(unquote(opts), :goal, ""),
+        module: Keyword.get(unquote(opts), :module, __MODULE__),
+        prisms: Keyword.get(unquote(opts), :prisms, []),
+        beams: Keyword.get(unquote(opts), :beams, []),
+        lenses: Keyword.get(unquote(opts), :lenses, []),
+        accepts_signals: Keyword.get(unquote(opts), :accepts_signals, []),
+        memory_config: Keyword.get(unquote(opts), :memory_config),
+        memory_pid: nil,
+        scheduled_actions: Keyword.get(unquote(opts), :scheduled_actions, []),
+        llm_config: Keyword.get(unquote(opts), :llm_config, %{})
       }
 
-      @impl Lux.Agent
-      def new(attrs) do
-        @default_values
-        |> Map.merge(attrs)
-        |> Lux.Agent.new()
-      end
-
-      @impl Lux.Agent
+      @impl Agent
       def chat(agent, message, opts \\ []) do
-        Lux.Agent.chat(agent, message, opts)
+        Agent.chat(agent, message, opts)
       end
 
-      @impl Lux.Agent
+      @impl Agent
       def handle_signal(agent, signal) do
         :ignore
       end
 
       # GenServer Client API
       def start_link(attrs \\ %{}) do
-        agent = new(attrs)
+        # Convert keyword list to map if needed
+        attrs = Map.new(attrs)
+        llm_config = attrs |> Map.get(:llm_config, %{}) |> Map.new()
+        updated_llm_config = Map.merge(@agent.llm_config, llm_config)
+
+        agent = struct(@agent, Map.put(attrs, :llm_config, updated_llm_config))
 
         GenServer.start_link(__MODULE__, agent, name: get_name(agent))
       end
@@ -106,6 +117,10 @@ defmodule Lux.Agent do
           shutdown: 60_000
         }
       end
+
+      def view, do: @agent
+
+      def get_state(pid), do: :sys.get_state(pid)
 
       defp get_name(%{name: name}) when is_binary(name), do: String.to_atom(name)
       defp get_name(%{name: nil}), do: __MODULE__
@@ -123,8 +138,14 @@ defmodule Lux.Agent do
         agent =
           case agent.memory_config do
             %{backend: backend} = config when not is_nil(backend) ->
-              {:ok, pid} = backend.initialize(name: config[:name])
-              %{agent | memory_pid: pid}
+              case Process.whereis(config[:name]) do
+                nil ->
+                  {:ok, pid} = backend.initialize(name: config[:name])
+                  %{agent | memory_pid: pid}
+
+                pid ->
+                  %{agent | memory_pid: pid}
+              end
 
             _ ->
               agent
@@ -132,8 +153,8 @@ defmodule Lux.Agent do
 
         # Schedule initial runs for all scheduled actions
         for {module, interval_ms, input, opts} <- agent.scheduled_actions do
-          name = opts[:name] || Lux.Agent.module_to_name(module)
-          Lux.Agent.schedule_action(name, module, interval_ms, input, opts)
+          name = opts[:name] || Agent.module_to_name(module)
+          Agent.schedule_action(name, module, interval_ms, input, opts)
         end
 
         {:ok, agent}
@@ -149,7 +170,7 @@ defmodule Lux.Agent do
 
       @impl GenServer
       def handle_info(input, agent) do
-        Lux.Agent.__handle_info__(input, agent)
+        Agent.__handle_info__(input, agent)
       end
 
       @impl GenServer
@@ -160,39 +181,8 @@ defmodule Lux.Agent do
 
       def terminate(_reason, _agent), do: :ok
 
-      defoverridable new: 1, chat: 3, handle_signal: 2
+      defoverridable chat: 3, handle_signal: 2
     end
-  end
-
-  @doc """
-  Creates a new agent from the given attributes
-  """
-  def new(attrs) when is_map(attrs) do
-    struct(__MODULE__, %{
-      id: Map.get(attrs, :id, Lux.UUID.generate()),
-      name: Map.get(attrs, :name, "Anonymous Agent"),
-      description: Map.get(attrs, :description, ""),
-      goal: Map.get(attrs, :goal, ""),
-      module: Map.get(attrs, :module, __MODULE__),
-      memory_config: Map.get(attrs, :memory_config),
-      memory_pid: nil,
-      llm_config:
-        attrs
-        |> Map.get(:llm_config, %{})
-        |> then(fn
-          %Config{} = config -> config
-          config -> struct(Config, config)
-        end),
-      prisms: Map.get(attrs, :prisms, []),
-      beams: Map.get(attrs, :beams, []),
-      lenses: Map.get(attrs, :lenses, []),
-      accepts_signals: Map.get(attrs, :accepts_signals, []),
-      scheduled_actions: Map.get(attrs, :scheduled_actions, [])
-    })
-  end
-
-  def new(attrs) when is_list(attrs) do
-    attrs |> Map.new() |> new()
   end
 
   def handle_signal(agent, signal) do
@@ -365,12 +355,17 @@ defmodule Lux.Agent do
   end
 
   # to handle when the Task.Supervisor.async_nolink process is down without bringing down the agent
-  def handle_info({:DOWN, _ref, :process, _pid, :normal}, agent) do
+  def __handle_info__({:DOWN, _ref, :process, _pid, :normal}, agent) do
     {:noreply, agent}
   end
 
   # implements the access protocol for this struct...
-  def fetch(agent, key) do
-    Map.get(agent, key)
-  end
+  @impl Access
+  defdelegate fetch(agent, key), to: Map
+
+  @impl Access
+  defdelegate get_and_update(data, key, function), to: Map
+
+  @impl Access
+  defdelegate pop(data, key), to: Map
 end

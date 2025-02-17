@@ -7,16 +7,11 @@ defmodule Lux.AgentHubTest do
   # Test agent module
   defmodule TestAgent do
     @moduledoc false
-    use Lux.Agent
-
-    def new(opts \\ %{}) do
-      Agent.new(%{
-        name: opts[:name] || "Test Agent",
-        description: "A test agent",
-        goal: "Help with testing",
-        capabilities: opts[:capabilities] || []
-      })
-    end
+    use Lux.Agent,
+      name: "Test Agent",
+      description: "A test agent",
+      goal: "Help with testing",
+      capabilities: []
   end
 
   describe "starting hubs" do
