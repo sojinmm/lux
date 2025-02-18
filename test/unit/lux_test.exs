@@ -4,6 +4,7 @@ defmodule LuxTest do
   doctest Lux
 
   defmodule TestBeam do
+    @moduledoc false
     use Lux.Beam
 
     sequence do
@@ -12,6 +13,7 @@ defmodule LuxTest do
   end
 
   defmodule TestPrism do
+    @moduledoc false
     use Lux.Prism
 
     def handler(_input, _context) do
