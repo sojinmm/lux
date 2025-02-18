@@ -10,7 +10,7 @@ defmodule Lux.Integration.LLM.OpenAITest do
 
   describe "simple text request and response, no tools or structure output" do
     setup do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7
@@ -73,9 +73,9 @@ defmodule Lux.Integration.LLM.OpenAITest do
     end
 
     test "will return a structured response according to the schema" do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+        model: Application.get_env(:lux, :open_ai_models)[:smartest],
         temperature: 0.7,
         json_schema: CapitalCitySchema
       }
@@ -174,7 +174,7 @@ defmodule Lux.Integration.LLM.OpenAITest do
     end
 
     test "will return a function call result in the response when calling a prism" do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7
@@ -205,7 +205,7 @@ defmodule Lux.Integration.LLM.OpenAITest do
     end
 
     test "will return a function call result in the response when calling a beam" do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7

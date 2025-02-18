@@ -95,6 +95,7 @@ defmodule Lux.LLM.OpenAI do
     ]
     |> Keyword.merge(Application.get_env(:lux, __MODULE__, []))
     |> Req.new()
+    |> dbg()
     |> Req.post()
     |> case do
       {:ok, %{status: 200} = response} ->
