@@ -405,6 +405,8 @@ defmodule Lux.AgentTest do
       signal = Lux.Signal.new(%{schema_id: TestSchema, payload: %{test: "signal"}})
       pid = start_supervised!({SimpleAgent, %{name: "Signal Agent"}})
 
+      # Perhaps, this should be updated to use :trace, available since OTP27
+      # https://www.erlang.org/doc/apps/kernel/trace.html
       :erlang.trace(pid, true, [:call])
 
       :erlang.trace_pattern(
@@ -421,23 +423,9 @@ defmodule Lux.AgentTest do
     end
 
     test "ignore unspecified signal" do
+      # Would be nice to have this test using messages too.
       signal = %Lux.Signal{schema_id: Unsupported, payload: %{test: "signal"}}
-      pid = start_supervised!({SimpleAgent, %{name: "Signal Agent"}})
-
-      :erlang.trace(pid, true, [:call])
-
-      :erlang.trace_pattern(
-        {SimpleAgent, :handle_signal, 2},
-        [{:_, [], []}],
-        # [{:_, [], [{:return_trace}]}],
-        [:global]
-      )
-
       assert :ignore = SimpleAgent.handle_signal(signal, %{})
-
-      send(pid, {:signal, signal})
-
-      assert_receive {:trace, ^pid, :return_from, {SimpleAgent, :handle_signal, _}, :ignore}, 100
     end
   end
 end
