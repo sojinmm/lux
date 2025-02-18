@@ -305,24 +305,44 @@ defmodule Lux.Beam do
   end
 
   defmacro sequence(do: {:__block__, _, steps}) do
-    Module.put_attribute(__CALLER__.module, :sequence_defined, true)
-    build_sequnce(steps)
+    if has_parent?(__CALLER__) do
+      quote do
+        {:sequence, unquote(steps)}
+      end
+    else
+      Module.put_attribute(__CALLER__.module, :sequence_defined, true)
+      build_steps(steps)
+    end
   end
 
   defmacro sequence(do: single_step) do
-    Module.put_attribute(__CALLER__.module, :sequence_defined, true)
-    build_sequnce([single_step])
+    if has_parent?(__CALLER__) do
+      quote do
+        {:sequence, [unquote(single_step)]}
+      end
+    else
+      Module.put_attribute(__CALLER__.module, :sequence_defined, true)
+      build_steps([single_step])
+    end
   end
 
   defmacro parallel(do: {:__block__, _, steps}) do
-    quote do
-      {:parallel, unquote(steps)}
+    if has_parent?(__CALLER__) do
+      quote do
+        {:parallel, unquote(steps)}
+      end
+    else
+      build_steps(steps)
     end
   end
 
   defmacro parallel(do: single_step) do
-    quote do
-      {:parallel, [unquote(single_step)]}
+    if has_parent?(__CALLER__) do
+      quote do
+        {:parallel, [unquote(single_step)]}
+      end
+    else
+      build_steps([single_step])
     end
   end
 
@@ -333,7 +353,18 @@ defmodule Lux.Beam do
     end
   end
 
-  defp build_sequnce(steps) do
+  defp has_parent?(caller) do
+    cond do
+      # used outside of module (e.g. livebook cell)
+      is_nil(caller.function) and is_nil(caller.module) -> true
+      # used in nested block
+      not is_nil(caller.function) and not is_nil(caller.module) -> true
+      # top level
+      is_nil(caller.function) and not is_nil(caller.module) -> false
+    end
+  end
+
+  defp build_steps(steps) do
     seq =
       quote do
         {:sequence, unquote(steps)}
