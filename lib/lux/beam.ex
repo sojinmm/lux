@@ -192,7 +192,7 @@ defmodule Lux.Beam do
             description: "",
             input_schema: nil,
             output_schema: nil,
-            definition: nil,
+            definition: [],
             timeout: :timer.minutes(5),
             generate_execution_log: false
 
@@ -246,12 +246,8 @@ defmodule Lux.Beam do
           generate_execution_log: boolean()
         }
 
-  @callback steps() :: term()
-
   defmacro __using__(opts) do
     quote do
-      @behaviour Lux.Beam
-
       import Lux.Beam, only: [step: 3, step: 4, parallel: 1, sequence: 1, branch: 2]
 
       alias Lux.Beam
@@ -263,13 +259,16 @@ defmodule Lux.Beam do
         input_schema: unquote(opts[:input_schema]),
         output_schema: unquote(opts[:output_schema]),
         timeout: Keyword.get(unquote(opts), :timeout, :timer.minutes(5)),
-        generate_execution_log: Keyword.get(unquote(opts), :generate_execution_log, false),
-        definition: nil
+        generate_execution_log: Keyword.get(unquote(opts), :generate_execution_log, false)
       }
 
-      def beam, do: %{@beam | definition: steps()}
+      if not Module.get_attribute(__MODULE__, :sequence_defined) do
+        raise "The Lux.Beam module requires a sequence block to be defined"
+      end
 
-      def run(input, opts \\ []), do: Lux.Beam.Runner.run(beam(), input, opts)
+      def view, do: %{@beam | definition: __steps__()}
+
+      def run(input, opts \\ []), do: Lux.Beam.Runner.run(view(), input, opts)
     end
   end
 
@@ -311,15 +310,13 @@ defmodule Lux.Beam do
   end
 
   defmacro sequence(do: {:__block__, _, steps}) do
-    quote do
-      {:sequence, unquote(steps)}
-    end
+    Module.put_attribute(__CALLER__.module, :sequence_defined, true)
+    build_sequnce(steps)
   end
 
   defmacro sequence(do: single_step) do
-    quote do
-      {:sequence, [unquote(single_step)]}
-    end
+    Module.put_attribute(__CALLER__.module, :sequence_defined, true)
+    build_sequnce([single_step])
   end
 
   defmacro parallel(do: {:__block__, _, steps}) do
@@ -338,6 +335,19 @@ defmodule Lux.Beam do
     quote do
       {:branch, {__MODULE__, unquote(extract_function_name(condition))},
        unquote(transform_branch_blocks(blocks))}
+    end
+  end
+
+  defp build_sequnce(steps) do
+    seq =
+      quote do
+        {:sequence, unquote(steps)}
+      end
+
+    quote do
+      def __steps__ do
+        unquote(seq)
+      end
     end
   end
 
@@ -392,14 +402,4 @@ defmodule Lux.Beam do
   defp validate_definition(nil), do: {:error, :missing_definition}
   defp validate_definition(definition) when is_list(definition), do: :ok
   defp validate_definition(_), do: {:error, :invalid_definition}
-
-  def steps(%__MODULE__{definition: definition}) when not is_nil(definition) do
-    definition
-  end
-
-  def steps(module) when is_atom(module) do
-    module.steps()
-  end
-
-  def steps(_), do: nil
 end
