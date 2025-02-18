@@ -132,4 +132,13 @@ defmodule Lux.Schemas.Companies.ObjectiveSignal do
     tags: ["objective", "workflow", "ceo"],
     compatibility: :full,
     format: :json
+
+  @type t :: %Lux.Signal{
+          schema_id: __MODULE__,
+          payload: %{
+            type: String.t(),
+            objective_id: String.t(),
+            title: String.t()
+          }
+        }
 end

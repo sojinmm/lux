@@ -15,7 +15,6 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
 
   require Logger
 
-  @impl true
   def handle_signal(%Signal{schema_id: TaskSignal} = signal, context) do
     case signal.payload["type"] do
       "assignment" -> handle_task_assignment(signal, context)

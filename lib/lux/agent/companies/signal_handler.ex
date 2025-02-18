@@ -90,22 +90,14 @@ defmodule Lux.Agent.Companies.SignalHandler do
     quote location: :keep do
       @behaviour Lux.Agent.Companies.SignalHandler
 
-      # Default implementation of base signal handler
-      @impl true
-      def handle_signal(%Signal{schema_id: schema_id} = signal, context) do
-        case schema_id do
-          TaskSignal ->
-            handle_task_signal(signal, context)
-
-          ObjectiveSignal ->
-            handle_objective_signal(signal, context)
-
-          _ ->
-            {:error, :unsupported_schema}
-        end
-      end
+      @signal_handler_functions {TaskSignal,
+                                 {Lux.Agent.Companies.SignalHandler, :handle_task_signal}}
+      @signal_handler_functions {ObjectiveSignal,
+                                 {Lux.Agent.Companies.SignalHandler, :handle_objective_signal}}
 
       defp handle_task_signal(%Signal{payload: %{"type" => type}} = signal, context) do
+        dbg(@template_opts)
+
         case type do
           "assignment" -> handle_task_assignment(signal, context)
           "status_update" -> handle_task_update(signal, context)
@@ -116,6 +108,8 @@ defmodule Lux.Agent.Companies.SignalHandler do
       end
 
       defp handle_objective_signal(%Signal{payload: %{"type" => type}} = signal, context) do
+        dbg(@template_opts)
+
         case type do
           "evaluate" -> handle_objective_evaluation(signal, context)
           "next_step" -> handle_objective_next_step(signal, context)
@@ -126,13 +120,28 @@ defmodule Lux.Agent.Companies.SignalHandler do
       end
 
       # Default implementations that return :not_implemented
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_task_assignment(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_task_update(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_task_completion(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_task_failure(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_objective_evaluation(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_objective_next_step(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_objective_update(_, _), do: {:error, :not_implemented}
+
+      @impl Lux.Agent.Companies.SignalHandler
       def handle_objective_completion(_, _), do: {:error, :not_implemented}
 
       # Allow overriding any of these functions

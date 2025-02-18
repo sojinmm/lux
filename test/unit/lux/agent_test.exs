@@ -2,10 +2,45 @@ defmodule Lux.AgentTest do
   use UnitCase, async: true
 
   alias Lux.Agent
+  alias Lux.Agent.Companies.SignalHandler
   alias Lux.Memory.SimpleMemory
+  alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
 
   @default_timeout 1_000
+
+  defmodule SignalHandler1 do
+    @moduledoc false
+    use Lux.Prism,
+      name: "Signal Handler 1",
+      description: "A signal handler"
+
+    def handler(signal, context) do
+      {:ok, signal}
+    end
+  end
+
+  defmodule SignalHandler2 do
+    @moduledoc false
+    use Lux.Prism,
+      name: "Signal Handler 2",
+      description: "A signal handler"
+
+    def handler(signal, context) do
+      {:ok, signal}
+    end
+  end
+
+  defmodule TestLens do
+    @moduledoc false
+    use Lux.Lens,
+      name: "Test Lens",
+      description: "A test lens"
+
+    def focus(signal, context) do
+      {:ok, signal}
+    end
+  end
 
   # Test modules
   defmodule TestPrism do
@@ -37,7 +72,8 @@ defmodule Lux.AgentTest do
       description: "A simple agent that keeps things simple.",
       goal: "You have one simple goal. Not making things too complicated.",
       prisms: [TestPrism],
-      beams: [TestBeam]
+      beams: [TestBeam],
+      signal_handlers: [{TestSchema, TestPrism}]
   end
 
   defmodule MemoryAgent do
@@ -295,6 +331,54 @@ defmodule Lux.AgentTest do
       assert response.recipient == signal.sender
     end
 
+    test "templated company agent has company signal handlers" do
+      assert %Lux.Agent{
+               signal_handlers: [
+                 {ObjectiveSignal, {SignalHandler, :handle_objective_signal}},
+                 {Lux.Schemas.Companies.TaskSignal, {SignalHandler, :handle_task_signal}}
+               ]
+             } = CompanyAgent.view()
+    end
+
+    test "template company agent with extra handlers has all handlers and they follow a correct order" do
+      defmodule TestCompanyAgent2 do
+        @moduledoc false
+        use Lux.Agent,
+          template: :company_agent,
+          signal_handlers: [
+            {FakeSignalSchema1, SignalHandler1},
+            {FakeSignalSchema2, SignalHandler2}
+          ]
+      end
+
+      assert %Lux.Agent{
+               signal_handlers: [
+                 {FakeSignalSchema1, SignalHandler1},
+                 {FakeSignalSchema2, SignalHandler2},
+                 {ObjectiveSignal, {Lux.Agent.Companies.SignalHandler, :handle_objective_signal}},
+                 {Lux.Schemas.Companies.TaskSignal,
+                  {Lux.Agent.Companies.SignalHandler, :handle_task_signal}}
+               ]
+             } = TestCompanyAgent2.view()
+    end
+
+    test "templated agent can override a template signal handler" do
+      defmodule TestCompanyAgent3 do
+        @moduledoc false
+        use Lux.Agent,
+          template: :company_agent,
+          signal_handlers: [{Lux.Schemas.Companies.TaskSignal, SignalHandler1}]
+      end
+
+      # The templated handler for Task signal is removed and replaced with the user-provided one
+      assert %Lux.Agent{
+               signal_handlers: [
+                 {Lux.Schemas.Companies.TaskSignal, SignalHandler1},
+                 {ObjectiveSignal, {Lux.Agent.Companies.SignalHandler, :handle_objective_signal}}
+               ]
+             } = TestCompanyAgent3.view()
+    end
+
     test "includes template options in context" do
       signal = %Lux.Signal{
         id: "test-1",
@@ -319,6 +403,44 @@ defmodule Lux.AgentTest do
 
       # Test that template options are merged into context
       assert {:ok, _response} = CompanyAgent.handle_signal(signal, context)
+    end
+  end
+
+  describe "signal handlers" do
+    test "can handle specified signal" do
+      signal = Lux.Signal.new(%{schema_id: TestSchema, payload: %{test: "signal"}})
+      pid = start_supervised!({SimpleAgent, %{name: "Signal Agent"}})
+
+      :erlang.trace(pid, true, [:call])
+
+      :erlang.trace_pattern(
+        {Lux.AgentTest.TestPrism, :handler, 2},
+        [{:_, [], [{:return_trace}]}],
+        [:global]
+      )
+
+      send(pid, {:signal, signal})
+
+      assert_receive {:trace, ^pid, :return_from, {Lux.AgentTest.TestPrism, :handler, _},
+                      {:ok, %{result: "test"}}},
+                     5000
+    end
+
+    test "ignore unspecified signal" do
+      signal = %Lux.Signal{schema_id: Unsupported, payload: %{test: "signal"}}
+      pid = start_supervised!({SimpleAgent, %{name: "Signal Agent"}})
+
+      :erlang.trace(pid, true, [:call])
+
+      :erlang.trace_pattern(
+        {SimpleAgent, :handle_signal, 2},
+        [{:_, [], [{:return_trace}]}],
+        [:global]
+      )
+
+      send(pid, {:signal, signal})
+
+      assert_receive {:trace, ^pid, :return_from, {SimpleAgent, :handle_signal, _}, :ignore}, 5000
     end
   end
 end

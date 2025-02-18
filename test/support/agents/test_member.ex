@@ -7,7 +7,6 @@ defmodule Test.Support.Agents.TestMember do
     description: "A test member agent for testing company functionality",
     goal: "Execute test tasks effectively"
 
-  @impl true
   def handle_signal(signal, _context) do
     # Echo back the signal for testing
     {:ok, signal}

@@ -11,7 +11,7 @@ defmodule Lux.Signal do
           recipient: String.t() | nil,
           timestamp: DateTime.t(),
           metadata: map(),
-          schema_id: String.t() | nil
+          schema_id: module() | nil
         }
 
   defstruct id: nil,

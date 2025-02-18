@@ -7,7 +7,6 @@ defmodule Test.Support.Agents.TestCEO do
     description: "A test CEO agent for testing company functionality",
     goal: "Lead test companies effectively"
 
-  @impl true
   def handle_signal(signal, _context) do
     # Echo back the signal for testing
     {:ok, signal}

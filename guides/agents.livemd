@@ -475,7 +475,6 @@ Agents can process signals from other components:
 defmodule MyApp.Agents.SignalAwareAgent do
   use Lux.Agent
 
-  @impl true
   def handle_signal(_agent, %{schema_id: MyApp.Schemas.TaskSignal} = signal) do
     # Process the task signal
     {:ok, process_task(signal.payload)}

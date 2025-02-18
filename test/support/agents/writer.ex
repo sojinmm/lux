@@ -23,7 +23,7 @@ defmodule Test.Support.Agents.Writer do
       ]
     }
 
-  @impl Lux.Agent
+  @impl Lux.Agent.Companies.SignalHandler
   def handle_signal(%{schema_id: Lux.Schemas.TaskSignal} = signal, context) do
     case signal.payload do
       %{"type" => "assignment", "task" => "create_outline"} ->
