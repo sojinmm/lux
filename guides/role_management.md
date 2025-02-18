@@ -1,102 +1,75 @@
 # Role Management in Lux
 
-In Lux, companies can be defined with vacant roles, allowing for dynamic agent assignment. This guide explains how to manage roles and assign agents to them.
+This guide explains how to manage roles and assign agents in your Lux companies.
 
-## Defining Vacant Roles
+## Role Types
 
-When defining a company, you can specify roles without assigning agents to them:
+1. **CEO**
+   - Every company has one CEO
+   - Responsible for evaluating and managing objectives
+   - Has leadership capabilities
+
+2. **Members**
+   - Regular company members
+   - Have specific capabilities
+   - Can be assigned to objectives
+
+3. **Contractors** (Future)
+   - Specialized external agents
+   - Temporary assignments
+   - Access to specific objectives only
+
+## Role Assignment
+
+To assign an agent to a role:
+
+```elixir
+{:ok, _} = Lux.Company.assign_agent(company, role_id, agent)
+```
+
+The agent can be:
+- A local module (e.g., `MyApp.Agents.Writer`)
+- A remote reference (e.g., `{"agent-123", :research_hub}`)
+
+## Role Capabilities
+
+Each role has specific capabilities that determine what tasks they can perform:
 
 ```elixir
 defmodule MyApp.Companies.BlogTeam do
-  use Lux.Company
+  use Lux.Company.DSL
 
   company do
-    name("Content Creation Lab")
-    mission("Create high-quality content")
+    name "Content Creation Team"
+    mission "Create engaging content efficiently"
 
     has_ceo "Content Director" do
-      goal("Direct content creation")
-      can("plan")
-      can("review")
-      # No agent specified - vacant role
+      agent MyApp.Agents.ContentDirector
+      goal "Direct content creation and review"
+      can "plan"
+      can "review"
+      can "approve"
     end
 
-    has_member "Writer" do
-      goal("Create content")
-      can("write")
-      can("edit")
-      # No agent specified - vacant role
+    members do
+      has_role "Lead Researcher" do
+        agent {"researcher-123", :research_hub}
+        goal "Research and analyze topics"
+        can "research"
+        can "analyze"
+        can "summarize"
+      end
     end
   end
 end
 ```
 
-## Managing Roles
+## Error Handling
 
-### Listing Roles
-
-To get information about all roles in a company:
+If you try to run an objective without required roles:
 
 ```elixir
-{:ok, roles} = Lux.Company.list_roles(MyApp.Companies.BlogTeam)
-[ceo, writer] = roles
-
-# Each role has:
-# - id: Unique identifier
-# - name: Human-readable name
-# - type: :ceo or :member
-# - capabilities: List of capabilities
-# - agent: Currently assigned agent (nil if vacant)
-```
-
-### Getting Role Information
-
-To get information about a specific role:
-
-```elixir
-{:ok, role} = Lux.Company.get_role(MyApp.Companies.BlogTeam, role_id)
-```
-
-## Assigning Agents
-
-Agents can be assigned to roles in two ways:
-
-### 1. Local Agents
-
-For agents that run in the same BEAM VM:
-
-```elixir
-# Assign a local agent module
-{:ok, updated_role} = Lux.Company.assign_agent(
-  MyApp.Companies.BlogTeam,
-  role_id,
-  MyApp.Agents.CEO
-)
-```
-
-### 2. Remote Agents
-
-For agents running in different nodes or systems:
-
-```elixir
-# Assign a remote agent with its ID and hub
-{:ok, updated_role} = Lux.Company.assign_agent(
-  MyApp.Companies.BlogTeam,
-  role_id,
-  {"agent-123", RemoteHub}
-)
-```
-
-## Running Plans with Vacant Roles
-
-When running a plan, Lux checks if all required roles have agents assigned. If a required role is vacant:
-
-1. The plan will fail with a `:missing_agent` error
-2. The error message will indicate which role needs an agent
-
-```elixir
-# This will fail if required roles don't have agents
-{:ok, plan_id} = Lux.Company.run_plan(
+{:ok, objective_id} = Lux.Company.run_objective(
   MyApp.Companies.BlogTeam,
   :create_blog_post,
   %{"topic" => "AI"}
@@ -104,8 +77,8 @@ When running a plan, Lux checks if all required roles have agents assigned. If a
 
 # You'll receive an error message
 receive do
-  {:plan_failed, ^plan_id, {:missing_agent, message}} ->
-    IO.puts "Plan failed: #{message}"
+  {:objective_failed, ^objective_id, {:missing_agent, message}} ->
+    IO.puts "Objective failed: #{message}"
 end
 ```
 
@@ -122,7 +95,7 @@ end
    - Validate agent capabilities before assignment
 
 3. **Error Handling**
-   - Check for `:missing_agent` errors when running plans
+   - Check for `:missing_agent` errors when running objectives
    - Provide clear feedback when agent assignment fails
    - Validate role IDs before attempting agent assignment
 
@@ -133,7 +106,7 @@ end
 
 ## Example Workflow
 
-Here's a complete example of managing roles and running a plan:
+Here's a complete example of managing roles and running an objective:
 
 ```elixir
 # Start the company
@@ -147,8 +120,8 @@ Here's a complete example of managing roles and running a plan:
 {:ok, _} = Lux.Company.assign_agent(MyApp.Companies.BlogTeam, ceo.id, MyApp.Agents.CEO)
 {:ok, _} = Lux.Company.assign_agent(MyApp.Companies.BlogTeam, writer.id, MyApp.Agents.Writer)
 
-# Now the plan can run successfully
-{:ok, plan_id} = Lux.Company.run_plan(
+# Now the objective can run successfully
+{:ok, objective_id} = Lux.Company.run_objective(
   MyApp.Companies.BlogTeam,
   :create_blog_post,
   %{"topic" => "AI"}
@@ -156,7 +129,7 @@ Here's a complete example of managing roles and running a plan:
 
 # Wait for completion
 receive do
-  {:plan_completed, ^plan_id, results} ->
-    IO.puts "Plan completed successfully!"
+  {:objective_completed, ^objective_id, results} ->
+    IO.puts "Objective completed successfully!"
 end
 ``` 

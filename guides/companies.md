@@ -3,7 +3,7 @@
 Companies in Lux are the highest-level organizational units that coordinate agent-based workflows. A company consists of:
 - A CEO agent for high-level coordination and decision making
 - Member agents with specific roles and capabilities
-- Plans that define executable workflows
+- Objectives that define executable workflows
 
 ## Basic Company Structure
 
@@ -39,19 +39,15 @@ defmodule MyApp.Companies.BlogTeam do
     end
   end
 
-  plan :create_blog_post do
-    input do
-      field("topic")
-      field("target_audience")
-      field("tone")
-    end
-
-    steps("""
-    1. Research the topic thoroughly
-    2. Create a detailed outline
-    3. Write the first draft
-    4. Review and edit content
-    """)
+  objective :create_blog_post do
+    description "Create a well-researched blog post"
+    success_criteria "Well-researched content with cited sources, engaging writing style, proper structure, and approved by Content Director"
+    steps [
+      "Research the topic thoroughly",
+      "Create a detailed outline",
+      "Write the first draft",
+      "Review and edit content"
+    ]
   end
 end
 ```
@@ -86,21 +82,18 @@ has_member "Role Name" do
 end
 ```
 
-### 3. Plans
+### 3. Objectives
 
-Plans define workflows that the company can execute:
+Objectives define workflows that the company can execute:
 ```elixir
-plan :plan_name do
-  input do
-    field("required_input_1")
-    field("required_input_2")
-  end
-
-  steps("""
-  1. First step description
-  2. Second step description
-  3. Third step description
-  """)
+objective :objective_name do
+  description "Description of what this objective accomplishes"
+  success_criteria "Criteria that must be met for this objective to be considered successful"
+  steps [
+    "First step description",
+    "Second step description",
+    "Third step description"
+  ]
 end
 ```
 
@@ -114,9 +107,9 @@ To start a company, use the `Lux.Company.start_link/2` function:
 {:ok, pid} = Lux.Company.start_link(MyApp.Companies.BlogTeam)
 ```
 
-### 2. Running Plans
+### 2. Running Objectives
 
-To execute a plan within the company:
+To execute an objective within the company:
 
 ```elixir
 params = %{
@@ -125,7 +118,7 @@ params = %{
   "tone" => "casual"
 }
 
-{:ok, plan_id} = Lux.Company.run_plan(MyApp.Companies.BlogTeam, :create_blog_post, params)
+{:ok, objective_id} = Lux.Company.run_objective(MyApp.Companies.BlogTeam, :create_blog_post, params)
 ```
 
 ## Best Practices
@@ -135,19 +128,19 @@ params = %{
    - Define specific capabilities that align with the role's responsibilities
    - Use descriptive names for roles and capabilities
 
-2. **Plan Structure**
-   - Break down plans into clear, sequential steps
+2. **Objective Structure**
+   - Break down objectives into clear, sequential steps
    - Make step descriptions actionable and unambiguous
    - Include all necessary input fields
    - Consider the natural workflow of your agents
 
 3. **Agent Implementation**
    - Implement agents that specialize in their assigned capabilities
-   - Ensure agents can handle the tasks described in plan steps
+   - Ensure agents can handle the tasks described in objective steps
    - Use appropriate LLM configurations for each agent's needs
 
 4. **Error Handling**
-   - Plans should validate their inputs
+   - Objectives should validate their inputs
    - Agents should handle task failures gracefully
    - Consider retry strategies for transient failures
 
@@ -186,17 +179,14 @@ defmodule MyApp.Companies.WeatherNewsTeam do
     end
   end
 
-  plan :create_weather_report do
-    input do
-      field("coverage_area")
-      field("editorial_tone")
-    end
-
-    steps("""
-    1. Analyze weather data for the area
-    2. Create news script with specified tone
-    3. Review final content
-    """)
+  objective :create_weather_report do
+    description "Create a comprehensive weather report"
+    success_criteria "Accurate weather data analysis, engaging presentation, and approved by Editorial Director"
+    steps [
+      "Analyze weather data for the area",
+      "Create news script with specified tone",
+      "Review final content"
+    ]
   end
 end
 ```

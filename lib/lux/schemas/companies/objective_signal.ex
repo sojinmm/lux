@@ -1,36 +1,32 @@
-defmodule Lux.Schemas.Companies.PlanSignal do
+defmodule Lux.Schemas.Companies.ObjectiveSignal do
   @moduledoc """
-  Schema for plan execution signals used by the CEO.
+  Schema for objective execution signals used by the CEO.
 
   This schema defines the structure for:
-  1. Plan evaluation requests
+  1. Objective evaluation requests
   2. Next step determination
-  3. Plan status updates and completion
+  3. Objective status updates and completion
   """
 
   use Lux.SignalSchema,
-    name: "plan",
+    name: "objective",
     version: "1.0.0",
-    description: "Represents plan execution and management signals",
+    description: "Represents objective execution and management signals",
     schema: %{
       type: :object,
       properties: %{
         type: %{
           type: :string,
           enum: ["evaluate", "next_step", "status_update", "completion"],
-          description: "The type of plan signal"
-        },
-        plan_id: %{
-          type: :string,
-          description: "Unique identifier for the plan"
+          description: "The type of objective signal"
         },
         objective_id: %{
           type: :string,
-          description: "ID of the objective this plan belongs to"
+          description: "Unique identifier for the objective"
         },
         title: %{
           type: :string,
-          description: "Title of the plan"
+          description: "Title of the objective"
         },
         current_step: %{
           type: :object,
@@ -130,10 +126,10 @@ defmodule Lux.Schemas.Companies.PlanSignal do
           }
         }
       },
-      required: ["type", "plan_id", "objective_id", "title"],
+      required: ["type", "objective_id", "title"],
       additionalProperties: false
     },
-    tags: ["plan", "workflow", "ceo"],
+    tags: ["objective", "workflow", "ceo"],
     compatibility: :full,
     format: :json
 end

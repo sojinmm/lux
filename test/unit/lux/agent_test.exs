@@ -259,9 +259,12 @@ defmodule Lux.AgentTest do
       assert function_exported?(CompanyAgent, :handle_signal, 2)
       assert function_exported?(CompanyAgent, :handle_task_assignment, 2)
       assert function_exported?(CompanyAgent, :handle_task_update, 2)
-      assert function_exported?(CompanyAgent, :handle_plan_evaluation, 2)
-      assert function_exported?(CompanyAgent, :handle_plan_update, 2)
-      assert function_exported?(CompanyAgent, :handle_plan_completion, 2)
+      assert function_exported?(CompanyAgent, :handle_task_completion, 2)
+      assert function_exported?(CompanyAgent, :handle_task_failure, 2)
+      assert function_exported?(CompanyAgent, :handle_objective_evaluation, 2)
+      assert function_exported?(CompanyAgent, :handle_objective_next_step, 2)
+      assert function_exported?(CompanyAgent, :handle_objective_update, 2)
+      assert function_exported?(CompanyAgent, :handle_objective_completion, 2)
     end
 
     test "properly routes signals through handler" do

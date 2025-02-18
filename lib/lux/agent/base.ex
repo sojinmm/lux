@@ -120,8 +120,10 @@ defmodule Lux.Agent.Base do
 
   defp handle_signal(signal, context) do
     # Delegate to the signal handler implementation
-    if function_exported?(__MODULE__, :handle_signal, 2) do
-      __MODULE__.handle_signal(signal, context)
+    module = context.agent.__struct__
+
+    if function_exported?(module, :handle_signal, 2) do
+      module.handle_signal(signal, context)
     else
       {:error, :no_signal_handler}
     end
@@ -161,7 +163,7 @@ defmodule Lux.Agent.Base do
     context.memory.retrieve(key)
   end
 
-  defmacro __using__(opts) do
+  defmacro __using__(_opts) do
     quote location: :keep do
       use GenServer
       use SignalHandler

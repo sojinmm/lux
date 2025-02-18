@@ -18,7 +18,9 @@ defmodule Lux.Signal.Router.Local do
 
   # Client API
 
-  @impl Router
+  @doc """
+  Starts the local router with the given options.
+  """
   def start_link(opts \\ []) do
     name = opts[:name] || __MODULE__
     Logger.info("Starting Local Router with name: #{inspect(name)}")
@@ -48,7 +50,9 @@ defmodule Lux.Signal.Router.Local do
     GenServer.call(router_name, {:unsubscribe, signal_id, self()})
   end
 
-  @impl Router
+  @doc """
+  Lists all agents registered with the router.
+  """
   def list_agents(opts \\ []) do
     router_name = get_name(opts)
     GenServer.call(router_name, :list_agents)

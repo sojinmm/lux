@@ -1,7 +1,6 @@
 defmodule Lux.Company.ObjectivesTest do
   use ExUnit.Case, async: true
 
-  alias Lux.Company.Objective
   alias Lux.Company.Objectives
 
   @moduletag :unit

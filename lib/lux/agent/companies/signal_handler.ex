@@ -4,11 +4,11 @@ defmodule Lux.Agent.Companies.SignalHandler do
 
   This module defines callbacks for:
   1. Task-related signals (assignments, updates, completion)
-  2. Plan-related signals (evaluation, next steps)
+  2. Objective-related signals (evaluation, next steps)
   3. General signal handling
   """
 
-  alias Lux.Schemas.Companies.PlanSignal
+  alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
   alias Lux.Signal
 
@@ -48,31 +48,31 @@ defmodule Lux.Agent.Companies.SignalHandler do
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
-  Called for CEO agents to evaluate plan progress.
+  Called for CEO agents to evaluate objective progress.
   Should assess current state and decide next actions.
   """
-  @callback handle_plan_evaluation(PlanSignal.t(), context :: map()) ::
+  @callback handle_objective_evaluation(ObjectiveSignal.t(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
-  Called for CEO agents to determine next step in plan.
+  Called for CEO agents to determine next step in objective.
   Should analyze dependencies and assign appropriate agent.
   """
-  @callback handle_plan_next_step(PlanSignal.t(), context :: map()) ::
+  @callback handle_objective_next_step(ObjectiveSignal.t(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
-  Called to update plan status.
-  Should evaluate progress and update plan metadata.
+  Called to update objective status.
+  Should evaluate progress and update objective metadata.
   """
-  @callback handle_plan_update(PlanSignal.t(), context :: map()) ::
+  @callback handle_objective_update(ObjectiveSignal.t(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
-  Called when a plan is completed.
+  Called when an objective is completed.
   Should validate all steps are complete and prepare completion report.
   """
-  @callback handle_plan_completion(PlanSignal.t(), context :: map()) ::
+  @callback handle_objective_completion(ObjectiveSignal.t(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @optional_callbacks [
@@ -80,10 +80,10 @@ defmodule Lux.Agent.Companies.SignalHandler do
     handle_task_update: 2,
     handle_task_completion: 2,
     handle_task_failure: 2,
-    handle_plan_evaluation: 2,
-    handle_plan_next_step: 2,
-    handle_plan_update: 2,
-    handle_plan_completion: 2
+    handle_objective_evaluation: 2,
+    handle_objective_next_step: 2,
+    handle_objective_update: 2,
+    handle_objective_completion: 2
   ]
 
   defmacro __using__(_opts) do
@@ -97,8 +97,8 @@ defmodule Lux.Agent.Companies.SignalHandler do
           TaskSignal ->
             handle_task_signal(signal, context)
 
-          PlanSignal ->
-            handle_plan_signal(signal, context)
+          ObjectiveSignal ->
+            handle_objective_signal(signal, context)
 
           _ ->
             {:error, :unsupported_schema}
@@ -115,13 +115,13 @@ defmodule Lux.Agent.Companies.SignalHandler do
         end
       end
 
-      defp handle_plan_signal(%Signal{payload: %{"type" => type}} = signal, context) do
+      defp handle_objective_signal(%Signal{payload: %{"type" => type}} = signal, context) do
         case type do
-          "evaluate" -> handle_plan_evaluation(signal, context)
-          "next_step" -> handle_plan_next_step(signal, context)
-          "status_update" -> handle_plan_update(signal, context)
-          "completion" -> handle_plan_completion(signal, context)
-          _ -> {:error, :unsupported_plan_type}
+          "evaluate" -> handle_objective_evaluation(signal, context)
+          "next_step" -> handle_objective_next_step(signal, context)
+          "status_update" -> handle_objective_update(signal, context)
+          "completion" -> handle_objective_completion(signal, context)
+          _ -> {:error, :unsupported_objective_type}
         end
       end
 
@@ -130,21 +130,20 @@ defmodule Lux.Agent.Companies.SignalHandler do
       def handle_task_update(_, _), do: {:error, :not_implemented}
       def handle_task_completion(_, _), do: {:error, :not_implemented}
       def handle_task_failure(_, _), do: {:error, :not_implemented}
-      def handle_plan_evaluation(_, _), do: {:error, :not_implemented}
-      def handle_plan_next_step(_, _), do: {:error, :not_implemented}
-      def handle_plan_update(_, _), do: {:error, :not_implemented}
-      def handle_plan_completion(_, _), do: {:error, :not_implemented}
+      def handle_objective_evaluation(_, _), do: {:error, :not_implemented}
+      def handle_objective_next_step(_, _), do: {:error, :not_implemented}
+      def handle_objective_update(_, _), do: {:error, :not_implemented}
+      def handle_objective_completion(_, _), do: {:error, :not_implemented}
 
       # Allow overriding any of these functions
-      defoverridable handle_signal: 2,
-                     handle_task_assignment: 2,
+      defoverridable handle_task_assignment: 2,
                      handle_task_update: 2,
                      handle_task_completion: 2,
                      handle_task_failure: 2,
-                     handle_plan_evaluation: 2,
-                     handle_plan_next_step: 2,
-                     handle_plan_update: 2,
-                     handle_plan_completion: 2
+                     handle_objective_evaluation: 2,
+                     handle_objective_next_step: 2,
+                     handle_objective_update: 2,
+                     handle_objective_completion: 2
     end
   end
 end

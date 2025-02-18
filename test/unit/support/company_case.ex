@@ -38,34 +38,32 @@ defmodule Lux.CompanyCase do
   @doc """
   Creates a test company struct for testing.
   """
-  def create_test_company(name) do
-    %Company{
+  def create_test_company(attrs \\ %{})
+
+  def create_test_company(name) when is_binary(name) do
+    create_test_company(%{name: name})
+  end
+
+  def create_test_company(attrs) when is_map(attrs) do
+    base = %Company{
       id: Lux.UUID.generate(),
-      name: name,
-      mission: "Test company mission",
-      module: __MODULE__,
+      name: "Test Company",
+      mission: "Test Mission",
+      module: Test.Support.Companies.TestCompany,
       ceo: %{
         id: Lux.UUID.generate(),
-        type: :ceo,
         name: "Test CEO",
-        goal: "Test company leadership",
-        capabilities: ["plan", "review"],
-        agent: nil,
-        hub: nil
+        capabilities: ["manage", "evaluate"]
       },
       roles: [
         %{
           id: Lux.UUID.generate(),
-          type: :member,
-          name: "Test Member",
-          goal: "Help with testing",
-          capabilities: ["test", "verify"],
-          agent: nil,
-          hub: nil
+          name: "Test Role",
+          capabilities: ["test"]
         }
-      ],
-      objectives: [],
-      plans: %{}
+      ]
     }
+
+    Map.merge(base, attrs)
   end
 end

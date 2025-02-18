@@ -2,7 +2,7 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
   use UnitCase, async: true
 
   alias Lux.Agent.Companies.SignalHandler.DefaultImplementation
-  alias Lux.Schemas.Companies.PlanSignal
+  alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
   alias Lux.Signal
 
@@ -53,7 +53,7 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
     end
   end
 
-  describe "plan signal handling" do
+  describe "objective signal handling" do
     setup do
       context = %{
         beams: [],
@@ -61,14 +61,14 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
         prisms: []
       }
 
-      plan_signal = %Signal{
+      objective_signal = %Signal{
         id: "test-2",
-        schema_id: PlanSignal,
+        schema_id: ObjectiveSignal,
+        sender: "test-sender",
         payload: %{
-          "type" => "evaluate",
-          "plan_id" => "plan-1",
           "objective_id" => "obj-1",
-          "title" => "Test Plan",
+          "title" => "Test Objective",
+          "type" => "evaluate",
           "steps" => [
             %{
               "index" => 0,
@@ -76,39 +76,42 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
               "status" => "pending"
             }
           ]
-        },
-        sender: "test-sender"
+        }
       }
 
-      %{context: context, plan_signal: plan_signal}
+      %{context: context, objective_signal: objective_signal}
     end
 
-    test "handles plan evaluation signal", %{context: context, plan_signal: signal} do
-      assert {:error, :not_implemented} =
-               DefaultImplementation.handle_plan_evaluation(signal, context)
+    test "handles objective evaluation signal", %{context: context, objective_signal: signal} do
+      assert {:ok, _} =
+               DefaultImplementation.handle_objective_evaluation(signal, context)
     end
 
-    test "handles plan update signal", %{context: context, plan_signal: signal} do
+    test "handles objective update signal", %{context: context, objective_signal: signal} do
       signal = %{
         signal
         | payload:
             Map.merge(signal.payload, %{
               "type" => "status_update",
-              "context" => %{"progress" => 50}
+              "context" => %{
+                "progress" => 50
+              }
             })
       }
 
-      assert {:error, :not_implemented} =
-               DefaultImplementation.handle_plan_update(signal, context)
+      assert {:ok, _} =
+               DefaultImplementation.handle_objective_update(signal, context)
     end
 
-    test "handles plan completion signal", %{context: context, plan_signal: signal} do
+    test "handles objective completion signal", %{context: context, objective_signal: signal} do
       signal = %{
         signal
         | payload:
             Map.merge(signal.payload, %{
               "type" => "completion",
-              "context" => %{"progress" => 100},
+              "context" => %{
+                "progress" => 100
+              },
               "steps" => [
                 %{
                   "index" => 0,
@@ -119,8 +122,8 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
             })
       }
 
-      assert {:error, :not_implemented} =
-               DefaultImplementation.handle_plan_completion(signal, context)
+      assert {:ok, _} =
+               DefaultImplementation.handle_objective_completion(signal, context)
     end
   end
 end

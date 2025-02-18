@@ -147,13 +147,14 @@ defmodule Lux.Company.Objectives do
       iex> Objectives.fail(completed_objective)
       {:error, :invalid_status}
   """
-  def fail(%Objective{status: :in_progress} = objective, reason \\ nil) do
-    metadata = Map.put(objective.metadata, :failure_reason, reason)
+  def fail(objective, reason \\ nil)
 
+  def fail(%Objective{status: :in_progress} = objective, reason) do
+    metadata = Map.put(objective.metadata, :failure_reason, reason)
     {:ok, %{objective | status: :failed, completed_at: DateTime.utc_now(), metadata: metadata}}
   end
 
-  def fail(%Objective{}, _), do: {:error, :invalid_status}
+  def fail(%Objective{}, _reason), do: {:error, :invalid_status}
 
   @doc """
   Returns true if the objective can be started.

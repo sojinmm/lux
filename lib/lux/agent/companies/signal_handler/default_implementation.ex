@@ -9,7 +9,7 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   @behaviour Lux.Agent.Companies.SignalHandler
 
   alias Lux.LLM
-  alias Lux.Schemas.Companies.PlanSignal
+  alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
   alias Lux.Signal
 
@@ -24,11 +24,11 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
     end
   end
 
-  def handle_signal(%Signal{schema_id: PlanSignal} = signal, context) do
+  def handle_signal(%Signal{schema_id: ObjectiveSignal} = signal, context) do
     case signal.payload["type"] do
-      "evaluate" -> handle_plan_evaluation(signal, context)
-      "status_update" -> handle_plan_update(signal, context)
-      "completion" -> handle_plan_completion(signal, context)
+      "evaluate" -> handle_objective_evaluation(signal, context)
+      "status_update" -> handle_objective_update(signal, context)
+      "completion" -> handle_objective_completion(signal, context)
       _ -> {:error, :unsupported_task_type}
     end
   end
@@ -105,18 +105,64 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   end
 
   @impl true
-  def handle_plan_evaluation(_signal, _context) do
-    {:error, :not_implemented}
+  def handle_objective_evaluation(%Signal{payload: payload} = signal, context) do
+    # Evaluate objective progress and determine next steps
+    {:ok,
+     %Signal{
+       id: Lux.UUID.generate(),
+       schema_id: ObjectiveSignal,
+       payload:
+         Map.merge(payload, %{
+           "type" => "evaluate",
+           "evaluation" => %{
+             "decision" => "continue",
+             "next_step_index" => get_next_step_index(payload),
+             "assigned_agent" => select_agent_for_step(payload, context),
+             "reasoning" => "Objective evaluation completed successfully"
+           }
+         }),
+       recipient: signal.sender
+     }}
   end
 
   @impl true
-  def handle_plan_update(_signal, _context) do
-    {:error, :not_implemented}
+  def handle_objective_update(%Signal{payload: payload} = signal, _context) do
+    # Update objective progress and status
+    {:ok,
+     %Signal{
+       id: Lux.UUID.generate(),
+       schema_id: ObjectiveSignal,
+       payload:
+         Map.merge(payload, %{
+           "type" => "status_update",
+           "context" => %{
+             "progress" => calculate_progress(payload)
+           }
+         }),
+       recipient: signal.sender
+     }}
   end
 
   @impl true
-  def handle_plan_completion(_signal, _context) do
-    {:error, :not_implemented}
+  def handle_objective_completion(%Signal{payload: payload} = signal, _context) do
+    # Handle objective completion
+    {:ok,
+     %Signal{
+       id: Lux.UUID.generate(),
+       schema_id: ObjectiveSignal,
+       payload:
+         Map.merge(payload, %{
+           "type" => "completion",
+           "context" => %{
+             "progress" => 100
+           },
+           "evaluation" => %{
+             "decision" => "complete",
+             "reasoning" => "All steps completed successfully"
+           }
+         }),
+       recipient: signal.sender
+     }}
   end
 
   # Private Functions
@@ -189,4 +235,46 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   defp get_available_tools(context) do
     (context.beams || []) ++ (context.lenses || []) ++ (context.prisms || [])
   end
+
+  defp get_next_step_index(%{"steps" => steps}) do
+    # Find the index of the next pending step
+    case Enum.find_index(steps, &(&1["status"] == "pending")) do
+      # If no pending steps, return length (completion)
+      nil -> length(steps)
+      index -> index
+    end
+  end
+
+  defp get_next_step_index(_), do: 0
+
+  defp select_agent_for_step(
+         %{"steps" => steps, "context" => %{"available_agents" => agents}},
+         _context
+       ) do
+    case Enum.at(steps, get_next_step_index(%{"steps" => steps})) do
+      %{"assigned_to" => agent_id} when not is_nil(agent_id) ->
+        agent_id
+
+      _ ->
+        # Select first available agent if no assignment
+        case agents do
+          [%{"id" => id} | _] -> id
+          _ -> nil
+        end
+    end
+  end
+
+  defp select_agent_for_step(_, _), do: nil
+
+  defp calculate_progress(%{"steps" => steps}) do
+    completed = Enum.count(steps, &(&1["status"] == "completed"))
+    total = length(steps)
+
+    case total do
+      0 -> 0
+      _ -> round(completed / total * 100)
+    end
+  end
+
+  defp calculate_progress(_), do: 0
 end
