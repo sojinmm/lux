@@ -37,32 +37,29 @@ defmodule Lux.Beam do
       },
       generate_execution_log: true
 
-    @impl true
-    def steps do
-      sequence do
-        step(:market_data, MyApp.Prisms.MarketData, %{symbol: :symbol})
+    sequence do
+      step(:market_data, MyApp.Prisms.MarketData, %{symbol: :symbol})
 
-        parallel do
-          step(:technical, MyApp.Prisms.TechnicalAnalysis,
-            %{data: {:ref, "market_data"}},
-            retries: 3,
-            store_io: true)
+      parallel do
+        step(:technical, MyApp.Prisms.TechnicalAnalysis,
+          %{data: {:ref, "market_data"}},
+          retries: 3,
+          store_io: true)
 
-          step(:sentiment, MyApp.Prisms.SentimentAnalysis,
-            %{symbol: :symbol},
-            timeout: :timer.seconds(30))
-        end
+        step(:sentiment, MyApp.Prisms.SentimentAnalysis,
+          %{symbol: :symbol},
+          timeout: :timer.seconds(30))
+      end
 
-        branch {__MODULE__, :should_trade?} do
-          true -> step(:execute, MyApp.Prisms.ExecuteTrade, %{
-            symbol: :symbol,
-            amount: :amount,
-            signals: {:ref, "technical"}
-          })
-          false -> step(:skip, MyApp.Prisms.LogDecision, %{
-            reason: "Unfavorable conditions"
-          })
-        end
+      branch {__MODULE__, :should_trade?} do
+        true -> step(:execute, MyApp.Prisms.ExecuteTrade, %{
+          symbol: :symbol,
+          amount: :amount,
+          signals: {:ref, "technical"}
+        })
+        false -> step(:skip, MyApp.Prisms.LogDecision, %{
+          reason: "Unfavorable conditions"
+        })
       end
     end
 
@@ -86,60 +83,58 @@ defmodule Lux.Beam do
   defmodule HiringManagerBeam do
     use Lux.Beam, generate_execution_log: true
 
-    def steps do
-      sequence do
-        # First evaluate current workforce metrics
-        step(:workforce_metrics, WorkforceAnalysisPrism, %{
-          team_size: {:ref, "current_team_size"},
-          performance_data: {:ref, "agent_performance_metrics"},
-          workload_stats: {:ref, "current_workload"}
-        })
+    sequence do
+      # First evaluate current workforce metrics
+      step(:workforce_metrics, WorkforceAnalysisPrism, %{
+        team_size: {:ref, "current_team_size"},
+        performance_data: {:ref, "agent_performance_metrics"},
+        workload_stats: {:ref, "current_workload"}
+      })
 
-        # Check if we need to scale the team
-        branch {__MODULE__, :needs_scaling?} do
-          :scale_up ->
-            sequence do
-              # Find suitable candidates
-              step(:candidate_search, AgentSearchPrism, %{
-                required_skills: {:ref, "workforce_metrics.skill_gaps"},
-                count: {:ref, "workforce_metrics.hiring_needs"}
-              })
-
-              # Interview and evaluate candidates
-              step(:candidate_evaluation, AgentEvaluationPrism, %{
-                candidates: {:ref, "candidate_search.results"},
-                evaluation_criteria: {:ref, "workforce_metrics.requirements"}
-              })
-
-              # Onboard selected candidates
-              step(:onboarding, AgentOnboardingPrism, %{
-                selected_agents: {:ref, "candidate_evaluation.approved_candidates"},
-                resource_allocation: {:ref, "workforce_metrics.available_resources"}
-              })
-            end
-
-          :scale_down ->
-            sequence do
-              # Identify underperforming agents
-              step(:performance_review, PerformanceReviewPrism, %{
-                agents: {:ref, "workforce_metrics.underperforming_agents"},
-                criteria: {:ref, "workforce_metrics.performance_thresholds"}
-              })
-
-              # Handle agent termination
-              step(:termination, AgentTerminationPrism, %{
-                agents: {:ref, "performance_review.agents_to_terminate"},
-                reassign_tasks: true
-              })
-            end
-
-          :maintain ->
-            # Just update team metrics and resources
-            step(:team_maintenance, TeamMaintenancePrism, %{
-              current_team: {:ref, "workforce_metrics.active_agents"},
-              resource_updates: {:ref, "workforce_metrics.resource_adjustments"}
+      # Check if we need to scale the team
+      branch {__MODULE__, :needs_scaling?} do
+        :scale_up ->
+          sequence do
+            # Find suitable candidates
+            step(:candidate_search, AgentSearchPrism, %{
+              required_skills: {:ref, "workforce_metrics.skill_gaps"},
+              count: {:ref, "workforce_metrics.hiring_needs"}
             })
-        end
+
+            # Interview and evaluate candidates
+            step(:candidate_evaluation, AgentEvaluationPrism, %{
+              candidates: {:ref, "candidate_search.results"},
+              evaluation_criteria: {:ref, "workforce_metrics.requirements"}
+            })
+
+            # Onboard selected candidates
+            step(:onboarding, AgentOnboardingPrism, %{
+              selected_agents: {:ref, "candidate_evaluation.approved_candidates"},
+              resource_allocation: {:ref, "workforce_metrics.available_resources"}
+            })
+          end
+
+        :scale_down ->
+          sequence do
+            # Identify underperforming agents
+            step(:performance_review, PerformanceReviewPrism, %{
+              agents: {:ref, "workforce_metrics.underperforming_agents"},
+              criteria: {:ref, "workforce_metrics.performance_thresholds"}
+            })
+
+            # Handle agent termination
+            step(:termination, AgentTerminationPrism, %{
+              agents: {:ref, "performance_review.agents_to_terminate"},
+              reassign_tasks: true
+            })
+          end
+
+        :maintain ->
+          # Just update team metrics and resources
+          step(:team_maintenance, TeamMaintenancePrism, %{
+            current_team: {:ref, "workforce_metrics.active_agents"},
+            resource_updates: {:ref, "workforce_metrics.resource_adjustments"}
+          })
       end
     end
 
