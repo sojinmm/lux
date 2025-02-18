@@ -46,6 +46,8 @@ defmodule Lux.Agent do
 
   @type t :: %__MODULE__{
           id: String.t(),
+          template: atom(),
+          template_opts: map(),
           name: String.t(),
           description: String.t(),
           goal: String.t(),
@@ -62,6 +64,8 @@ defmodule Lux.Agent do
         }
 
   defstruct id: nil,
+            template: nil,
+            template_opts: %{},
             name: "",
             description: "",
             goal: "",
@@ -106,33 +110,6 @@ defmodule Lux.Agent do
         module: __MODULE__
       }
 
-      # @signal_handler_functions =
-      #   for {schema, handler} <- Keyword.get(opts, :signal_handlers, []) do
-      #     quote do
-      #       @impl Lux.Agent
-      #       def handle_signal(agent, %{schema_id: schema_id} = signal)
-      #           when schema_id == unquote(schema) do
-      #         module = unquote(handler)
-
-      #         cond do
-      #           # is it a prism?
-      #           function_exported?(module, :handler, 2) ->
-      #             module.handler(signal, agent)
-
-      #           # is it a beam?
-      #           function_exported?(module, :run, 2) ->
-      #             module.run(signal, agent)
-
-      #           # is it a lens?
-      #           function_exported?(module, :focus, 2) ->
-      #             module.focus(signal, agent)
-      #         end
-      #       end
-      #     end
-      #   end
-
-      dbg(@signal_handler_functions)
-
       # Then inject template-specific functions
       case unquote(opts[:template]) do
         :company_agent ->
@@ -155,20 +132,18 @@ defmodule Lux.Agent do
           @template_opts %{}
       end
 
-      dbg(@signal_handler_functions)
-
       # Accumulate signal handlers passed by the user
       for {schema, handler} <-
             unquote(opts) |> Keyword.get(:signal_handlers, []) |> Enum.reverse() do
         @signal_handler_functions {schema, handler}
       end
 
-      dbg(@signal_handler_functions)
-
       @impl Lux.Agent
 
       @agent %Agent{
         id: Keyword.get(unquote(opts), :id, Lux.UUID.generate()),
+        template: unquote(opts[:template]),
+        template_opts: @template_opts,
         name: Keyword.get(unquote(opts), :name, "Anonymous Agent"),
         description: Keyword.get(unquote(opts), :description, ""),
         goal: Keyword.get(unquote(opts), :goal, ""),
@@ -184,79 +159,39 @@ defmodule Lux.Agent do
         llm_config: Keyword.get(unquote(opts), :llm_config, %{})
       }
 
-      dbg(@signal_handler_functions)
-
       @impl Agent
       def chat(agent, message, opts \\ []) do
         Agent.chat(agent, message, opts)
       end
 
-      # unquote(signal_handler_functions)
+      def handle_signal(%{schema_id: schema_id} = signal, agent) do
+        case Enum.find(@agent.signal_handlers, fn {schema, _} -> schema_id == schema end) do
+          {_schema, handler} ->
+            case Lux.Agent.get_handler_type(handler) do
+              :prism ->
+                handler.handler(agent, signal)
 
-      # for {schema, handler} <- @agent.signal_handlers do
-      #   @impl Lux.Agent
-      #   def handle_signal(agent, %{schema_id: schema_id} = signal) when schema_id == unqoute(schema) do
-      #     cond do
-      #       # is it a prism?
-      #       function_exported?(handler, :handler, 2) ->
-      #         handler.handler(signal, agent)
+              :beam ->
+                handler.run(agent, signal)
 
-      #       # is it a beam?
-      #       function_exported?(handler, :run, 2) ->
-      #         handler.run(signal, agent)
+              :lens ->
+                handler.focus(agent, signal)
 
-      #       # is it a lens?
-      #       function_exported?(handler, :focus, 2) ->
-      #         handler.focus(signal, agent)
-      #     end
-      #   end
-      # end
+              :module_function ->
+                {module, function} = handler
+                apply(module, function, [signal, agent])
 
-      handler_functions =
-        for {schema, handler} <- @agent.signal_handlers do
-          case Lux.Agent.get_handler_type(handler) do
-            :prism ->
-              quote do
-                def handle_signal(agent, %{schema_id: schema_id} = signal)
-                    when schema_id == schema do
-                  handler.handler(agent, signal)
-                end
-              end
+              :unknown ->
+                raise "Unknown handler type: #{inspect(handler)}"
 
-            :beam ->
-              quote do
-                def handle_signal(agent, %{schema_id: schema_id} = signal)
-                    when schema_id == schema do
-                  handler.run(agent, signal)
-                end
-              end
+              :ignore ->
+                :ignore
+            end
 
-            :lens ->
-              quote do
-                def handle_signal(agent, %{schema_id: schema_id} = signal)
-                    when schema_id == schema do
-                  handler.focus(agent, signal)
-                end
-              end
-
-            :module_function ->
-              quote do
-                def handle_signal(agent, %{schema_id: schema_id} = signal)
-                    when schema_id == schema do
-                  {module, function} = handler
-
-                  apply(module, function, [agent, signal])
-                end
-              end
-
-            :unknown ->
-              raise "Unknown handler type: #{inspect(handler)}"
-          end
+          nil ->
+            :ignore
         end
-
-      dbg(handler_functions)
-
-      def handle_signal(_agent, _signal), do: :ignore
+      end
 
       # GenServer Client API
       def start_link(attrs \\ %{}) do
@@ -332,7 +267,7 @@ defmodule Lux.Agent do
 
       @impl GenServer
       def handle_info({:signal, signal}, agent) do
-        _ = handle_signal(agent, signal)
+        _ = handle_signal(signal, agent)
         {:noreply, agent}
       end
 
@@ -351,10 +286,6 @@ defmodule Lux.Agent do
 
       defoverridable chat: 3
     end
-  end
-
-  def handle_signal(agent, signal) do
-    apply(agent.module, :handle_signal, [agent, signal])
   end
 
   def chat(agent, message, opts) do
@@ -531,6 +462,8 @@ defmodule Lux.Agent do
   def get_handler_type({module, function}) when is_atom(module) and is_atom(function) do
     :module_function
   end
+
+  def get_handler_type(nil), do: :ignore
 
   def get_handler_type(module) when is_atom(module) do
     Code.ensure_compiled!(module)

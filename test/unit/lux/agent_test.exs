@@ -2,7 +2,6 @@ defmodule Lux.AgentTest do
   use UnitCase, async: true
 
   alias Lux.Agent
-  alias Lux.Agent.Companies.SignalHandler
   alias Lux.Memory.SimpleMemory
   alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
@@ -15,7 +14,7 @@ defmodule Lux.AgentTest do
       name: "Signal Handler 1",
       description: "A signal handler"
 
-    def handler(signal, context) do
+    def handler(signal, _context) do
       {:ok, signal}
     end
   end
@@ -26,7 +25,7 @@ defmodule Lux.AgentTest do
       name: "Signal Handler 2",
       description: "A signal handler"
 
-    def handler(signal, context) do
+    def handler(signal, _context) do
       {:ok, signal}
     end
   end
@@ -36,10 +35,6 @@ defmodule Lux.AgentTest do
     use Lux.Lens,
       name: "Test Lens",
       description: "A test lens"
-
-    def focus(signal, context) do
-      {:ok, signal}
-    end
   end
 
   # Test modules
@@ -146,7 +141,7 @@ defmodule Lux.AgentTest do
       }
 
     @impl true
-    def handle_task_update(signal, context) do
+    def handle_task_update(signal, _context) do
       {:ok,
        %Lux.Signal{
          id: "response-1",
@@ -334,8 +329,8 @@ defmodule Lux.AgentTest do
     test "templated company agent has company signal handlers" do
       assert %Lux.Agent{
                signal_handlers: [
-                 {ObjectiveSignal, {SignalHandler, :handle_objective_signal}},
-                 {Lux.Schemas.Companies.TaskSignal, {SignalHandler, :handle_task_signal}}
+                 {ObjectiveSignal, {CompanyAgent, :handle_objective_signal}},
+                 {Lux.Schemas.Companies.TaskSignal, {CompanyAgent, :handle_task_signal}}
                ]
              } = CompanyAgent.view()
     end
@@ -355,9 +350,8 @@ defmodule Lux.AgentTest do
                signal_handlers: [
                  {FakeSignalSchema1, SignalHandler1},
                  {FakeSignalSchema2, SignalHandler2},
-                 {ObjectiveSignal, {Lux.Agent.Companies.SignalHandler, :handle_objective_signal}},
-                 {Lux.Schemas.Companies.TaskSignal,
-                  {Lux.Agent.Companies.SignalHandler, :handle_task_signal}}
+                 {ObjectiveSignal, {TestCompanyAgent2, :handle_objective_signal}},
+                 {Lux.Schemas.Companies.TaskSignal, {TestCompanyAgent2, :handle_task_signal}}
                ]
              } = TestCompanyAgent2.view()
     end
@@ -374,7 +368,7 @@ defmodule Lux.AgentTest do
       assert %Lux.Agent{
                signal_handlers: [
                  {Lux.Schemas.Companies.TaskSignal, SignalHandler1},
-                 {ObjectiveSignal, {Lux.Agent.Companies.SignalHandler, :handle_objective_signal}}
+                 {ObjectiveSignal, {TestCompanyAgent3, :handle_objective_signal}}
                ]
              } = TestCompanyAgent3.view()
     end
@@ -434,13 +428,16 @@ defmodule Lux.AgentTest do
 
       :erlang.trace_pattern(
         {SimpleAgent, :handle_signal, 2},
-        [{:_, [], [{:return_trace}]}],
+        [{:_, [], []}],
+        # [{:_, [], [{:return_trace}]}],
         [:global]
       )
 
+      assert :ignore = SimpleAgent.handle_signal(signal, %{})
+
       send(pid, {:signal, signal})
 
-      assert_receive {:trace, ^pid, :return_from, {SimpleAgent, :handle_signal, _}, :ignore}, 5000
+      assert_receive {:trace, ^pid, :return_from, {SimpleAgent, :handle_signal, _}, :ignore}, 100
     end
   end
 end

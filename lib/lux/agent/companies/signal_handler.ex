@@ -90,14 +90,10 @@ defmodule Lux.Agent.Companies.SignalHandler do
     quote location: :keep do
       @behaviour Lux.Agent.Companies.SignalHandler
 
-      @signal_handler_functions {TaskSignal,
-                                 {Lux.Agent.Companies.SignalHandler, :handle_task_signal}}
-      @signal_handler_functions {ObjectiveSignal,
-                                 {Lux.Agent.Companies.SignalHandler, :handle_objective_signal}}
+      @signal_handler_functions {TaskSignal, {__MODULE__, :handle_task_signal}}
+      @signal_handler_functions {ObjectiveSignal, {__MODULE__, :handle_objective_signal}}
 
-      defp handle_task_signal(%Signal{payload: %{"type" => type}} = signal, context) do
-        dbg(@template_opts)
-
+      def handle_task_signal(%Signal{payload: %{"type" => type}} = signal, context) do
         case type do
           "assignment" -> handle_task_assignment(signal, context)
           "status_update" -> handle_task_update(signal, context)
@@ -107,9 +103,7 @@ defmodule Lux.Agent.Companies.SignalHandler do
         end
       end
 
-      defp handle_objective_signal(%Signal{payload: %{"type" => type}} = signal, context) do
-        dbg(@template_opts)
-
+      def handle_objective_signal(%Signal{payload: %{"type" => type}} = signal, context) do
         case type do
           "evaluate" -> handle_objective_evaluation(signal, context)
           "next_step" -> handle_objective_next_step(signal, context)
