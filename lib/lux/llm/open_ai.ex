@@ -176,7 +176,7 @@ defmodule Lux.LLM.OpenAI do
         tool_to_function(tool_module.view())
 
       beam?(tool_module) ->
-        tool_to_function(tool_module.beam())
+        tool_to_function(tool_module.view())
 
       true ->
         raise "Unsupported tool type: #{inspect(tool_module)}"
@@ -326,7 +326,7 @@ defmodule Lux.LLM.OpenAI do
   end
 
   def beam?(module) when is_atom(module) do
-    function_exported?(module, :steps, 0) and function_exported?(module, :run, 2)
+    function_exported?(module, :__steps__, 0) and function_exported?(module, :run, 2)
   end
 
   def beam?(_), do: false

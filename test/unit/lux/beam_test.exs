@@ -15,21 +15,18 @@ defmodule Lux.BeamTest do
         required: ["trade_id"]
       }
 
-    @impl true
-    def steps do
-      sequence do
-        step(:first, TestPrism, %{value: :value})
-        step(:first_again, TestPrism, %{value: :value})
+    sequence do
+      step(:first, TestPrism, %{value: :value})
+      step(:first_again, TestPrism, %{value: :value})
 
-        parallel do
-          step(:second, TestPrism, %{value: "fixed"}, retries: 2)
-          step(:third, TestPrism, %{value: [:steps, :first, :result]}, store_io: true)
-        end
+      parallel do
+        step(:second, TestPrism, %{value: "fixed"}, retries: 2)
+        step(:third, TestPrism, %{value: [:steps, :first, :result]}, store_io: true)
+      end
 
-        branch &above_threshold?/1 do
-          true -> step(:high, TestPrism, %{value: "high"})
-          false -> step(:low, TestPrism, %{value: "low"})
-        end
+      branch &above_threshold?/1 do
+        true -> step(:high, TestPrism, %{value: "high"})
+        false -> step(:low, TestPrism, %{value: "low"})
       end
     end
 
@@ -91,11 +88,11 @@ defmodule Lux.BeamTest do
                  properties: %{trade_id: %{type: :string}},
                  required: ["trade_id"]
                }
-             } = TestBeam.beam()
+             } = TestBeam.view()
     end
 
     test "serializes step definitions" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
 
       assert {:sequence,
               [
@@ -111,7 +108,7 @@ defmodule Lux.BeamTest do
     end
 
     test "supports parameter references" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
 
       assert {:sequence,
               [
@@ -185,7 +182,7 @@ defmodule Lux.BeamTest do
 
   describe "serialization" do
     test "beam can be serialized and deserialized" do
-      beam = TestBeam.beam()
+      beam = TestBeam.view()
       binary = :erlang.term_to_binary(beam)
       deserialized = :erlang.binary_to_term(binary)
 
@@ -193,7 +190,7 @@ defmodule Lux.BeamTest do
     end
 
     test "step definitions can be serialized and deserialized" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
       binary = :erlang.term_to_binary(steps)
       deserialized = :erlang.binary_to_term(binary)
 
@@ -203,14 +200,14 @@ defmodule Lux.BeamTest do
 
   describe "step validation" do
     test "validates step IDs are of the same type of what we define them as" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
 
       assert {:sequence, [first | _rest]} = steps
       assert :first = first.id
     end
 
     test "validates step options have correct defaults" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
       {:sequence, [first | _]} = steps
 
       assert %{opts: opts} = first
@@ -223,7 +220,7 @@ defmodule Lux.BeamTest do
     end
 
     test "validates step parameters are properly referenced" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
       {:sequence, [first | _]} = steps
 
       assert %{params: %{value: :value}} = first
@@ -232,7 +229,7 @@ defmodule Lux.BeamTest do
 
   describe "branch validation" do
     test "validates branch condition is properly serialized" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
       {:sequence, steps_list} = steps
       branch = List.last(steps_list)
 
@@ -243,7 +240,7 @@ defmodule Lux.BeamTest do
     end
 
     test "validates branch steps have correct structure" do
-      steps = TestBeam.steps()
+      steps = TestBeam.__steps__()
       {:sequence, steps_list} = steps
       {:branch, _, branches} = List.last(steps_list)
 
@@ -289,10 +286,8 @@ defmodule Lux.BeamTest do
         @moduledoc false
         use Lux.Beam
 
-        def steps do
-          sequence do
-            step(:test, TestPrism, %{fail: :recoverable}, fallback: TestFallback)
-          end
+        sequence do
+          step(:test, TestPrism, %{fail: :recoverable}, fallback: TestFallback)
         end
       end
 
@@ -306,10 +301,8 @@ defmodule Lux.BeamTest do
         @moduledoc false
         use Lux.Beam
 
-        def steps do
-          sequence do
-            step(:test, TestPrism, %{fail: :unrecoverable}, fallback: TestFallback)
-          end
+        sequence do
+          step(:test, TestPrism, %{fail: :unrecoverable}, fallback: TestFallback)
         end
       end
 
@@ -322,14 +315,12 @@ defmodule Lux.BeamTest do
         @moduledoc false
         use Lux.Beam
 
-        def steps do
-          sequence do
-            step(:test, TestPrism, %{fail: true},
-              fallback: fn %{error: error, context: _ctx} ->
-                {:continue, %{handled: true, error: error}}
-              end
-            )
-          end
+        sequence do
+          step(:test, TestPrism, %{fail: true},
+            fallback: fn %{error: error, context: _ctx} ->
+              {:continue, %{handled: true, error: error}}
+            end
+          )
         end
       end
 
@@ -343,14 +334,12 @@ defmodule Lux.BeamTest do
         @moduledoc false
         use Lux.Beam
 
-        def steps do
-          sequence do
-            step(:test, TestPrism, %{fail: true},
-              fallback: fn %{error: _error, context: _ctx} ->
-                {:stop, "Stopped by inline fallback"}
-              end
-            )
-          end
+        sequence do
+          step(:test, TestPrism, %{fail: true},
+            fallback: fn %{error: _error, context: _ctx} ->
+              {:stop, "Stopped by inline fallback"}
+            end
+          )
         end
       end
 
@@ -363,16 +352,14 @@ defmodule Lux.BeamTest do
         @moduledoc false
         use Lux.Beam
 
-        def steps do
-          sequence do
-            step(:first, TestPrism, %{value: 123})
+        sequence do
+          step(:first, TestPrism, %{value: 123})
 
-            step(:second, TestPrism, %{fail: true},
-              fallback: fn %{context: ctx} ->
-                {:continue, %{previous_value: ctx[:steps][:first][:result].value}}
-              end
-            )
-          end
+          step(:second, TestPrism, %{fail: true},
+            fallback: fn %{context: ctx} ->
+              {:continue, %{previous_value: ctx[:steps][:first][:result].value}}
+            end
+          )
         end
       end
 
@@ -386,16 +373,14 @@ defmodule Lux.BeamTest do
         use Lux.Beam,
           generate_execution_log: true
 
-        def steps do
-          sequence do
-            step(:test, TestPrism, %{fail: true},
-              retries: 2,
-              retry_backoff: 1,
-              fallback: fn %{error: _error} ->
-                {:continue, %{retried: true}}
-              end
-            )
-          end
+        sequence do
+          step(:test, TestPrism, %{fail: true},
+            retries: 2,
+            retry_backoff: 1,
+            fallback: fn %{error: _error} ->
+              {:continue, %{retried: true}}
+            end
+          )
         end
       end
 
