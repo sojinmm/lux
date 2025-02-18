@@ -306,18 +306,6 @@ defmodule Lux.Agent do
     |> String.downcase()
   end
 
-  def beam?(module) when is_atom(module) do
-    function_exported?(module, :__steps__, 0) and function_exported?(module, :run, 2)
-  end
-
-  def beam?(_), do: false
-
-  def prism?(module) when is_atom(module) do
-    function_exported?(module, :handler, 2)
-  end
-
-  def prism?(_), do: false
-
   def __handle_info__({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
     timeout = opts[:timeout] || 60_000
 
@@ -327,7 +315,7 @@ defmodule Lux.Agent do
       fn ->
         try do
           result =
-            case {Lux.Agent.prism?(module), Lux.Agent.beam?(module)} do
+            case {Lux.prism?(module), Lux.beam?(module)} do
               {true, false} ->
                 module.handler(input, agent)
 
