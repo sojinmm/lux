@@ -36,7 +36,8 @@ defmodule Lux.AgentTest do
       description: "A simple agent that keeps things simple.",
       goal: "You have one simple goal. Not making things too complicated.",
       prisms: [TestPrism],
-      beams: [TestBeam]
+      beams: [TestBeam],
+      signal_handlers: [{TestSchema, TestPrism}]
   end
 
   defmodule MemoryAgent do
@@ -225,6 +226,44 @@ defmodule Lux.AgentTest do
 
       # Wait for the scheduled action to run
       assert_receive {:prism_called, %{test: "default_name"}}, @default_timeout
+    end
+  end
+
+  describe "signal handlers" do
+    test "can handle specified signal" do
+      signal = Lux.Signal.new(%{schema_id: TestSchema, payload: %{test: "signal"}})
+      pid = start_supervised!({SimpleAgent, %{name: "Signal Agent"}})
+
+      :erlang.trace(pid, true, [:call])
+
+      :erlang.trace_pattern(
+        {Lux.AgentTest.TestPrism, :handler, 2},
+        [{:_, [], [{:return_trace}]}],
+        [:local]
+      )
+
+      send(pid, {:signal, signal})
+
+      assert_receive {:trace, ^pid, :return_from, {Lux.AgentTest.TestPrism, :handler, _},
+                      {:ok, %{result: "test"}}},
+                     5000
+    end
+
+    test "ignore unspecified signal" do
+      signal = %Lux.Signal{schema_id: Unsupported, payload: %{test: "signal"}}
+      pid = start_supervised!({SimpleAgent, %{name: "Signal Agent"}})
+
+      :erlang.trace(pid, true, [:call])
+
+      :erlang.trace_pattern(
+        {SimpleAgent, :handle_signal, 2},
+        [{:_, [], [{:return_trace}]}],
+        [:local]
+      )
+
+      send(pid, {:signal, signal})
+
+      assert_receive {:trace, ^pid, :return_from, {SimpleAgent, :handle_signal, _}, :ignore}, 5000
     end
   end
 end

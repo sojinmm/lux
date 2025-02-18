@@ -12,6 +12,9 @@ Mix.install(
       api_keys: [
         openai: System.fetch_env!("LB_OPENAI_API_KEY")
       ],
+      open_ai_models: [
+        default: "gpt-4o-mini"
+      ],
       accounts: [
         hyperliquid_private_key: System.fetch_env!("LB_HYPERLIQUID_PRIVATE_KEY"),
         hyperliquid_address: System.fetch_env!("LB_HYPERLIQUID_ADDRESS"),
