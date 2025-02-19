@@ -37,7 +37,7 @@ Each role has specific capabilities that determine what tasks they can perform:
 
 ```elixir
 defmodule MyApp.Companies.BlogTeam do
-  use Lux.Company.DSL
+  use Lux.Company
 
   company do
     name "Content Creation Team"

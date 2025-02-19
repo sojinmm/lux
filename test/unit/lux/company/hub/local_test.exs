@@ -8,7 +8,7 @@ defmodule Lux.Company.Hub.LocalTest do
   # Define a proper test company using the DSL
   defmodule TestCompany do
     @moduledoc false
-    use Lux.Company.DSL
+    use Lux.Company
 
     company do
       name("Test Company")

@@ -5,7 +5,7 @@ defmodule Lux.Company.DSL do
   ## Example
 
       defmodule MyApp.Companies.ContentTeam do
-        use Lux.Company.DSL
+        use Lux.Company
 
         company do
           name "Content Creation Team"
@@ -60,11 +60,25 @@ defmodule Lux.Company.DSL do
       import Lux.Company.DSL
 
       Module.register_attribute(__MODULE__, :company_config, accumulate: false)
+      Module.register_attribute(__MODULE__, :company_defined, accumulate: false)
       @before_compile Lux.Company.DSL
+
+      def view do
+        %{__company__() | module: __MODULE__}
+      end
     end
   end
 
-  defmacro __before_compile__(_env) do
+  defmacro __before_compile__(env) do
+    if not Module.get_attribute(env.module, :company_defined) do
+      raise "The Lux.Company module requires a company block to be defined"
+    end
+
+    # Get the final company config for validation
+    env.module
+    |> Module.get_attribute(:company_config)
+    |> validate!()
+
     quote do
       def __company__ do
         @company_config
@@ -74,6 +88,7 @@ defmodule Lux.Company.DSL do
 
   defmacro company(do: block) do
     quote do
+      @company_defined true
       @company_config %{
         id: Lux.UUID.generate(),
         name: nil,
@@ -217,6 +232,67 @@ defmodule Lux.Company.DSL do
         |> Enum.reject(&(&1 == ""))
 
       var!(current_objective) = Map.put(var!(current_objective), :steps, steps)
+    end
+  end
+
+  defp validate!(config) do
+    cond do
+      is_nil(config.name) ->
+        raise CompileError, description: "Company requires a name"
+
+      is_nil(config.mission) ->
+        raise CompileError, description: "Company requires a mission"
+
+      is_nil(config.ceo) ->
+        raise CompileError, description: "Company requires a CEO"
+
+      true ->
+        validate_role!(config.ceo, :ceo)
+
+        Enum.each(config.roles, &validate_role!(&1, :member))
+
+        Enum.each(config.objectives, &validate_objective!/1)
+    end
+  end
+
+  # Private validation functions
+  defp validate_role!(role, type) do
+    if is_nil(role.name) do
+      raise CompileError,
+        description: "#{String.capitalize(to_string(type))} role requires a name"
+    end
+
+    if is_nil(role.agent) do
+      raise CompileError,
+        description: "#{String.capitalize(to_string(type))} role '#{role.name}' requires an agent"
+    end
+
+    if is_nil(role.goal) do
+      raise CompileError,
+        description: "#{String.capitalize(to_string(type))} role '#{role.name}' requires a goal"
+    end
+
+    if is_nil(role.capabilities) or role.capabilities == [] do
+      raise CompileError,
+        description:
+          "#{String.capitalize(to_string(type))} role '#{role.name}' requires at least one capability"
+    end
+  end
+
+  defp validate_objective!(objective) do
+    if is_nil(objective.description) do
+      raise CompileError,
+        description: "Objective :#{objective.name} requires a description"
+    end
+
+    if is_nil(objective.success_criteria) do
+      raise CompileError,
+        description: "Objective :#{objective.name} requires success criteria"
+    end
+
+    if is_nil(objective.steps) or objective.steps == [] do
+      raise CompileError,
+        description: "Objective :#{objective.name} requires at least one step"
     end
   end
 end

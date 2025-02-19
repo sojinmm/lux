@@ -3,7 +3,7 @@ defmodule Test.Support.Companies.ContentTeam do
   Defines a content creation company for testing purposes.
   Includes a CEO (Content Director), a researcher, and a writer.
   """
-  use Lux.Company.DSL
+  use Lux.Company
 
   company do
     name("Content Creation Team")

@@ -162,8 +162,9 @@ defmodule Lux.Company do
 
   @impl true
   def init({module, opts}) do
-    Logger.info("Starting company: #{module.name()}")
-    Logger.info("Mission: #{module.mission()}")
+    dbg()
+    Logger.info("Starting company: #{module.view().name}")
+    Logger.info("Mission: #{module.view().mission}")
     Logger.info("\nCEO:")
 
     # Initialize CEO
@@ -450,5 +451,11 @@ defmodule Lux.Company do
     end)
 
     {:ok, pid}
+  end
+
+  defmacro __using__(_opts) do
+    quote do
+      use Lux.Company.DSL
+    end
   end
 end
