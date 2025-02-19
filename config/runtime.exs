@@ -32,7 +32,7 @@ if config_env() in [:dev, :test] do
     default_signer: Ethers.Signer.Local,
     default_signer_opts: [
       private_key: env!("WALLET_PRIVATE_KEY", :string!),
-      rpc_url: env!("RPC_URL", :string!),
+      rpc_url: env!("RPC_URL", :string!)
     ]
 
   config :ethereumex,
