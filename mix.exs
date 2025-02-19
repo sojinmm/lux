@@ -75,7 +75,7 @@ defmodule Lux.MixProject do
 
   def package do
     [
-      organization: "spectral_labs",
+      name: "lux",
       description:
         "Lux is a powerful framework for building and orchestrating LLM-powered agent workflows. It provides a robust set of tools for creating, managing, and coordinating AI agents in complex business processes.",
       licenses: ["MIT"],
