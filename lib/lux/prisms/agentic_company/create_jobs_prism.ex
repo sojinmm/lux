@@ -49,15 +49,16 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobsPrism do
   alias Lux.Prisms.AgenticCompany.CreateJobPrism
 
   def handler(%{company_address: company_address, jobs: jobs}, _ctx) do
-    results = Enum.map(jobs, fn job ->
-      case CreateJobPrism.run(%{
-        company_address: company_address,
-        job_name: job.name
-      }) do
-        {:ok, result} -> Map.put(job, :job_id, result.job_id)
-        {:error, reason} -> {:error, reason}
-      end
-    end)
+    results =
+      Enum.map(jobs, fn job ->
+        case CreateJobPrism.run(%{
+               company_address: company_address,
+               job_name: job.name
+             }) do
+          {:ok, result} -> Map.put(job, :job_id, result.job_id)
+          {:error, reason} -> {:error, reason}
+        end
+      end)
 
     case Enum.find(results, &match?({:error, _}, &1)) do
       nil -> {:ok, %{jobs: Enum.filter(results, &is_map/1)}}

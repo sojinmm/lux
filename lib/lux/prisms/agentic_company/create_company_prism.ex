@@ -49,7 +49,7 @@ defmodule Lux.Prisms.AgenticCompany.CreateCompanyPrism do
     Logger.info("Creating company with name: #{company_name} and agent token: #{agent_token}")
 
     with {:ok, tx_hash} <- create_company_transaction(company_name, agent_token),
-         task <- Task.async(fn -> wait_for_company_created_event(tx_hash) end),
+         task = Task.async(fn -> wait_for_company_created_event(tx_hash) end),
          {:ok, company_address} <- Task.await(task, :timer.minutes(5)) do
       {:ok, %{company_address: company_address}}
     else
@@ -67,11 +67,15 @@ defmodule Lux.Prisms.AgenticCompany.CreateCompanyPrism do
 
   defp wait_for_company_created_event(tx_hash) do
     case Ethers.get_transaction_receipt(tx_hash) do
-      {:ok, receipt} -> process_receipt(receipt, tx_hash)
+      {:ok, receipt} ->
+        process_receipt(receipt, tx_hash)
+
       {:error, :transaction_receipt_not_found} ->
         Process.sleep(2000)
         wait_for_company_created_event(tx_hash)
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

@@ -54,9 +54,10 @@ defmodule Lux.Prisms.AgenticCompany.FormatOutputPrism do
     }
 
   def handler(%{company_address: company_address, job_results: %{jobs: jobs}}, _ctx) do
-    {:ok, %{
-      company_address: company_address,
-      jobs: jobs
-    }}
+    {:ok,
+     %{
+       company_address: company_address,
+       jobs: jobs
+     }}
   end
 end

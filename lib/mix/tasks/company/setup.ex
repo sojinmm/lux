@@ -15,6 +15,7 @@ defmodule Mix.Tasks.Company.Setup do
   """
 
   use Mix.Task
+
   require Logger
 
   @default_config "config/company_setup.yaml"
@@ -24,7 +25,7 @@ defmodule Mix.Tasks.Company.Setup do
   def run(args) do
     config_path = List.first(args) || @default_config
 
-    unless File.exists?(config_path) do
+    if !File.exists?(config_path) do
       Mix.raise("Configuration file not found: #{config_path}")
     end
 
@@ -48,9 +49,10 @@ defmodule Mix.Tasks.Company.Setup do
         name: config["company"]["name"],
         agent_token: config["company"]["agent_token"]
       },
-      jobs: Enum.map(config["jobs"], fn job ->
-        %{name: job["name"]}
-      end)
+      jobs:
+        Enum.map(config["jobs"], fn job ->
+          %{name: job["name"]}
+        end)
     }
 
     case Lux.Beams.AgenticCompany.SetupCompanyBeam.run(beam_input) do

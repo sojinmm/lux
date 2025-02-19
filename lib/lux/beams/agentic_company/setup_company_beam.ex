@@ -90,7 +90,10 @@ defmodule Lux.Beams.AgenticCompany.SetupCompanyBeam do
           type: :object,
           properties: %{
             name: %{type: :string, description: "Name of the company to create"},
-            agent_token: %{type: :string, description: "Address of the agent token to use (zero address if none)"}
+            agent_token: %{
+              type: :string,
+              description: "Address of the agent token to use (zero address if none)"
+            }
           },
           required: ["name", "agent_token"]
         },
@@ -126,11 +129,9 @@ defmodule Lux.Beams.AgenticCompany.SetupCompanyBeam do
     },
     generate_execution_log: true
 
-  alias Lux.Prisms.AgenticCompany.{
-    CreateCompanyPrism,
-    CreateJobsPrism,
-    FormatOutputPrism
-  }
+  alias Lux.Prisms.AgenticCompany.CreateCompanyPrism
+  alias Lux.Prisms.AgenticCompany.CreateJobsPrism
+  alias Lux.Prisms.AgenticCompany.FormatOutputPrism
 
   sequence do
     # First create the company
@@ -159,15 +160,16 @@ defmodule CreateJobsPrism do
   use Lux.Prism
 
   def handler(%{company_address: company_address, jobs: jobs}, _ctx) do
-    results = Enum.map(jobs, fn job ->
-      case Lux.Prisms.AgenticCompany.CreateJobPrism.run(%{
-        company_address: company_address,
-        job_name: job["name"]
-      }) do
-        {:ok, result} -> Map.put(job, "job_id", result.job_id)
-        {:error, reason} -> {:error, reason}
-      end
-    end)
+    results =
+      Enum.map(jobs, fn job ->
+        case Lux.Prisms.AgenticCompany.CreateJobPrism.run(%{
+               company_address: company_address,
+               job_name: job["name"]
+             }) do
+          {:ok, result} -> Map.put(job, "job_id", result.job_id)
+          {:error, reason} -> {:error, reason}
+        end
+      end)
 
     case Enum.find(results, &match?({:error, _}, &1)) do
       nil -> {:ok, %{jobs: Enum.filter(results, &is_map/1)}}
@@ -182,9 +184,10 @@ defmodule FormatOutputPrism do
   use Lux.Prism
 
   def handler(%{company_address: company_address, job_results: %{jobs: jobs}}, _ctx) do
-    {:ok, %{
-      company_address: company_address,
-      jobs: jobs
-    }}
+    {:ok,
+     %{
+       company_address: company_address,
+       jobs: jobs
+     }}
   end
 end

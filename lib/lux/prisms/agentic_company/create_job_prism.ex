@@ -49,8 +49,8 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobPrism do
     Logger.info("Creating job '#{job_name}' in company at #{company_address}")
 
     with {:ok, tx_hash} <- create_job_transaction(company_address, job_name),
-         _ <- Logger.info("Job creation transaction sent with hash: #{tx_hash}"),
-         task <- Task.async(fn -> wait_for_job_created_event(company_address, tx_hash) end),
+         Logger.info("Job creation transaction sent with hash: #{tx_hash}"),
+         task = Task.async(fn -> wait_for_job_created_event(company_address, tx_hash) end),
          {:ok, job_id} <- Task.await(task, :timer.minutes(5)) do
       {:ok, %{job_id: job_id}}
     else
@@ -61,19 +61,23 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobPrism do
   end
 
   defp create_job_transaction(company_address, job_name) do
-    AgenticCompany.create_job(job_name)
+    job_name
+    |> AgenticCompany.create_job()
     |> Ethers.send_transaction(from: Lux.Config.wallet_address(), to: company_address)
   end
 
   defp wait_for_job_created_event(company_address, tx_hash) do
     Logger.debug("Waiting for job creation event from transaction #{tx_hash}")
+
     case Ethers.get_transaction_receipt(tx_hash) do
       {:ok, receipt} ->
         Logger.debug("Received receipt for transaction #{tx_hash}")
         process_receipt(company_address, receipt, tx_hash)
+
       {:error, :transaction_receipt_not_found} ->
         Process.sleep(2000)
         wait_for_job_created_event(company_address, tx_hash)
+
       {:error, reason} ->
         Logger.error("Failed to get receipt for transaction #{tx_hash}: #{inspect(reason)}")
         {:error, reason}
