@@ -12,7 +12,8 @@ defmodule Lux.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
       # Package
-      description: "A framework for building and orchestrating LLM-powered agent workflows in Elixir",
+      description:
+        "A framework for building and orchestrating LLM-powered agent workflows in Elixir",
       package: package(),
       # Docs
       name: "Lux",
@@ -75,7 +76,8 @@ defmodule Lux.MixProject do
   def package do
     [
       organization: "spectral_labs",
-      description: "Lux is a powerful framework for building and orchestrating LLM-powered agent workflows. It provides a robust set of tools for creating, managing, and coordinating AI agents in complex business processes.",
+      description:
+        "Lux is a powerful framework for building and orchestrating LLM-powered agent workflows. It provides a robust set of tools for creating, managing, and coordinating AI agents in complex business processes.",
       licenses: ["MIT"],
       links: %{
         "GitHub" => "https://github.com/Spectral-Finance/lux",
