@@ -4,13 +4,16 @@ defmodule Lux.MixProject do
   def project do
     [
       app: :lux,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]],
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
+      # Package
+      description: "A framework for building and orchestrating LLM-powered agent workflows in Elixir",
+      package: package(),
       # Docs
       name: "Lux",
       source_url: "https://github.com/Spectral-Finance/lux",
@@ -66,6 +69,19 @@ defmodule Lux.MixProject do
         "test.integration": :test,
         "test.unit": :test
       ]
+    ]
+  end
+
+  def package do
+    [
+      organization: "spectral_labs",
+      description: "Lux is a powerful framework for building and orchestrating LLM-powered agent workflows. It provides a robust set of tools for creating, managing, and coordinating AI agents in complex business processes.",
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => "https://github.com/Spectral-Finance/lux",
+        "Changelog" => "https://github.com/Spectral-Finance/lux/blob/main/CHANGELOG.md"
+      },
+      files: ~w(lib .formatter.exs mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
 
