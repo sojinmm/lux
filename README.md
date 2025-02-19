@@ -224,34 +224,32 @@ defmodule MyApp.Beams.PortfolioRebalancing do
     name: "Portfolio Rebalancing",
     description: "End-to-end portfolio rebalancing workflow"
 
-  def steps do
-    sequence do
-      step(:analyze, MyApp.Prisms.PortfolioAnalysis, %{
-        compute_metrics: true,
-        include_history: true
+  sequence do
+    step(:analyze, MyApp.Prisms.PortfolioAnalysis, %{
+      compute_metrics: true,
+      include_history: true
+    })
+
+    parallel do
+      step(:risk, MyApp.Prisms.RiskAssessment, %{
+        portfolio: {:ref, "analyze.portfolio"},
+        metrics: {:ref, "analyze.metrics"}
       })
 
-      parallel do
-        step(:risk, MyApp.Prisms.RiskAssessment, %{
-          portfolio: {:ref, "analyze.portfolio"},
-          metrics: {:ref, "analyze.metrics"}
-        })
-
-        step(:market, MyApp.Prisms.MarketAnalysis, %{
-          assets: {:ref, "analyze.assets"}
-        })
-      end
-
-      step(:optimize, MyApp.Prisms.PortfolioOptimization, %{
-        current_state: {:ref, "analyze"},
-        risk_assessment: {:ref, "risk"},
-        market_data: {:ref, "market"}
-      })
-
-      step(:execute, MyApp.Prisms.TradeExecution, %{
-        trades: {:ref, "optimize.trades"}
+      step(:market, MyApp.Prisms.MarketAnalysis, %{
+        assets: {:ref, "analyze.assets"}
       })
     end
+
+    step(:optimize, MyApp.Prisms.PortfolioOptimization, %{
+      current_state: {:ref, "analyze"},
+      risk_assessment: {:ref, "risk"},
+      market_data: {:ref, "market"}
+    })
+
+    step(:execute, MyApp.Prisms.TradeExecution, %{
+      trades: {:ref, "optimize.trades"}
+    })
   end
 end
 ```

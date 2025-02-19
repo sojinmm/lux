@@ -4,25 +4,27 @@ defmodule Lux.Beam.Runner do
   based on the beam's structure.
   """
 
-  def run(beam, input, opts \\ []) do
-    with :ok <- validate_input(beam, input) do
-      initial_context = %{input: input, steps: %{}, step_index: 0}
-      steps = Lux.Beam.steps(beam)
+  alias Lux.Beam
 
-      case execute_steps(steps, initial_context) do
-        {:ok, context} ->
-          last_step = get_last_step(context)
-          log = generate_execution_log(beam, context, opts[:agent], last_step)
-          {:ok, last_step.result, log}
+  def run(%Beam{} = beam, input, opts \\ []) do
+    with :ok <- validate_input(beam, input),
+         initial_context = %{input: input, steps: %{}, step_index: 0},
+         %Beam{definition: steps} <- beam,
+         {:ok, context} <- execute_steps(steps, initial_context) do
+      last_step = get_last_step(context)
+      log = generate_execution_log(beam, context, opts[:agent], last_step)
+      {:ok, last_step.result, log}
+    else
+      {:error, error, context} ->
+        log = generate_execution_log(beam, context, opts[:agent], nil)
+        {:error, error, log}
 
-        {:error, error, context} ->
-          log = generate_execution_log(beam, context, opts[:agent], nil)
-          {:error, error, log}
-      end
+      error ->
+        error
     end
   end
 
-  defp validate_input(%Lux.Beam{input_schema: input_schema}, _input) do
+  defp validate_input(%Beam{input_schema: input_schema}, _input) do
     case input_schema do
       nil -> :ok
       _schema -> :ok

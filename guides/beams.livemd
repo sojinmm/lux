@@ -65,24 +65,21 @@ defmodule MyApp.Beams.ContentProcessor do
     },
     generate_execution_log: true
 
-  @impl true
-  def steps do
-    sequence do
-      step(:sentiment, Lux.Prisms.SentimentAnalysisPrism, [:input])
+  sequence do
+    step(:sentiment, Lux.Prisms.SentimentAnalysisPrism, [:input])
 
-      branch {__MODULE__, :should_enrich?} do
-        true ->
-          parallel do
-            step(:entities, MyApp.Prisms.EntityExtraction, [:input], retries: 2)
+    branch {__MODULE__, :should_enrich?} do
+      true ->
+        parallel do
+          step(:entities, MyApp.Prisms.EntityExtraction, [:input], retries: 2)
 
-            step(:summary, MyApp.Prisms.TextSummarization, [:input],
-              timeout: :timer.seconds(30)
-            )
-          end
+          step(:summary, MyApp.Prisms.TextSummarization, [:input],
+            timeout: :timer.seconds(30)
+          )
+        end
 
-        false ->
-          step(:skip, MyApp.Prisms.NoOp, %{})
-      end
+      false ->
+        step(:skip, MyApp.Prisms.NoOp, %{})
     end
   end
 
@@ -583,14 +580,12 @@ step(:important, ImportantPrism, %{}, store_io: true)
 defmodule MyApp.Beams.RobustBeam do
   use Lux.Beam
 
-  def steps do
-    sequence do
-      step(:risky, MyApp.Prisms.RiskyPrism, %{},
-        retries: 3,
-        retry_backoff: 1000,
-        fallback: MyApp.Fallbacks.RiskyFallback
-      )
-    end
+  sequence do
+    step(:risky, MyApp.Prisms.RiskyPrism, %{},
+      retries: 3,
+      retry_backoff: 1000,
+      fallback: MyApp.Fallbacks.RiskyFallback
+    )
   end
 end
 
@@ -636,17 +631,15 @@ You can also define fallbacks inline using anonymous functions:
 defmodule MyApp.Beams.InlineFallbackBeam do
   use Lux.Beam
 
-  def steps do
-    sequence do
-      step(:operation, MyApp.Prisms.OperationPrism, %{},
-        fallback: fn %{error: error, context: _ctx} ->
-          if recoverable?(error) do
-            {:continue, %{status: :degraded}}
-          else
-            {:stop, "Cannot proceed: #{inspect(error)}"}
-          end
-        end)
-    end
+  sequence do
+    step(:operation, MyApp.Prisms.OperationPrism, %{},
+      fallback: fn %{error: error, context: _ctx} ->
+        if recoverable?(error) do
+          {:continue, %{status: :degraded}}
+        else
+          {:stop, "Cannot proceed: #{inspect(error)}"}
+        end
+      end)
   end
 
   defp recoverable?(%{type: :temporary}), do: true
@@ -690,28 +683,26 @@ Fallbacks can:
 defmodule MyApp.Beams.ErrorHandlingBeam do
   use Lux.Beam
 
-  def steps do
-    sequence do
-      step(:operation, MyApp.Prisms.OperationPrism, [:input])
-      
-      branch {__MODULE__, :handle_error} do
-        :retry ->
-          step(:retry, MyApp.Prisms.RetryPrism, %{
-            original_input: [:steps, :operatoin, :input],
-            error: [:steps, :operatoin, :error]
-          })
+  sequence do
+    step(:operation, MyApp.Prisms.OperationPrism, [:input])
+    
+    branch {__MODULE__, :handle_error} do
+      :retry ->
+        step(:retry, MyApp.Prisms.RetryPrism, %{
+          original_input: [:steps, :operatoin, :input],
+          error: [:steps, :operatoin, :error]
+        })
 
-        :fallback ->
-          step(:fallback, MyApp.Prisms.FallbackPrism, %{
-            error: [:steps, :operatoin, :error]
-          })
+      :fallback ->
+        step(:fallback, MyApp.Prisms.FallbackPrism, %{
+          error: [:steps, :operatoin, :error]
+        })
 
-        :fail ->
-          step(:error, MyApp.Prisms.ErrorPrism, %{
-            error: [:steps, :operatoin, :error],
-            context: :context
-          })
-      end
+      :fail ->
+        step(:error, MyApp.Prisms.ErrorPrism, %{
+          error: [:steps, :operatoin, :error],
+          context: :context
+        })
     end
   end
 
@@ -834,46 +825,44 @@ defmodule MyApp.Beams.ComplexWorkflow do
   use Lux.Beam,
     generate_execution_log: true
 
-  def steps do
-    sequence do
-      parallel do
-        step(:data1, DataSource1, %{})
-        step(:data2, DataSource2, %{})
-        step(:data3, DataSource3, %{})
-      end
+  sequence do
+    parallel do
+      step(:data1, DataSource1, %{})
+      step(:data2, DataSource2, %{})
+      step(:data3, DataSource3, %{})
+    end
 
-      step(:validate, DataValidator, %{
-        data1: [:steps, :data1, :result],
-        data2: [:steps, :data2, :result],
-        data3: [:steps, :data3, :result]
-      })
+    step(:validate, DataValidator, %{
+      data1: [:steps, :data1, :result],
+      data2: [:steps, :data2, :result],
+      data3: [:steps, :data3, :result]
+    })
 
-      branch {__MODULE__, :process_path} do
-        :fast ->
-          step(:quick, QuickProcessor, %{
+    branch {__MODULE__, :process_path} do
+      :fast ->
+        step(:quick, QuickProcessor, %{
+          data: [:steps, :validate, :result]
+        })
+
+      :thorough ->
+        parallel do
+          step(:analysis, DeepAnalysis, %{
             data: [:steps, :validate, :result]
           })
 
-        :thorough ->
-          parallel do
-            step(:analysis, DeepAnalysis, %{
-              data: [:steps, :validate, :result]
-            })
+          step(:enrichment, DataEnrichment, %{
+            data: [:steps, :validate, :result]
+          })
 
-            step(:enrichment, DataEnrichment, %{
-              data: [:steps, :validate, :result]
-            })
-
-            step(:verification, DataVerification, %{
-              data: [:steps, :validate, :result]
-            })
-          end
-      end
-
-      step(:finalize, Finalizer, %{
-        result: [:steps, :process_path, :result]
-      })
+          step(:verification, DataVerification, %{
+            data: [:steps, :validate, :result]
+          })
+        end
     end
+
+    step(:finalize, Finalizer, %{
+      result: [:steps, :process_path, :result]
+    })
   end
 
   def process_path(ctx) do
@@ -1084,11 +1073,9 @@ defmodule MyApp.Beams.MonitoredBeam do
       ]
     }
 
-  def steps do
-    sequence do
-      step(:operation, MonitoredPrism, %{},
-        track: true)
-    end
+  sequence do
+    step(:operation, MonitoredPrism, %{},
+      track: true)
   end
 
   def alert?(metrics) do

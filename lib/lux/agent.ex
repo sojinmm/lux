@@ -104,7 +104,10 @@ defmodule Lux.Agent do
 
       unquote(signal_handler_functions)
 
-      def handle_signal(_agent, _signal), do: :ignore
+      def handle_signal(agent, signal) do
+        Logger.error("Agent #{agent.name} got unknown signal: #{inspect(signal)}")
+        :ignore
+      end
 
       # GenServer Client API
       def start_link(attrs \\ %{}) do
@@ -303,18 +306,6 @@ defmodule Lux.Agent do
     |> String.downcase()
   end
 
-  def beam?(module) when is_atom(module) do
-    function_exported?(module, :steps, 0) and function_exported?(module, :run, 2)
-  end
-
-  def beam?(_), do: false
-
-  def prism?(module) when is_atom(module) do
-    function_exported?(module, :handler, 2)
-  end
-
-  def prism?(_), do: false
-
   def __handle_info__({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
     timeout = opts[:timeout] || 60_000
 
@@ -324,7 +315,7 @@ defmodule Lux.Agent do
       fn ->
         try do
           result =
-            case {Lux.Agent.prism?(module), Lux.Agent.beam?(module)} do
+            case {Lux.prism?(module), Lux.beam?(module)} do
               {true, false} ->
                 module.handler(input, agent)
 

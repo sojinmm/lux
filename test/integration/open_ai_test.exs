@@ -3,14 +3,13 @@ defmodule Lux.Integration.LLM.OpenAITest do
   use IntegrationCase, async: true
 
   alias Lux.LLM.OpenAI
-  alias Lux.LLM.OpenAI.Config, as: LLMConfig
   alias Lux.LLM.ResponseSignal
   alias Lux.Signal
   alias Lux.SignalSchema
 
   describe "simple text request and response, no tools or structure output" do
     setup do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7
@@ -73,7 +72,7 @@ defmodule Lux.Integration.LLM.OpenAITest do
     end
 
     test "will return a structured response according to the schema" do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7,
@@ -161,20 +160,18 @@ defmodule Lux.Integration.LLM.OpenAITest do
           required: ["to_hash", "algorithm"]
         }
 
-      def steps do
-        sequence do
-          step(:just_do_nothing, LoggingPrism, [:input])
+      sequence do
+        step(:just_do_nothing, LoggingPrism, [:input])
 
-          step(:hash, HashPrism, %{
-            value: [:steps, :just_do_nothing, :result, "to_hash"],
-            algo: [:input, "algorithm"]
-          })
-        end
+        step(:hash, HashPrism, %{
+          value: [:steps, :just_do_nothing, :result, "to_hash"],
+          algo: [:input, "algorithm"]
+        })
       end
     end
 
     test "will return a function call result in the response when calling a prism" do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7
@@ -205,7 +202,7 @@ defmodule Lux.Integration.LLM.OpenAITest do
     end
 
     test "will return a function call result in the response when calling a beam" do
-      config = %LLMConfig{
+      config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
         model: Application.get_env(:lux, :open_ai_models)[:cheapest],
         temperature: 0.7
