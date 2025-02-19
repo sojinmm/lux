@@ -3,7 +3,6 @@ defmodule Lux.Integration.LLM.OpenAITest do
   use IntegrationCase, async: true
 
   alias Lux.LLM.OpenAI
-  alias Lux.LLM.OpenAI.Config, as: LLMConfig
   alias Lux.LLM.ResponseSignal
   alias Lux.Signal
   alias Lux.SignalSchema
@@ -161,15 +160,13 @@ defmodule Lux.Integration.LLM.OpenAITest do
           required: ["to_hash", "algorithm"]
         }
 
-      def steps do
-        sequence do
-          step(:just_do_nothing, LoggingPrism, [:input])
+      sequence do
+        step(:just_do_nothing, LoggingPrism, [:input])
 
-          step(:hash, HashPrism, %{
-            value: [:steps, :just_do_nothing, :result, "to_hash"],
-            algo: [:input, "algorithm"]
-          })
-        end
+        step(:hash, HashPrism, %{
+          value: [:steps, :just_do_nothing, :result, "to_hash"],
+          algo: [:input, "algorithm"]
+        })
       end
     end
 

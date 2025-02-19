@@ -27,10 +27,8 @@ defmodule Lux.LLM.OpenAITest do
       input_schema: %{type: :object, properties: %{value: %{type: :string}}},
       description: "A test beam"
 
-    def steps do
-      sequence do
-        step(:test, TestPrism, %{})
-      end
+    sequence do
+      step(:test, TestPrism, %{})
     end
   end
 

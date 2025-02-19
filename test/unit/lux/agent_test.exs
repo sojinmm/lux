@@ -53,10 +53,8 @@ defmodule Lux.AgentTest do
       name: "Test Beam",
       description: "A test beam"
 
-    def steps do
-      sequence do
-        step(:test, TestPrism, %{})
-      end
+    sequence do
+      step(:test, TestPrism, %{})
     end
   end
 
@@ -125,10 +123,8 @@ defmodule Lux.AgentTest do
       name: "Test Scheduled Beam",
       description: "A test beam for scheduled actions"
 
-    def steps do
-      sequence do
-        step(:test, TestScheduledPrism, %{test: "beam"})
-      end
+    sequence do
+      step(:test, TestScheduledPrism, %{test: "beam"})
     end
   end
 

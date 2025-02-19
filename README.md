@@ -224,34 +224,32 @@ defmodule MyApp.Beams.PortfolioRebalancing do
     name: "Portfolio Rebalancing",
     description: "End-to-end portfolio rebalancing workflow"
 
-  def steps do
-    sequence do
-      step(:analyze, MyApp.Prisms.PortfolioAnalysis, %{
-        compute_metrics: true,
-        include_history: true
+  sequence do
+    step(:analyze, MyApp.Prisms.PortfolioAnalysis, %{
+      compute_metrics: true,
+      include_history: true
+    })
+
+    parallel do
+      step(:risk, MyApp.Prisms.RiskAssessment, %{
+        portfolio: {:ref, "analyze.portfolio"},
+        metrics: {:ref, "analyze.metrics"}
       })
 
-      parallel do
-        step(:risk, MyApp.Prisms.RiskAssessment, %{
-          portfolio: {:ref, "analyze.portfolio"},
-          metrics: {:ref, "analyze.metrics"}
-        })
-
-        step(:market, MyApp.Prisms.MarketAnalysis, %{
-          assets: {:ref, "analyze.assets"}
-        })
-      end
-
-      step(:optimize, MyApp.Prisms.PortfolioOptimization, %{
-        current_state: {:ref, "analyze"},
-        risk_assessment: {:ref, "risk"},
-        market_data: {:ref, "market"}
-      })
-
-      step(:execute, MyApp.Prisms.TradeExecution, %{
-        trades: {:ref, "optimize.trades"}
+      step(:market, MyApp.Prisms.MarketAnalysis, %{
+        assets: {:ref, "analyze.assets"}
       })
     end
+
+    step(:optimize, MyApp.Prisms.PortfolioOptimization, %{
+      current_state: {:ref, "analyze"},
+      risk_assessment: {:ref, "risk"},
+      market_data: {:ref, "market"}
+    })
+
+    step(:execute, MyApp.Prisms.TradeExecution, %{
+      trades: {:ref, "optimize.trades"}
+    })
   end
 end
 ```
@@ -378,81 +376,19 @@ The setup process will:
 - Configure Python environment
 - Create necessary environment files
 
-### Manual Setup (if needed)
-
-If you prefer to set up manually or encounter issues with the automated setup:
-
-1. **Install asdf plugins**:
-```bash
-asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
-asdf plugin add elixir https://github.com/asdf-vm/asdf-elixir.git
-asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
-asdf plugin add python https://github.com/danhper/asdf-python.git
-asdf plugin add poetry https://github.com/asdf-community/asdf-poetry.git
-```
-
-2. **macOS-specific setup**:
-```bash
-# Install Xcode Command Line Tools
-xcode-select --install
-
-# Install Homebrew dependencies
-brew install autoconf automake libtool wxmac fop openssl@3
-
-# Configure OpenSSL for Erlang compilation
-export KERL_CONFIGURE_OPTIONS="--with-ssl=$(brew --prefix openssl@3)"
-echo 'export KERL_CONFIGURE_OPTIONS="--with-ssl=$(brew --prefix openssl@3)"' >> ~/.zshrc
-# Or if using bash:
-echo 'export KERL_CONFIGURE_OPTIONS="--with-ssl=$(brew --prefix openssl@3)"' >> ~/.bashrc
-```
-
-3. **Install tools with asdf**:
-```bash
-asdf install
-```
-
-4. **Install Elixir dependencies**:
-```bash
-mix local.hex --force
-mix local.rebar --force
-mix deps.get
-```
-
-5. **Set up Python environment**:
-```bash
-cd priv/python
-poetry install
-```
-
-6. **Configure environment**:
-```bash
-# Copy environment files
-cp dev.envrc dev.override.envrc
-cp test.envrc test.override.envrc
-```
-
 ### Troubleshooting
 
-If you encounter issues during setup:
+If you encounter any issues during setup or development:
+1. Check our comprehensive [Troubleshooting Guide](guides/troubleshooting.md)
+2. Join our [Discord community](https://discord.gg/luxframework) for real-time help
+3. Search or open an issue on [GitHub](https://github.com/spectrallabs/lux/issues)
 
-1. **Erlang compilation fails**:
-   - Ensure all system dependencies are installed
-   - Check OpenSSL configuration (especially on macOS)
-   - Try removing and reinstalling: `asdf uninstall erlang && asdf install erlang`
-
-2. **Python/Poetry issues**:
-   - Ensure you're in the correct directory for poetry commands
-   - Try removing and recreating the virtual environment
-
-3. **Test failures**:
-   - Ensure all environment variables are set correctly
-   - Check that all dependencies are installed
-   - Try running specific test files to isolate issues
-
-For more help:
-- Open an issue on GitHub
-- Join our Discord community
-- Check our troubleshooting guide (coming soon)
+Common issues and their solutions are documented in the troubleshooting guide, including:
+- ASDF and shell integration problems
+- Elixir/Mix installation issues
+- OpenSSL configuration on macOS
+- Python/Poetry setup problems
+- Permission and path-related errors
 
 ## Contributing
 
