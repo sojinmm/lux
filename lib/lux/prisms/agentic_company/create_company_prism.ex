@@ -70,51 +70,52 @@ defmodule Lux.Prisms.AgenticCompany.CreateCompanyPrism do
   end
 
   defp wait_for_company_created_event(tx_hash, wait_until) do
-    # First check if we have a receipt
     case Ethers.get_transaction_receipt(tx_hash) do
-      {:ok, receipt} ->
-        # Create an event filter for CompanyCreated events
-        event_filter =
-          AgenticCompanyFactory.EventFilters.company_created(nil, Lux.Config.wallet_address())
+      {:ok, receipt} -> process_receipt(receipt, tx_hash, wait_until)
+      {:error, :transaction_receipt_not_found} -> handle_receipt_not_found(tx_hash, wait_until)
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-        # Look through the logs for our event
-        case Enum.find(receipt["logs"], fn log ->
-               # Match the event signature
-               List.first(log["topics"]) == List.first(event_filter.topics)
-             end) do
-          nil ->
-            if System.monotonic_time(:millisecond) < wait_until do
-              # Wait 2 seconds before checking again
-              Process.sleep(2000)
-              wait_for_company_created_event(tx_hash, wait_until)
-            else
-              {:error, :event_not_found}
-            end
+  defp process_receipt(receipt, tx_hash, wait_until) do
+    event_filter =
+      AgenticCompanyFactory.EventFilters.company_created(nil, Lux.Config.wallet_address())
 
-          log ->
-            # The company address is the second topic (index 1)
-            # Remove "0x" prefix and get the last 40 characters (20 bytes) of the address
-            company_address =
-              log["topics"]
-              |> Enum.at(1)
-              |> String.slice(-40..-1)
-              |> then(&"0x#{&1}")
+    receipt["logs"]
+    |> Enum.find(&matching_event?(&1, event_filter))
+    |> handle_event_log(tx_hash, wait_until)
+  end
 
-            Logger.info("Found company address in event: #{company_address}")
-            {:ok, company_address}
-        end
+  defp matching_event?(log, event_filter) do
+    List.first(log["topics"]) == List.first(event_filter.topics)
+  end
 
-      {:error, :transaction_receipt_not_found} ->
-        if System.monotonic_time(:millisecond) < wait_until do
-          # Wait 2 seconds before checking again
-          Process.sleep(2000)
-          wait_for_company_created_event(tx_hash, wait_until)
-        else
-          {:error, :transaction_timeout}
-        end
+  defp handle_event_log(nil, tx_hash, wait_until) do
+    if System.monotonic_time(:millisecond) < wait_until do
+      Process.sleep(2000)
+      wait_for_company_created_event(tx_hash, wait_until)
+    else
+      {:error, :event_not_found}
+    end
+  end
 
-      {:error, reason} ->
-        {:error, reason}
+  defp handle_event_log(log, _tx_hash, _wait_until) do
+    company_address =
+      log["topics"]
+      |> Enum.at(1)
+      |> String.slice(-40..-1)
+      |> then(&"0x#{&1}")
+
+    Logger.info("Found company address in event: #{company_address}")
+    {:ok, company_address}
+  end
+
+  defp handle_receipt_not_found(tx_hash, wait_until) do
+    if System.monotonic_time(:millisecond) < wait_until do
+      Process.sleep(2000)
+      wait_for_company_created_event(tx_hash, wait_until)
+    else
+      {:error, :transaction_timeout}
     end
   end
 end
