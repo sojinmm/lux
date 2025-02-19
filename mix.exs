@@ -49,6 +49,8 @@ defmodule Lux.MixProject do
       {:crontab, "~> 1.1"},
       {:ex_json_schema, "~> 0.10.2"},
       {:nodejs, "~> 2.0"},
+      {:ethers, "~> 0.6.4"},
+      {:ex_secp256k1, "~> 0.7.4"},
       # test and dev dependencies
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
