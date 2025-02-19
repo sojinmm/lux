@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: help setup setup-asdf setup-deps setup-mac setup-linux test
+.PHONY: help setup setup-asdf setup-deps setup-mac setup-linux setup-shell test
 
 help: ## Show this help
 	@echo "Lux Development Setup Commands:"
@@ -15,9 +15,38 @@ setup: ## Run complete setup (recommended)
 		echo "  Then add it to your shell config and restart your terminal"; \
 		exit 1; \
 	fi
+	@$(MAKE) setup-shell
 	@$(MAKE) setup-asdf
 	@$(MAKE) setup-deps
 	@echo "Setup complete! Run 'make test' to verify installation"
+
+setup-shell: ## Configure shell for asdf
+	@echo "Configuring shell integration..."
+	@SHELL_TYPE=$$(basename $$SHELL); \
+	ASDF_DIR="$${HOME}/.asdf"; \
+	if [ "$$SHELL_TYPE" = "zsh" ]; then \
+		RCFILE="$$HOME/.zshrc"; \
+	else \
+		RCFILE="$$HOME/.bashrc"; \
+	fi; \
+	if [ ! -f "$$RCFILE" ]; then \
+		touch "$$RCFILE"; \
+	fi; \
+	if ! grep -q "asdf.sh" "$$RCFILE"; then \
+		echo "Adding asdf to $$RCFILE..."; \
+		echo '. "$$ASDF_DIR/asdf.sh"' >> "$$RCFILE"; \
+		if [ "$$SHELL_TYPE" = "zsh" ]; then \
+			echo "fpath=($$ASDF_DIR/completions $$fpath)" >> "$$RCFILE"; \
+		else \
+			echo '. "$$ASDF_DIR/completions/asdf.bash"' >> "$$RCFILE"; \
+		fi; \
+	fi; \
+	if [ "$$SHELL_TYPE" = "zsh" ] && [ -f "$$HOME/.zshenv" ]; then \
+		if ! grep -q "ASDF_DIR" "$$HOME/.zshenv"; then \
+			echo "export ASDF_DIR=$$ASDF_DIR" >> "$$HOME/.zshenv"; \
+		fi; \
+	fi
+	@echo "Shell configuration complete. Please run: source $$RCFILE"
 
 setup-asdf: ## Install asdf plugins and tools
 	@echo "Installing asdf plugins..."
@@ -38,8 +67,15 @@ setup-mac: ## Install Mac-specific dependencies
 		exit 1; \
 	fi
 	@brew install autoconf automake libtool wxmac fop openssl@3
-	@echo "export KERL_CONFIGURE_OPTIONS=\"--with-ssl=$$(brew --prefix openssl@3)\"" >> ~/.zshrc
-	@echo "export KERL_CONFIGURE_OPTIONS=\"--with-ssl=$$(brew --prefix openssl@3)\"" >> ~/.bashrc
+	@SHELL_TYPE=$$(basename $$SHELL); \
+	if [ "$$SHELL_TYPE" = "zsh" ]; then \
+		RCFILE="$$HOME/.zshrc"; \
+	else \
+		RCFILE="$$HOME/.bashrc"; \
+	fi; \
+	if ! grep -q "KERL_CONFIGURE_OPTIONS" "$$RCFILE"; then \
+		echo "export KERL_CONFIGURE_OPTIONS=\"--with-ssl=$$(brew --prefix openssl@3)\"" >> "$$RCFILE"; \
+	fi
 	@export KERL_CONFIGURE_OPTIONS="--with-ssl=$$(brew --prefix openssl@3)"
 
 setup-linux: ## Install Linux-specific dependencies
