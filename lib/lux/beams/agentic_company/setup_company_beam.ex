@@ -12,6 +12,7 @@ defmodule Lux.Beams.AgenticCompany.SetupCompanyBeam do
   company:
     name: Blockchain Solutions Inc
     agent_token: "0x0000000000000000000000000000000000000000"  # zero address for no token
+    ceo_wallet_address: "0x1234..."  # optional, defaults to WALLET_ADDRESS set in the environment variable.
   jobs:
     - name: Senior Smart Contract Developer
     - name: Blockchain Security Analyst
@@ -25,7 +26,8 @@ defmodule Lux.Beams.AgenticCompany.SetupCompanyBeam do
   {:ok, result, execution_log} = Lux.Beams.AgenticCompany.SetupCompanyBeam.run(%{
     company: %{
       name: "Blockchain Solutions Inc",
-      agent_token: "0x0000000000000000000000000000000000000000"
+      agent_token: "0x0000000000000000000000000000000000000000",
+      ceo_wallet_address: "0x1234..."  # optional
     },
     jobs: [
       %{name: "Senior Smart Contract Developer"},
@@ -93,6 +95,11 @@ defmodule Lux.Beams.AgenticCompany.SetupCompanyBeam do
             agent_token: %{
               type: :string,
               description: "Address of the agent token to use (zero address if none)"
+            },
+            ceo_wallet_address: %{
+              type: :string,
+              description:
+                "Optional wallet address to use as company CEO. Defaults to WALLET_ADDRESS set in the environment variable"
             }
           },
           required: ["name", "agent_token"]
@@ -131,25 +138,24 @@ defmodule Lux.Beams.AgenticCompany.SetupCompanyBeam do
 
   alias Lux.Prisms.AgenticCompany.CreateCompanyPrism
   alias Lux.Prisms.AgenticCompany.CreateJobsPrism
-  alias Lux.Prisms.AgenticCompany.FormatOutputPrism
 
   sequence do
     # First create the company
     step(:create_company, CreateCompanyPrism, %{
       company_name: [:input, :company, :name],
-      agent_token: [:input, :company, :agent_token]
+      agent_token: [:input, :company, :agent_token],
+      ceo_wallet_address: [:input, :company, :ceo_wallet_address]
     })
 
-    # Then create all the jobs in parallel
     step(:create_jobs, CreateJobsPrism, %{
       company_address: [:steps, :create_company, :result, :company_address],
-      jobs: [:input, :jobs]
+      jobs: [:input, :jobs],
+      ceo_wallet_address: [:input, :company, :ceo_wallet_address]
     })
 
-    # Finally, format the output
-    step(:format_output, FormatOutputPrism, %{
+    step(:return, Lux.Prisms.NoOp, %{
       company_address: [:steps, :create_company, :result, :company_address],
-      job_results: [:steps, :create_jobs, :result]
+      jobs: [:steps, :create_jobs, :result, :jobs]
     })
   end
 end

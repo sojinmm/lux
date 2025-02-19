@@ -25,6 +25,11 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobsPrism do
             },
             required: [:name]
           }
+        },
+        ceo_wallet_address: %{
+          type: :string,
+          description:
+            "Optional wallet address to use as company CEO. Defaults to WALLET_ADDRESS set in the environment variable."
         }
       },
       required: [:company_address, :jobs]
@@ -48,12 +53,21 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobsPrism do
 
   alias Lux.Prisms.AgenticCompany.CreateJobPrism
 
-  def handler(%{company_address: company_address, jobs: jobs}, _ctx) do
+  def handler(%{company_address: company_address, jobs: jobs} = input, _ctx) do
+    # Get the CEO wallet address from input, but let CreateJobPrism handle the default
+    ceo_wallet =
+      case Map.get(input, :ceo_wallet_address) do
+        nil -> nil
+        "" -> nil
+        wallet -> wallet
+      end
+
     results =
       Enum.map(jobs, fn job ->
         case CreateJobPrism.run(%{
                company_address: company_address,
-               job_name: job.name
+               job_name: job.name,
+               ceo_wallet_address: ceo_wallet
              }) do
           {:ok, result} -> Map.put(job, :job_id, result.job_id)
           {:error, reason} -> {:error, reason}

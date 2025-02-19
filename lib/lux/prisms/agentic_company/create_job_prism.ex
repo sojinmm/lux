@@ -6,7 +6,8 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobPrism do
 
       iex> Lux.Prisms.AgenticCompany.CreateJobPrism.run(%{
       ...>   company_address: "0xdf610daa6acc8c7ca4b68dfd2a7bed96bafeee34",
-      ...>   job_name: "Content Writer"
+      ...>   job_name: "Content Writer",
+      ...>   ceo_wallet_address: "0x1234..."  # optional, defaults to WALLET_ADDRESS set in the environment variable
       ...> })
       {:ok, %{
         job_id: "0xabcd..."  # The ID of the newly created job
@@ -26,6 +27,11 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobPrism do
         job_name: %{
           type: :string,
           description: "Name of the job to create"
+        },
+        ceo_wallet_address: %{
+          type: :string,
+          description:
+            "Optional wallet address to use as company CEO. Defaults to WALLET_ADDRESS set in the environment variable."
         }
       },
       required: ["company_address", "job_name"]
@@ -41,14 +47,25 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobPrism do
       required: ["job_id"]
     }
 
+  alias Lux.Config
   alias Lux.Web3.Contracts.AgenticCompany
 
   require Logger
 
-  def handler(%{company_address: company_address, job_name: job_name}, _ctx) do
-    Logger.info("Creating job '#{job_name}' in company at #{company_address}")
+  def handler(%{company_address: company_address, job_name: job_name} = input, _ctx) do
+    # Get the CEO wallet address from input or default to Config.wallet_address()
+    ceo_wallet =
+      case Map.get(input, :ceo_wallet_address) do
+        nil -> Config.wallet_address()
+        "" -> Config.wallet_address()
+        wallet -> wallet
+      end
 
-    with {:ok, tx_hash} <- create_job_transaction(company_address, job_name),
+    Logger.info(
+      "Creating job '#{job_name}' in company at #{company_address} as CEO #{ceo_wallet}"
+    )
+
+    with {:ok, tx_hash} <- create_job_transaction(company_address, job_name, ceo_wallet),
          Logger.info("Job creation transaction sent with hash: #{tx_hash}"),
          task = Task.async(fn -> wait_for_job_created_event(company_address, tx_hash) end),
          {:ok, job_id} <- Task.await(task, :timer.minutes(5)) do
@@ -60,10 +77,10 @@ defmodule Lux.Prisms.AgenticCompany.CreateJobPrism do
     end
   end
 
-  defp create_job_transaction(company_address, job_name) do
+  defp create_job_transaction(company_address, job_name, ceo_wallet) do
     job_name
     |> AgenticCompany.create_job()
-    |> Ethers.send_transaction(from: Lux.Config.wallet_address(), to: company_address)
+    |> Ethers.send_transaction(from: ceo_wallet, to: company_address)
   end
 
   defp wait_for_job_created_event(company_address, tx_hash) do
