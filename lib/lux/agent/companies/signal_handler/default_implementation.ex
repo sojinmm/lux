@@ -9,6 +9,7 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   @behaviour Lux.Agent.Companies.SignalHandler
 
   alias Lux.LLM
+  alias Lux.LLM.ResponseSignal
   alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
   alias Lux.Signal
@@ -39,9 +40,14 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   @impl true
   def handle_task_assignment(%Signal{payload: payload} = signal, context) do
     Logger.info("Analyzing task: #{payload["title"]}")
+    Logger.debug("Task context: #{inspect(context)}")
+    Logger.debug("Task payload: #{inspect(payload)}")
 
     with {:ok, analysis} <- analyze_task(payload, context),
          {:ok, result} <- execute_task(analysis, context) do
+      Logger.debug("Task analysis successful: #{inspect(analysis)}")
+      Logger.debug("Task execution successful: #{inspect(result)}")
+
       # Create success response
       {:ok,
        %Signal{
@@ -66,6 +72,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
        }}
     else
       {:error, stage, reason} ->
+        Logger.error("Task failed at #{stage}: #{inspect(reason)}")
+        Logger.error("Context during failure: #{inspect(context)}")
         # Create failure response with details
         {:ok,
          %Signal{
@@ -167,38 +175,78 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   # Private Functions
 
   defp analyze_task(payload, context) do
+    Logger.debug("Starting task analysis with payload: #{inspect(payload)}")
+
     prompt = """
-    Analyze this task and determine the requirements:
+    Analyze this task and determine if it is possible to complete with the available tools:
     Title: #{payload["title"]}
     Description: #{payload["description"]}
 
     Consider:
-    1. What type of task is this?
-    2. What tools might be needed?
-    3. What should the output look like?
-    4. Are there any constraints to consider?
-    5. What artifacts should be produced?
-
-    Provide a structured analysis that includes:
-    - Task type
-    - Required capabilities
-    - Expected outputs
-    - Success criteria
+    1. Is this task possible to complete with the available tools?
+    2. What type of task is this?
+    3. What tools might be needed?
+    4. What should the output look like?
+    5. Are there any constraints to consider?
+    6. What artifacts should be produced?
+    7. Are the requirements clear and complete?
     """
 
     # Let OpenAI handle the tool schema transformation
     tools = get_available_tools(context)
 
-    case LLM.call(prompt, tools, %{structured_output: true}) do
+    llm_opts =
+      context
+      |> get_llm_opts()
+      |> Map.put(:json_response, true)
+      |> Map.put(:json_schema, %{
+        "name" => "AnalysisFeasibilitySchema",
+        "type" => "object",
+        "properties" => %{
+          "feasibility" => %{
+            "type" => "object",
+            "properties" => %{
+              "possible" => %{"type" => "boolean"},
+              "reason" => %{"type" => "string"}
+            }
+          }
+        }
+      })
+
+    Logger.debug("Available tools for analysis: #{inspect(tools)}")
+
+    case LLM.call(prompt, tools, llm_opts) do
       {:ok, %LLM.Response{structured_output: analysis}} ->
-        {:ok, analysis}
+        Logger.debug("Analysis successful: #{inspect(analysis)}")
+
+        case analysis do
+          %{"feasibility" => %{"possible" => false, "reason" => reason}} ->
+            {:error, :analysis, "Task is impossible: #{reason}"}
+
+          _ ->
+            {:ok, analysis}
+        end
+
+      {:ok, %Signal{schema_id: ResponseSignal} = response} ->
+        Logger.debug("Analysis successful: #{inspect(response)}")
+
+        case response.payload.content do
+          %{"feasibility" => %{"possible" => false, "reason" => reason}} ->
+            {:error, :analysis, "Task is impossible: #{reason}"}
+
+          content ->
+            {:ok, content}
+        end
 
       {:error, reason} ->
+        Logger.error("Analysis failed: #{inspect(reason)}")
         {:error, :analysis, reason}
     end
   end
 
   defp execute_task(analysis, context) do
+    Logger.debug("Starting task execution with analysis: #{inspect(analysis)}")
+
     prompt = """
     Given this task analysis:
     #{format_analysis(analysis)}
@@ -208,28 +256,44 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
     1. Which tools to use
     2. What parameters to provide
     3. How to combine the results
+
+    If at any point you determine the task cannot be completed, explain why.
     """
 
     # Let OpenAI handle tool execution
+    llm_opts = get_llm_opts(context)
     tools = get_available_tools(context)
+    Logger.debug("Available tools for execution: #{inspect(tools)}")
 
-    case LLM.call(prompt, tools, %{structured_output: true}) do
+    case LLM.call(prompt, tools, llm_opts) do
       {:ok, %LLM.Response{structured_output: result}} ->
+        Logger.debug("Execution successful: #{inspect(result)}")
         {:ok, result}
 
+      {:ok, %Signal{schema_id: ResponseSignal} = response} ->
+        Logger.debug("Execution successful: #{inspect(response)}")
+        {:ok, response.payload.content}
+
       {:error, reason} ->
+        Logger.error("Execution failed: #{inspect(reason)}")
         {:error, :execution, reason}
     end
   end
 
-  defp format_analysis(analysis) do
+  defp format_analysis(analysis) when is_map(analysis) do
     """
-    Task Type: #{analysis.task_type}
-    Required Capabilities: #{Enum.join(analysis.capabilities, ", ")}
-    Expected Outputs: #{Enum.join(analysis.expected_outputs, ", ")}
-    Success Criteria: #{Enum.join(analysis.success_criteria, ", ")}
+    Task Type: #{analysis["task_type"]}
+    Required Capabilities: #{format_data(analysis["required_capabilities"])}
+    Expected Outputs: #{format_data(analysis["expected_outputs"])}
+    Success Criteria: #{format_data(analysis["success_criteria"])}
     """
   end
+
+  defp format_data(data) when is_map(data) or is_list(data) do
+    Jason.encode!(data)
+  end
+
+  defp format_data(data), do: inspect(data)
 
   defp get_available_tools(context) do
     (context.beams || []) ++ (context.lenses || []) ++ (context.prisms || [])
@@ -276,4 +340,12 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   end
 
   defp calculate_progress(_), do: 0
+
+  def get_llm_opts(%{template_opts: %{llm_opts: llm_opts}}) do
+    llm_opts
+  end
+
+  def get_llm_opts(%{llm_config: llm_opts}), do: llm_opts
+
+  def get_llm_opts(_), do: raise("No LLM configuration found to run the task.")
 end

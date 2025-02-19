@@ -57,10 +57,11 @@ defmodule Lux.Company.DSL do
 
   defmacro __using__(_opts) do
     quote do
-      require Logger
-      Logger.debug("Using Lux.Company.DSL in #{__MODULE__}")
       import Lux.Company.DSL
 
+      require Logger
+
+      Logger.debug("Using Lux.Company.DSL in #{__MODULE__}")
       Module.register_attribute(__MODULE__, :company_config, accumulate: false)
       Module.register_attribute(__MODULE__, :company_defined, accumulate: false)
       @before_compile Lux.Company.DSL
@@ -73,6 +74,7 @@ defmodule Lux.Company.DSL do
 
   defmacro __before_compile__(env) do
     require Logger
+
     Logger.debug("Before compile hook for #{env.module}")
 
     if not Module.get_attribute(env.module, :company_defined) do

@@ -7,6 +7,21 @@ defmodule Lux.Config do
   @type eth_key :: String.t()
   @type eth_address :: String.t()
 
+  def runtime(key, path, default \\ nil) do
+    {:runtime_config, key, path, default}
+  end
+
+  def resolve({:runtime_config, key, path, default}) do
+    case Application.get_env(:lux, key) do
+      nil -> default
+      config -> get_in(config, path)
+    end
+  end
+
+  def resolve(value) do
+    value
+  end
+
   @doc """
   Gets the Alchemy API key from configuration.
   Raises if the key is not configured.

@@ -60,8 +60,8 @@ defmodule Lux.LLM.OpenAI do
   @impl true
   def call(prompt, tools, config) do
     config =
-      struct(
-        Config,
+      Config
+      |> struct(
         Map.merge(
           %{
             model: Application.get_env(:lux, :open_ai_models)[:default],
@@ -70,13 +70,14 @@ defmodule Lux.LLM.OpenAI do
           config
         )
       )
+      |> dbg()
 
     messages = config.messages ++ build_messages(prompt)
     tools_config = build_tools_config(tools)
 
     body =
       %{
-        model: config.model,
+        model: Lux.Config.resolve(config.model),
         messages: messages,
         temperature: config.temperature,
         frequency_penalty: config.frequency_penalty,
@@ -89,7 +90,7 @@ defmodule Lux.LLM.OpenAI do
       url: @endpoint,
       json: body,
       headers: [
-        {"Authorization", "Bearer #{config.api_key}"},
+        {"Authorization", "Bearer #{Lux.Config.resolve(config.api_key)}"},
         {"Content-Type", "application/json"}
       ]
     ]
@@ -300,6 +301,10 @@ defmodule Lux.LLM.OpenAI do
     |> case do
       {:module, module_name} ->
         execute_tool(module_name, args, ctx)
+
+      {:error, :nofile} ->
+        {:error,
+         "Failed to load tool module #{tool_name}: It doesn't seems to be implemented or reacheable"}
 
       {:error, error} ->
         {:error, "Failed to load tool module #{tool_name}: #{inspect(error)}"}

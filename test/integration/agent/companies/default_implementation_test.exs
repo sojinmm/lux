@@ -2,82 +2,39 @@ defmodule Lux.Integration.Agent.Companies.DefaultImplementationTest do
   use IntegrationCase, async: true
 
   alias Lux.Agent.Companies.SignalHandler.DefaultImplementation
+  alias Lux.Config
   alias Lux.Schemas.Companies.TaskSignal
   alias Lux.Signal
-
-  # Test tools that perform real operations
-  defmodule SearchPrism do
-    @moduledoc false
-    use Lux.Prism,
-      name: "SearchPrism",
-      description: "Searches for information in a given text",
-      input_schema: %{
-        type: "object",
-        properties: %{
-          "query" => %{
-            type: "string",
-            description: "The search query"
-          },
-          "text" => %{
-            type: "string",
-            description: "The text to search in"
-          }
-        },
-        required: ["query", "text"]
-      },
-      capabilities: ["search", "analyze"]
-
-    def handler(%{"query" => query, "text" => text}, _context) do
-      if String.contains?(String.downcase(text), String.downcase(query)) do
-        {:ok,
-         %{
-           found: true,
-           matches: [text]
-         }}
-      else
-        {:ok,
-         %{
-           found: false,
-           matches: []
-         }}
-      end
-    end
-  end
-
-  defmodule SummarizeLens do
-    @moduledoc false
-    use Lux.Lens,
-      name: "SummarizeLens",
-      description: "Summarizes a given text",
-      schema: %{
-        type: "object",
-        properties: %{
-          "text" => %{
-            type: "string",
-            description: "The text to summarize"
-          },
-          "max_length" => %{
-            type: "integer",
-            description: "Maximum length of the summary",
-            default: 100
-          }
-        },
-        required: ["text"]
-      },
-      capabilities: ["summarize", "analyze"]
-
-    def call(%{"text" => text, "max_length" => max_length}, _context) do
-      summary = String.slice(text, 0, max_length)
-      {:ok, %{summary: summary}}
-    end
-  end
+  alias Test.Support.Companies.ContentTeam.SearchPrism
+  alias Test.Support.Companies.ContentTeam.SummarizeLens
+  alias Test.Support.Companies.ContentTeam.TestAgent
 
   describe "task execution with real LLM" do
     setup do
+      # Initialize the test agent with tools
+      {:ok, agent} =
+        TestAgent.start_link(
+          tools: [
+            SearchPrism,
+            SummarizeLens
+          ]
+        )
+
+      # Create proper context with the agent
       context = %{
+        agent: agent,
         beams: [],
         lenses: [SummarizeLens],
-        prisms: [SearchPrism]
+        prisms: [SearchPrism],
+        template_opts: %{
+          llm_opts: %{
+            provider: :open_ai,
+            model: Config.runtime(:open_ai_models, [:default]),
+            temperature: 0.7,
+            max_tokens: 500,
+            api_key: Config.runtime(:api_keys, [:integration_openai])
+          }
+        }
       }
 
       text = """
@@ -102,7 +59,7 @@ defmodule Lux.Integration.Agent.Companies.DefaultImplementationTest do
         sender: "sender-1"
       }
 
-      %{context: context, signal: signal}
+      %{context: context, signal: signal, agent: agent}
     end
 
     test "executes task with real tools", %{context: context, signal: signal} do
@@ -113,10 +70,22 @@ defmodule Lux.Integration.Agent.Companies.DefaultImplementationTest do
       assert response.payload["result"]["success"] == true
 
       # Verify the result contains both search and summary
-      result = response.payload["result"]["output"]
+      result = Jason.decode!(response.payload["result"]["output"])
+
       assert is_map(result)
-      assert Map.has_key?(result, :search) or Map.has_key?(result, "search")
-      assert Map.has_key?(result, :summary) or Map.has_key?(result, "summary")
+      assert Map.has_key?(result, "search")
+      assert Map.has_key?(result, "summary")
+      assert result["search"]["found"] == true
+      # Fix the expected values to match actual tool implementations
+      assert result["search"]["matches"] == [
+               """
+               The quick brown fox jumps over the lazy dog.
+               This pangram contains every letter of the English alphabet.
+               It is often used for testing fonts and keyboards.
+               """
+             ]
+
+      assert String.starts_with?(result["summary"], "The quick brown fox")
     end
 
     @tag :integration
@@ -128,6 +97,17 @@ defmodule Lux.Integration.Agent.Companies.DefaultImplementationTest do
       assert response.payload["type"] == "failure"
       assert response.payload["status"] == "failed"
       assert response.payload["result"]["success"] == false
+    end
+
+    # Clean up after tests
+    setup %{agent: agent} do
+      on_exit(fn ->
+        if Process.alive?(agent) do
+          GenServer.stop(agent)
+        end
+      end)
+
+      :ok
     end
   end
 end
