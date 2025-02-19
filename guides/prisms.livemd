@@ -5,7 +5,7 @@
 ```elixir
 Mix.install(
   [
-    {:lux, git: "https://github.com/spectral-finance/lux.git"},
+    {:lux, "~> 0.3.0"},
     {:xml_builder, "~> 2.3"},
     {:csv, "~> 3.2"},
     {:swoosh, "~> 1.17"}

@@ -1,8 +1,8 @@
 # Lux
 
 <!-- [![Build Status](https://github.com/spectrallabs/lux/workflows/CI/badge.svg)](https://github.com/spectrallabs/lux/actions) -->
-<!-- [![Hex.pm](https://img.shields.io/hexpm/v/lux.svg)](https://hex.pm/packages/lux)
-[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/lux) -->
+[![Hex.pm](https://img.shields.io/hexpm/v/lux.svg)](https://hex.pm/packages/lux)
+[![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/lux)
 
 > ⚠️ **Note**: Lux is currently under heavy development and should be considered pre-alpha software. The API and architecture are subject to significant changes. We welcome feedback and contributions.
 
@@ -24,7 +24,7 @@ Lux is a powerful Elixir framework for building intelligent, adaptive, and colla
 # Add Lux to your dependencies
 def deps do
   [
-    {:lux, "~> 0.1.0"}
+    {:lux, "~> 0.3.0"}
   ]
 end
 
@@ -56,22 +56,10 @@ defmodule MyApp.Agents.TradingAgent do
       MyApp.Prisms.MarketAnalysis,
       MyApp.Prisms.RiskAssessment,
       MyApp.Prisms.OrderExecution
+    ],
+    signal_handlers: [
+      {MyApp.Schemas.MarketSignal, MyApp.Prisms.OrderExecution}
     ]
-
-  # Handle incoming market signals
-  def handle_signal(agent, %{schema_id: MyApp.Schemas.MarketSignal} = signal) do
-    case signal.payload.action do
-      "buy" -> 
-        {:ok, [{MyApp.Prisms.OrderExecution, Map.put(signal.payload, :type, :market_buy)}]}
-      "sell" -> 
-        {:ok, [{MyApp.Prisms.OrderExecution, Map.put(signal.payload, :type, :market_sell)}]}
-      "hold" ->
-        :ignore
-    end
-  end
-
-  # Ignore other signal types
-  def handle_signal(_agent, _signal), do: :ignore
 end
 
 # Start and interact with your agent
@@ -103,36 +91,11 @@ defmodule MyApp.Agents.CryptoHedgeFundCEO do
         "research-analyst"
       ],
       collaboration_protocols: [:ask, :tell, :delegate]
-    }
-  
-  # Handle performance reports
-  def handle_signal(agent, %{schema_id: MyApp.Schemas.PerformanceReport} = signal) do
-    case analyze_performance(signal.payload) do
-      {:rebalance, changes} ->
-        {:ok, [
-          {MyApp.Prisms.PortfolioRebalance, changes},
-          {MyApp.Prisms.NotifyStakeholders, %{type: :portfolio_update}}
-        ]}
-      {:investigate, metrics} ->
-        {:ok, [
-          {MyApp.Prisms.RiskAnalysis, metrics},
-          {MyApp.Prisms.RequestAnalystReport, metrics}
-        ]}
-      :satisfactory ->
-        :ignore
-    end
-  end
-
-  # Handle market alerts
-  def handle_signal(agent, %{schema_id: MyApp.Schemas.MarketAlert} = signal) do
-    {:ok, [
-      {MyApp.Prisms.EmergencyAssessment, signal.payload},
-      {MyApp.Prisms.NotifyRiskManager, signal.payload}
-    ]}
-  end
-
-  # Ignore other signals
-  def handle_signal(_agent, _signal), do: :ignore
+    },
+    signal_handlers: [
+      {MyApp.Schemas.PerformanceReport, MyApp.Prisms.PerformanceReport},
+      {MyApp.Schemas.MarketAlert, MyApp.Prisms.MarketAlert}
+    ]
 end
 
 # Start the CEO agent
@@ -253,7 +216,7 @@ defmodule MyApp.Beams.PortfolioRebalancing do
   end
 end
 ```
-[Learn more about Beams](guides/beams.md)
+[Learn more about Beams](guides/beams.livemd)
 
 ## Python Integration
 

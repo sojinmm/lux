@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:lux, git: "https://github.com/spectral-finance/lux.git"},
+    {:lux, "~> 0.3.0"}
     {:kino, "~> 0.14.2"}
   ],
   config: [

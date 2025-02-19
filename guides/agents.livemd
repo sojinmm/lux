@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:lux, git: "https://github.com/spectral-finance/lux.git"},
+    {:lux, "~> 0.3.0"},
     {:kino, "~> 0.14.2"}
   ],
   config: [
@@ -473,25 +473,31 @@ Agents can process signals from other components:
 
 ```elixir
 defmodule MyApp.Agents.SignalAwareAgent do
-  use Lux.Agent
+  use Lux.Agent,
+    signal_handlers: [
+      {MyApp.Schemas.TaskSignal, MyApp.Prisms.TaskProcessor}
+    ]
+end
 
-  @impl true
-  def handle_signal(_agent, %{schema_id: MyApp.Schemas.TaskSignal} = signal) do
-    # Process the task signal
-    {:ok, process_task(signal.payload)}
+defmodule MyApp.Prisms.TaskProcessor do
+  use Lux.Prism
+
+  def handler(_signal, _agent) do
+    {:ok, "Signal processed"}
   end
-
-  def handle_signal(_agent, _signal), do: :ignore
-
-  defp process_task(payload), do: payload
 end
 
 {:ok, pid} = Kino.start_child({MyApp.Agents.SignalAwareAgent, %{}})
 
-MyApp.Agents.SignalAwareAgent.handle_signal(pid, %{
-  schema_id: MyApp.Schemas.TaskSignal,
-  payload: %{data: "this signal data"}
-})
+# send singal to agent
+MyApp.Agents.SignalAwareAgent.send_message(
+  pid,
+  {:signal,
+   %{
+     schema_id: MyApp.Schemas.TaskSignal,
+     payload: %{data: "this signal data"}
+   }}
+)
 ```
 
 ### Component Integration
@@ -510,3 +516,5 @@ end
 
 Kino.nothing()
 ```
+
+<!-- livebook:{"offset":13357,"stamp":{"token":"XCP.5uDaDN_ax0taOD_UDP8WfS0Uqs8jhY9Vuvzs_U1nf8QawsDmFPRylwoenPaXdFgU5DomWyZL5CDo6P7xq2Bl8gHxdbBAdV-tIAxr8ldurMXQvw1Gcf06X3z3aFeZJmrI0W_pp8uoLoBAzhpTYXgeuksT_UXdf8UQdbHlutFi3uRV38cjZ8Gv2Gs3yWm8-I1YF7DJqBQTOGgp0eNdpHEddDfiBRNX","version":2}} -->
