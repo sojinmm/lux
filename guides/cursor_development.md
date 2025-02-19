@@ -47,7 +47,7 @@ Create a new prism that [describe functionality]. Please follow the same structu
 #### Creating Beams
 
 Reference the beams guide and examples when creating new beams:
-- `guides/beams.md`
+- `guides/beams.livemd`
 - Existing beam implementations
 
 Example prompt:
@@ -62,7 +62,7 @@ Create a new beam that [describe functionality]. Please include:
 #### Creating Lenses
 
 When working with lenses, refer to:
-- `guides/lenses.md`
+- `guides/lenses.livemd`
 - Existing lens implementations
 
 Example prompt:
