@@ -103,12 +103,10 @@ defmodule Lux.Beams.MyWorkflowBeam do
     name: "My Workflow",
     description: "Orchestrates a specific workflow"
 
-  def steps do
-    sequence do
-      step(:validate, MyValidatorPrism, %{...})
-      step(:process, MyProcessorPrism, %{...})
-      step(:notify, MyNotifierPrism, %{...})
-    end
+  sequence do
+    step(:validate, MyValidatorPrism, %{...})
+    step(:process, MyProcessorPrism, %{...})
+    step(:notify, MyNotifierPrism, %{...})
   end
 end
 

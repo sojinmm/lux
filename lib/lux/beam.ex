@@ -37,32 +37,29 @@ defmodule Lux.Beam do
       },
       generate_execution_log: true
 
-    @impl true
-    def steps do
-      sequence do
-        step(:market_data, MyApp.Prisms.MarketData, %{symbol: :symbol})
+    sequence do
+      step(:market_data, MyApp.Prisms.MarketData, %{symbol: :symbol})
 
-        parallel do
-          step(:technical, MyApp.Prisms.TechnicalAnalysis,
-            %{data: {:ref, "market_data"}},
-            retries: 3,
-            store_io: true)
+      parallel do
+        step(:technical, MyApp.Prisms.TechnicalAnalysis,
+          %{data: {:ref, "market_data"}},
+          retries: 3,
+          store_io: true)
 
-          step(:sentiment, MyApp.Prisms.SentimentAnalysis,
-            %{symbol: :symbol},
-            timeout: :timer.seconds(30))
-        end
+        step(:sentiment, MyApp.Prisms.SentimentAnalysis,
+          %{symbol: :symbol},
+          timeout: :timer.seconds(30))
+      end
 
-        branch {__MODULE__, :should_trade?} do
-          true -> step(:execute, MyApp.Prisms.ExecuteTrade, %{
-            symbol: :symbol,
-            amount: :amount,
-            signals: {:ref, "technical"}
-          })
-          false -> step(:skip, MyApp.Prisms.LogDecision, %{
-            reason: "Unfavorable conditions"
-          })
-        end
+      branch {__MODULE__, :should_trade?} do
+        true -> step(:execute, MyApp.Prisms.ExecuteTrade, %{
+          symbol: :symbol,
+          amount: :amount,
+          signals: {:ref, "technical"}
+        })
+        false -> step(:skip, MyApp.Prisms.LogDecision, %{
+          reason: "Unfavorable conditions"
+        })
       end
     end
 
@@ -86,60 +83,58 @@ defmodule Lux.Beam do
   defmodule HiringManagerBeam do
     use Lux.Beam, generate_execution_log: true
 
-    def steps do
-      sequence do
-        # First evaluate current workforce metrics
-        step(:workforce_metrics, WorkforceAnalysisPrism, %{
-          team_size: {:ref, "current_team_size"},
-          performance_data: {:ref, "agent_performance_metrics"},
-          workload_stats: {:ref, "current_workload"}
-        })
+    sequence do
+      # First evaluate current workforce metrics
+      step(:workforce_metrics, WorkforceAnalysisPrism, %{
+        team_size: {:ref, "current_team_size"},
+        performance_data: {:ref, "agent_performance_metrics"},
+        workload_stats: {:ref, "current_workload"}
+      })
 
-        # Check if we need to scale the team
-        branch {__MODULE__, :needs_scaling?} do
-          :scale_up ->
-            sequence do
-              # Find suitable candidates
-              step(:candidate_search, AgentSearchPrism, %{
-                required_skills: {:ref, "workforce_metrics.skill_gaps"},
-                count: {:ref, "workforce_metrics.hiring_needs"}
-              })
-
-              # Interview and evaluate candidates
-              step(:candidate_evaluation, AgentEvaluationPrism, %{
-                candidates: {:ref, "candidate_search.results"},
-                evaluation_criteria: {:ref, "workforce_metrics.requirements"}
-              })
-
-              # Onboard selected candidates
-              step(:onboarding, AgentOnboardingPrism, %{
-                selected_agents: {:ref, "candidate_evaluation.approved_candidates"},
-                resource_allocation: {:ref, "workforce_metrics.available_resources"}
-              })
-            end
-
-          :scale_down ->
-            sequence do
-              # Identify underperforming agents
-              step(:performance_review, PerformanceReviewPrism, %{
-                agents: {:ref, "workforce_metrics.underperforming_agents"},
-                criteria: {:ref, "workforce_metrics.performance_thresholds"}
-              })
-
-              # Handle agent termination
-              step(:termination, AgentTerminationPrism, %{
-                agents: {:ref, "performance_review.agents_to_terminate"},
-                reassign_tasks: true
-              })
-            end
-
-          :maintain ->
-            # Just update team metrics and resources
-            step(:team_maintenance, TeamMaintenancePrism, %{
-              current_team: {:ref, "workforce_metrics.active_agents"},
-              resource_updates: {:ref, "workforce_metrics.resource_adjustments"}
+      # Check if we need to scale the team
+      branch {__MODULE__, :needs_scaling?} do
+        :scale_up ->
+          sequence do
+            # Find suitable candidates
+            step(:candidate_search, AgentSearchPrism, %{
+              required_skills: {:ref, "workforce_metrics.skill_gaps"},
+              count: {:ref, "workforce_metrics.hiring_needs"}
             })
-        end
+
+            # Interview and evaluate candidates
+            step(:candidate_evaluation, AgentEvaluationPrism, %{
+              candidates: {:ref, "candidate_search.results"},
+              evaluation_criteria: {:ref, "workforce_metrics.requirements"}
+            })
+
+            # Onboard selected candidates
+            step(:onboarding, AgentOnboardingPrism, %{
+              selected_agents: {:ref, "candidate_evaluation.approved_candidates"},
+              resource_allocation: {:ref, "workforce_metrics.available_resources"}
+            })
+          end
+
+        :scale_down ->
+          sequence do
+            # Identify underperforming agents
+            step(:performance_review, PerformanceReviewPrism, %{
+              agents: {:ref, "workforce_metrics.underperforming_agents"},
+              criteria: {:ref, "workforce_metrics.performance_thresholds"}
+            })
+
+            # Handle agent termination
+            step(:termination, AgentTerminationPrism, %{
+              agents: {:ref, "performance_review.agents_to_terminate"},
+              reassign_tasks: true
+            })
+          end
+
+        :maintain ->
+          # Just update team metrics and resources
+          step(:team_maintenance, TeamMaintenancePrism, %{
+            current_team: {:ref, "workforce_metrics.active_agents"},
+            resource_updates: {:ref, "workforce_metrics.resource_adjustments"}
+          })
       end
     end
 
@@ -192,7 +187,7 @@ defmodule Lux.Beam do
             description: "",
             input_schema: nil,
             output_schema: nil,
-            definition: nil,
+            definition: [],
             timeout: :timer.minutes(5),
             generate_execution_log: false
 
@@ -246,12 +241,8 @@ defmodule Lux.Beam do
           generate_execution_log: boolean()
         }
 
-  @callback steps() :: term()
-
   defmacro __using__(opts) do
     quote do
-      @behaviour Lux.Beam
-
       import Lux.Beam, only: [step: 3, step: 4, parallel: 1, sequence: 1, branch: 2]
 
       alias Lux.Beam
@@ -263,13 +254,16 @@ defmodule Lux.Beam do
         input_schema: unquote(opts[:input_schema]),
         output_schema: unquote(opts[:output_schema]),
         timeout: Keyword.get(unquote(opts), :timeout, :timer.minutes(5)),
-        generate_execution_log: Keyword.get(unquote(opts), :generate_execution_log, false),
-        definition: nil
+        generate_execution_log: Keyword.get(unquote(opts), :generate_execution_log, false)
       }
 
-      def beam, do: %{@beam | definition: steps()}
+      if not Module.get_attribute(__MODULE__, :sequence_defined) do
+        raise "The Lux.Beam module requires a sequence block to be defined"
+      end
 
-      def run(input, opts \\ []), do: Lux.Beam.Runner.run(beam(), input, opts)
+      def view, do: %{@beam | definition: __steps__()}
+
+      def run(input, opts \\ []), do: Lux.Beam.Runner.run(view(), input, opts)
     end
   end
 
@@ -311,26 +305,44 @@ defmodule Lux.Beam do
   end
 
   defmacro sequence(do: {:__block__, _, steps}) do
-    quote do
-      {:sequence, unquote(steps)}
+    if has_parent?(__CALLER__) do
+      quote do
+        {:sequence, unquote(steps)}
+      end
+    else
+      Module.put_attribute(__CALLER__.module, :sequence_defined, true)
+      build_steps(steps)
     end
   end
 
   defmacro sequence(do: single_step) do
-    quote do
-      {:sequence, [unquote(single_step)]}
+    if has_parent?(__CALLER__) do
+      quote do
+        {:sequence, [unquote(single_step)]}
+      end
+    else
+      Module.put_attribute(__CALLER__.module, :sequence_defined, true)
+      build_steps([single_step])
     end
   end
 
   defmacro parallel(do: {:__block__, _, steps}) do
-    quote do
-      {:parallel, unquote(steps)}
+    if has_parent?(__CALLER__) do
+      quote do
+        {:parallel, unquote(steps)}
+      end
+    else
+      build_steps(steps)
     end
   end
 
   defmacro parallel(do: single_step) do
-    quote do
-      {:parallel, [unquote(single_step)]}
+    if has_parent?(__CALLER__) do
+      quote do
+        {:parallel, [unquote(single_step)]}
+      end
+    else
+      build_steps([single_step])
     end
   end
 
@@ -338,6 +350,30 @@ defmodule Lux.Beam do
     quote do
       {:branch, {__MODULE__, unquote(extract_function_name(condition))},
        unquote(transform_branch_blocks(blocks))}
+    end
+  end
+
+  defp has_parent?(caller) do
+    cond do
+      # used outside of module (e.g. livebook cell)
+      is_nil(caller.function) and is_nil(caller.module) -> true
+      # used in nested block
+      not is_nil(caller.function) and not is_nil(caller.module) -> true
+      # top level
+      is_nil(caller.function) and not is_nil(caller.module) -> false
+    end
+  end
+
+  defp build_steps(steps) do
+    seq =
+      quote do
+        {:sequence, unquote(steps)}
+      end
+
+    quote do
+      def __steps__ do
+        unquote(seq)
+      end
     end
   end
 
@@ -392,14 +428,4 @@ defmodule Lux.Beam do
   defp validate_definition(nil), do: {:error, :missing_definition}
   defp validate_definition(definition) when is_list(definition), do: :ok
   defp validate_definition(_), do: {:error, :invalid_definition}
-
-  def steps(%__MODULE__{definition: definition}) when not is_nil(definition) do
-    definition
-  end
-
-  def steps(module) when is_atom(module) do
-    module.steps()
-  end
-
-  def steps(_), do: nil
 end

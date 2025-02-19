@@ -83,45 +83,42 @@ defmodule Lux.Beams.Hyperliquid.TradeRiskManagementBeam do
 
   require Logger
 
-  @impl true
-  def steps do
-    sequence do
-      # Get current portfolio state
-      step(:portfolio_state, HyperliquidUserStatePrism, %{
-        address: Config.hyperliquid_account_address()
-      })
+  sequence do
+    # Get current portfolio state
+    step(:portfolio_state, HyperliquidUserStatePrism, %{
+      address: Config.hyperliquid_account_address()
+    })
 
-      # Get current market prices
-      step(:market_data, HyperliquidTokenInfoPrism, %{})
+    # Get current market prices
+    step(:market_data, HyperliquidTokenInfoPrism, %{})
 
-      # Calculate risk metrics
-      step(:risk_assessment, HyperliquidRiskAssessmentPrism, %{
-        portfolio: [:steps, :portfolio_state, :result, :user_state],
-        market_data: [:steps, :market_data, :result, :prices],
-        proposed_trade: [:input, :trade]
-      })
+    # Calculate risk metrics
+    step(:risk_assessment, HyperliquidRiskAssessmentPrism, %{
+      portfolio: [:steps, :portfolio_state, :result, :user_state],
+      market_data: [:steps, :market_data, :result, :prices],
+      proposed_trade: [:input, :trade]
+    })
 
-      # Decide whether to execute the trade
-      branch {__MODULE__, :should_execute?} do
-        true ->
-          step(:execute_trade, HyperliquidExecuteOrderPrism, %{
-            coin: [:input, :trade, :coin],
-            is_buy: [:input, :trade, :is_buy],
-            sz: [:input, :trade, :sz],
-            limit_px: [:input, :trade, :limit_px],
-            order_type: [:input, :trade, :order_type],
-            reduce_only: [:input, :trade, :reduce_only]
-          })
+    # Decide whether to execute the trade
+    branch {__MODULE__, :should_execute?} do
+      true ->
+        step(:execute_trade, HyperliquidExecuteOrderPrism, %{
+          coin: [:input, :trade, :coin],
+          is_buy: [:input, :trade, :is_buy],
+          sz: [:input, :trade, :sz],
+          limit_px: [:input, :trade, :limit_px],
+          order_type: [:input, :trade, :order_type],
+          reduce_only: [:input, :trade, :reduce_only]
+        })
 
-        false ->
-          step(:noop, Lux.Prisms.NoOp, %{
-            status: "rejected",
-            order_result: %{
-              risk_metrics: [:steps, :risk_assessment, :result],
-              rejection_reason: "Failed risk assessment checks"
-            }
-          })
-      end
+      false ->
+        step(:noop, Lux.Prisms.NoOp, %{
+          status: "rejected",
+          order_result: %{
+            risk_metrics: [:steps, :risk_assessment, :result],
+            rejection_reason: "Failed risk assessment checks"
+          }
+        })
     end
   end
 

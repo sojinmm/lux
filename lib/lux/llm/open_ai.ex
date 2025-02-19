@@ -172,11 +172,11 @@ defmodule Lux.LLM.OpenAI do
 
   def tool_to_function(tool_module) when is_atom(tool_module) and not is_nil(tool_module) do
     cond do
-      prism?(tool_module) ->
+      Lux.prism?(tool_module) ->
         tool_to_function(tool_module.view())
 
-      beam?(tool_module) ->
-        tool_to_function(tool_module.beam())
+      Lux.beam?(tool_module) ->
+        tool_to_function(tool_module.view())
 
       true ->
         raise "Unsupported tool type: #{inspect(tool_module)}"
@@ -305,10 +305,10 @@ defmodule Lux.LLM.OpenAI do
 
   def execute_tool(tool_module, args, ctx) when is_atom(tool_module) do
     cond do
-      prism?(tool_module) ->
+      Lux.prism?(tool_module) ->
         tool_module.handler(args, ctx)
 
-      beam?(tool_module) ->
+      Lux.beam?(tool_module) ->
         tool_module.run(args, ctx)
 
       true ->
@@ -324,16 +324,4 @@ defmodule Lux.LLM.OpenAI do
     Logger.error("OpenAI API error: #{inspect(error)}")
     {:error, "OpenAI API error: #{inspect(error)}"}
   end
-
-  def beam?(module) when is_atom(module) do
-    function_exported?(module, :steps, 0) and function_exported?(module, :run, 2)
-  end
-
-  def beam?(_), do: false
-
-  def prism?(module) when is_atom(module) do
-    function_exported?(module, :handler, 2)
-  end
-
-  def prism?(_), do: false
 end
