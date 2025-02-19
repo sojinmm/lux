@@ -84,11 +84,16 @@ defmodule Lux.MixProject do
         "guides/testing.md",
         "guides/cursor_development.md",
         "guides/contributing.md",
+        "guides/troubleshooting.md",
         "CHANGELOG.md",
         "LICENSE"
       ],
       groups_for_extras: [
-        Guides: Path.wildcard("guides/*.livemd")
+        Guides: Path.wildcard("guides/*.livemd"),
+        Setup: [
+          "guides/troubleshooting.md",
+          "guides/contributing.md"
+        ]
       ]
     ]
   end
