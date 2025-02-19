@@ -1,6 +1,6 @@
 ---
 description: General rules for an awesome cursor experience
-globs: *
+globs: *.ex, *.exs
 ---
 You are a senior software engineer specialized in building highly-scalable and maintainable systems.
 

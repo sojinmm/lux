@@ -16,17 +16,23 @@ defmodule Lux.Integration.Company.ContentTeamTest do
       table_name = :"table_#{:erlang.unique_integer([:positive])}"
       start_supervised!({Local, name: hub_name, table_name: table_name})
 
+      # Get the company configuration
+      company_config = ContentTeam.view()
+
       # Start the company
       {:ok, company_pid} =
         Lux.Company.start_link(ContentTeam, %{
-          name: "Test Content Team",
+          name: company_config.name,
           hub: hub_name
         })
 
-      %{company_pid: company_pid, hub: hub_name}
+      # Register the company with the hub
+      {:ok, company_id} = Local.register_company(company_config, hub_name)
+
+      %{company_pid: company_pid, hub: hub_name, company_id: company_id}
     end
 
-    test "successfully creates a blog post", %{company_pid: pid, hub: hub} do
+    test "successfully creates a blog post", %{company_pid: pid, hub: hub, company_id: company_id} do
       # 1. Start a blog post objective
       {:ok, objective_id} =
         Lux.Company.run_objective(pid, :create_blog_post, %{
@@ -38,11 +44,11 @@ defmodule Lux.Integration.Company.ContentTeamTest do
       # 2. Wait for initial objective setup
       :timer.sleep(500)
       {:ok, initial_status} = Lux.Company.get_objective_status(pid, objective_id)
-      assert initial_status.status == :in_progress
+      assert initial_status == :in_progress
 
       # 3. Verify company structure
-      {:ok, company} = Local.get_company(pid, hub)
-      assert company.name == "Test Content Team"
+      {:ok, company} = Local.get_company(company_id, hub)
+      assert company.name == "Content Creation Team"
       # Two members (researcher and writer)
       assert length(company.roles) == 2
       # Has a CEO (editor)
@@ -54,8 +60,8 @@ defmodule Lux.Integration.Company.ContentTeamTest do
 
       # 5. Wait for research completion
       :timer.sleep(1000)
-      {:ok, research_status} = Lux.Company.get_objective_status(pid, objective_id)
-      assert research_status.progress > initial_status.progress
+      {:ok, research_objective} = Lux.Company.get_objective(pid, objective_id)
+      assert research_objective.progress > 0
 
       # 6. Monitor the writing phase
       writer = Enum.find(company.roles, &(&1.name == "Content Writer"))
@@ -63,8 +69,8 @@ defmodule Lux.Integration.Company.ContentTeamTest do
 
       # 7. Wait for writing completion
       :timer.sleep(1000)
-      {:ok, writing_status} = Lux.Company.get_objective_status(pid, objective_id)
-      assert writing_status.progress > research_status.progress
+      {:ok, writing_objective} = Lux.Company.get_objective(pid, objective_id)
+      assert writing_objective.progress > research_objective.progress
 
       # 8. Monitor the editing phase
       assert company.ceo.name == "Content Director"
@@ -72,10 +78,11 @@ defmodule Lux.Integration.Company.ContentTeamTest do
       # 9. Wait for final completion
       :timer.sleep(1000)
       {:ok, final_status} = Lux.Company.get_objective_status(pid, objective_id)
+      {:ok, final_objective} = Lux.Company.get_objective(pid, objective_id)
 
       # 10. Verify the final result
-      assert final_status.status in [:completed, :in_progress]
-      assert final_status.progress >= writing_status.progress
+      assert final_status in [:completed, :in_progress]
+      assert final_objective.progress >= writing_objective.progress
 
       # 11. Check the output artifacts
       {:ok, artifacts} = Lux.Company.get_objective_artifacts(pid, objective_id)
@@ -120,9 +127,9 @@ defmodule Lux.Integration.Company.ContentTeamTest do
       {:ok, status} = Lux.Company.get_objective_status(pid, objective_id)
 
       # Verify failure was handled
-      assert status.status in [:failed, :in_progress]
+      assert status in [:failed, :in_progress]
 
-      if status.status == :failed do
+      if status == :failed do
         assert status.error != nil
         # Should have error message
         assert is_binary(status.error)
@@ -154,8 +161,8 @@ defmodule Lux.Integration.Company.ContentTeamTest do
       {:ok, objective2_status} = Lux.Company.get_objective_status(pid, objective2_id)
 
       # Verify both objectives are being processed
-      assert objective1_status.status in [:in_progress, :completed]
-      assert objective2_status.status in [:in_progress, :completed]
+      assert objective1_status in [:in_progress, :completed]
+      assert objective2_status in [:in_progress, :completed]
 
       # Verify company can handle multiple objectives
       {:ok, active_objectives} = Lux.Company.list_objectives(pid)

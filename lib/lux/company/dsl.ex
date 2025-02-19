@@ -57,6 +57,8 @@ defmodule Lux.Company.DSL do
 
   defmacro __using__(_opts) do
     quote do
+      require Logger
+      Logger.debug("Using Lux.Company.DSL in #{__MODULE__}")
       import Lux.Company.DSL
 
       Module.register_attribute(__MODULE__, :company_config, accumulate: false)
@@ -64,20 +66,23 @@ defmodule Lux.Company.DSL do
       @before_compile Lux.Company.DSL
 
       def view do
-        %{__company__() | module: __MODULE__}
+        %Lux.Company{__company__() | module: __MODULE__}
       end
     end
   end
 
   defmacro __before_compile__(env) do
+    require Logger
+    Logger.debug("Before compile hook for #{env.module}")
+
     if not Module.get_attribute(env.module, :company_defined) do
       raise "The Lux.Company module requires a company block to be defined"
     end
 
     # Get the final company config for validation
-    env.module
-    |> Module.get_attribute(:company_config)
-    |> validate!()
+    config = Module.get_attribute(env.module, :company_config)
+    Logger.debug("Final company config: #{inspect(config)}")
+    validate!(config)
 
     quote do
       def __company__ do
@@ -89,7 +94,7 @@ defmodule Lux.Company.DSL do
   defmacro company(do: block) do
     quote do
       @company_defined true
-      @company_config %{
+      @company_config %Lux.Company{
         id: Lux.UUID.generate(),
         name: nil,
         mission: nil,

@@ -162,20 +162,26 @@ defmodule Lux.Company do
 
   @impl true
   def init({module, opts}) do
-    dbg()
-    Logger.info("Starting company: #{module.view().name}")
-    Logger.info("Mission: #{module.view().mission}")
+    require Logger
+    Logger.debug("Initializing company with module: #{inspect(module)}")
+
+    # Get company configuration
+    company_config = module.__company__()
+    Logger.debug("Company config during init: #{inspect(company_config)}")
+
+    Logger.info("Starting company: #{company_config.name}")
+    Logger.info("Mission: #{company_config.mission}")
     Logger.info("\nCEO:")
 
     # Initialize CEO
-    ceo = module.ceo()
+    ceo = company_config.ceo
     Logger.info("  - #{ceo.name} with capabilities: #{Enum.join(ceo.capabilities, ", ")}")
     Logger.info("  - Using agent: #{ceo.agent}")
 
     # Initialize members
     Logger.info("\nMembers:")
 
-    members = module.members()
+    members = company_config.roles
 
     Enum.each(members, fn member ->
       Logger.info("  - #{member.name} with capabilities: #{Enum.join(member.capabilities, ", ")}")
@@ -268,9 +274,11 @@ defmodule Lux.Company do
   def handle_call({:update_objective_progress, objective_id, progress}, _from, state) do
     case Map.get(state.objectives, objective_id) do
       nil ->
+        Logger.debug("Objective not found: #{objective_id}")
         {:reply, {:error, :not_found}, state}
 
       objective ->
+        Logger.debug("Updating objective progress: #{objective_id} from #{objective.progress} to #{progress}")
         updated_objective = %{objective | progress: progress}
         updated_objectives = Map.put(state.objectives, objective_id, updated_objective)
         {:reply, {:ok, updated_objective}, %{state | objectives: updated_objectives}}
@@ -314,6 +322,7 @@ defmodule Lux.Company do
   end
 
   def handle_call({:run_objective, objective_id, input}, _from, state) do
+    Logger.debug("Running objective: #{objective_id} with input: #{inspect(input)}")
     case validate_objective(objective_id, input, state) do
       {:ok, _objective} ->
         # Create a new objective instance
@@ -328,20 +337,31 @@ defmodule Lux.Company do
           error: nil
         }
 
+        Logger.debug("Created objective instance: #{inspect(objective_instance)}")
+
         # Store the objective instance
-        updated_objectives =
-          Map.put(state.objectives, objective_instance.id, objective_instance)
+        updated_objectives = Map.put(state.objectives, objective_instance.id, objective_instance)
 
-        # Start the objective
-        case start_objective(self(), objective_instance.id) do
-          {:ok, _} ->
-            {:reply, {:ok, objective_instance.id}, %{state | objectives: updated_objectives}}
-
+        # Start the objective through the GenServer
+        case handle_call({:start_objective, objective_instance.id}, _from, %{state | objectives: updated_objectives}) do
+          {:reply, {:ok, started_objective}, new_state} ->
+            Logger.debug("Started objective: #{inspect(started_objective)}")
+            # Update progress to indicate research has started
+            case handle_call({:update_objective_progress, started_objective.id, 20}, _from, new_state) do
+              {:reply, {:ok, updated_objective}, final_state} ->
+                Logger.debug("Updated objective progress: #{inspect(updated_objective)}")
+                {:reply, {:ok, objective_instance.id}, final_state}
+              error ->
+                Logger.error("Error updating objective progress: #{inspect(error)}")
+                {:reply, error, new_state}
+            end
           error ->
+            Logger.error("Error starting objective: #{inspect(error)}")
             {:reply, error, state}
         end
 
       error ->
+        Logger.error("Error validating objective: #{inspect(error)}")
         {:reply, error, state}
     end
   end
@@ -349,21 +369,35 @@ defmodule Lux.Company do
   # Private Functions
 
   defp validate_company(company) do
-    cond do
-      not function_exported?(company, :name, 0) ->
-        {:error, :missing_name}
+    require Logger
+    Logger.debug("Validating company module: #{inspect(company)}")
 
-      not function_exported?(company, :mission, 0) ->
-        {:error, :missing_mission}
-
-      not function_exported?(company, :ceo, 0) ->
-        {:error, :missing_ceo}
-
-      not function_exported?(company, :members, 0) ->
-        {:error, :missing_members}
-
+    # Try to get company config
+    case :erlang.function_exported(company, :__company__, 0) do
       true ->
-        {:ok, company}
+        config = company.__company__()
+        Logger.debug("Company config: #{inspect(config)}")
+
+        cond do
+          is_nil(config.name) ->
+            Logger.error("Company name is missing")
+            {:error, :missing_name}
+
+          is_nil(config.mission) ->
+            Logger.error("Company mission is missing")
+            {:error, :missing_mission}
+
+          is_nil(config.ceo) ->
+            Logger.error("Company CEO is missing")
+            {:error, :missing_ceo}
+
+          true ->
+            {:ok, company}
+        end
+
+      false ->
+        Logger.error("Company module does not implement __company__/0")
+        {:error, :invalid_company}
     end
   end
 
@@ -384,25 +418,21 @@ defmodule Lux.Company do
   end
 
   defp validate_objective(objective_id, input, state) do
-    case state.module.objectives() do
-      objectives when is_list(objectives) ->
-        case Enum.find(objectives, &(&1.id == objective_id)) do
-          nil ->
-            {:error, :objective_not_found}
+    company_config = state.module.__company__()
+    objectives = company_config.objectives
 
-          objective ->
-            validate_objective_input(objective, input)
-        end
+    case Enum.find(objectives, &(&1.name == objective_id)) do
+      nil ->
+        {:error, :objective_not_found}
 
-      _ ->
-        {:error, :invalid_objectives}
+      objective ->
+        validate_objective_input(objective, input)
     end
   end
 
   defp validate_objective_input(objective, input) do
-    # For now, just validate that required fields are present
-    # In the future, we can add more sophisticated validation
-    required_fields = objective.required_fields || []
+    # For blog posts, we require topic, target_audience, and tone
+    required_fields = ["topic", "target_audience", "tone"]
 
     if Enum.all?(required_fields, &Map.has_key?(input, &1)) do
       {:ok, objective}
@@ -457,5 +487,9 @@ defmodule Lux.Company do
     quote do
       use Lux.Company.DSL
     end
+  end
+
+  defp start_objective(objective) do
+    {:ok, %{objective | status: :in_progress, started_at: DateTime.utc_now()}}
   end
 end
