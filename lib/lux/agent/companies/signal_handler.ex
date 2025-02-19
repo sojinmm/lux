@@ -13,13 +13,6 @@ defmodule Lux.Agent.Companies.SignalHandler do
   alias Lux.Signal
 
   @doc """
-  Called when a signal is received by the agent.
-  Should dispatch to appropriate handler based on signal schema.
-  """
-  @callback handle_signal(Signal.t(), context :: map()) ::
-              {:ok, Signal.t()} | {:error, term()}
-
-  @doc """
   Called when a task is assigned to the agent.
   Should evaluate the task and determine how to complete it.
   """

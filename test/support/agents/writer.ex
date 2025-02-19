@@ -5,6 +5,9 @@ defmodule Test.Support.Agents.Writer do
   """
   use Lux.Agent,
     template: :company_agent,
+    signal_handlers: [
+      {Lux.Schemas.TaskSignal, {__MODULE__, :task_handler}}
+    ],
     llm_config: %{
       # Higher temperature for more creative writing
       temperature: 0.7,
@@ -23,8 +26,7 @@ defmodule Test.Support.Agents.Writer do
       ]
     }
 
-  @impl Lux.Agent.Companies.SignalHandler
-  def handle_signal(%{schema_id: Lux.Schemas.TaskSignal} = signal, context) do
+  def task_handler(%{schema_id: Lux.Schemas.TaskSignal} = signal, context) do
     case signal.payload do
       %{"type" => "assignment", "task" => "create_outline"} ->
         # Create outline using LLM
@@ -45,8 +47,6 @@ defmodule Test.Support.Agents.Writer do
         {:error, :unknown_task}
     end
   end
-
-  def handle_signal(_, _), do: :ignore
 
   defp create_outline(research, agent_context) do
     prompt = """

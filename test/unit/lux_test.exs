@@ -22,6 +22,7 @@ defmodule LuxTest do
   end
 
   defmodule TestLens do
+    @moduledoc false
     use Lux.Lens
   end
 

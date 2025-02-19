@@ -82,7 +82,7 @@ defmodule Lux.Company.ObjectivesTest do
       {:ok, with_agent} = Objectives.assign_agent(objective, "agent-123")
       assert {:ok, started} = Objectives.start(with_agent)
       assert started.status == :in_progress
-      assert started.started_at != nil
+      refute is_nil(started.started_at)
     end
 
     test "prevents starting without agents", %{objective: objective} do
@@ -139,7 +139,7 @@ defmodule Lux.Company.ObjectivesTest do
       assert {:ok, completed} = Objectives.complete(objective)
       assert completed.status == :completed
       assert completed.progress == 100
-      assert completed.completed_at != nil
+      refute is_nil(completed.completed_at)
     end
 
     test "prevents completing non-in-progress objectives" do
@@ -171,7 +171,7 @@ defmodule Lux.Company.ObjectivesTest do
       reason = "Resource unavailable"
       assert {:ok, failed} = Objectives.fail(objective, reason)
       assert failed.status == :failed
-      assert failed.completed_at != nil
+      refute is_nil(failed.completed_at)
       assert failed.metadata.failure_reason == reason
     end
 
