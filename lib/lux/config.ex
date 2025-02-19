@@ -66,6 +66,16 @@ defmodule Lux.Config do
     Application.fetch_env!(:lux, :accounts)[:hyperliquid_api_url]
   end
 
+  @doc """
+  Retrieves the wallet address
+  """
+  @spec wallet_address() :: String.t()
+  def wallet_address do
+    :lux
+    |> Application.fetch_env!(:accounts)
+    |> Keyword.get(:wallet_address, "")
+  end
+
   @doc false
   defp get_required_key(group, key) do
     :lux
