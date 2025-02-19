@@ -60,8 +60,8 @@ defmodule Lux.LLM.OpenAI do
   @impl true
   def call(prompt, tools, config) do
     config =
-      Config
-      |> struct(
+      struct(
+        Config,
         Map.merge(
           %{
             model: Application.get_env(:lux, :open_ai_models)[:default],
@@ -70,7 +70,6 @@ defmodule Lux.LLM.OpenAI do
           config
         )
       )
-      |> dbg()
 
     messages = config.messages ++ build_messages(prompt)
     tools_config = build_tools_config(tools)

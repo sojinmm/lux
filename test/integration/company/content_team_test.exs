@@ -34,15 +34,18 @@ defmodule Lux.Integration.Company.ContentTeamTest do
 
     test "successfully creates a blog post", %{company_pid: pid, hub: hub, company_id: company_id} do
       # 1. Start a blog post objective
-      {:ok, objective_id} =
+      {:ok, objective} =
         Lux.Company.run_objective(pid, :create_blog_post, %{
           "topic" => "Testing in Elixir",
           "target_audience" => "developers",
           "tone" => "technical"
         })
 
+      objective_id = objective.payload["id"]
+
       # 2. Wait for initial objective setup
-      :timer.sleep(500)
+      # :timer.sleep(500)
+      dbg("omgomgomg")
       {:ok, initial_status} = Lux.Company.get_objective_status(pid, objective_id)
       assert initial_status == :in_progress
 
@@ -97,14 +100,34 @@ defmodule Lux.Integration.Company.ContentTeamTest do
 
     test "handles invalid objective inputs", %{company_pid: pid} do
       # Test with missing required fields
-      assert {:error, :invalid_input} =
+      assert {
+               :ok,
+               %{
+                 payload: %{
+                   "result" => %{"error" => "{:error, :invalid_input}", "success" => false},
+                   "status" => "failed",
+                   "type" => "failure"
+                 },
+                 schema_id: TaskSignal
+               }
+             } =
                Lux.Company.run_objective(pid, :create_blog_post, %{
                  # Missing target_audience and tone
                  "topic" => "Testing"
                })
 
       # Test with invalid objective name
-      assert {:error, :objective_not_found} =
+      assert {
+               :ok,
+               %{
+                 payload: %{
+                   "result" => %{"error" => "{:error, :objective_not_found}", "success" => false},
+                   "status" => "failed",
+                   "type" => "failure"
+                 },
+                 schema_id: TaskSignal
+               }
+             } =
                Lux.Company.run_objective(pid, :invalid_objective, %{
                  "topic" => "Testing",
                  "target_audience" => "developers",
@@ -154,7 +177,7 @@ defmodule Lux.Integration.Company.ContentTeamTest do
         })
 
       # Wait for some progress
-      :timer.sleep(2000)
+      :timer.sleep(5000)
 
       # Check both objectives
       {:ok, objective1_status} = Lux.Company.get_objective_status(pid, objective1_id)

@@ -23,7 +23,8 @@ defmodule Lux.Company.Objective do
           progress: integer(),
           started_at: DateTime.t() | nil,
           completed_at: DateTime.t() | nil,
-          metadata: map()
+          metadata: map(),
+          input_schema: map() | nil
         }
 
   @type status :: :pending | :in_progress | :completed | :failed
@@ -33,6 +34,7 @@ defmodule Lux.Company.Objective do
     :name,
     :description,
     :success_criteria,
+    :input_schema,
     steps: [],
     status: :pending,
     assigned_agents: [],
@@ -53,6 +55,7 @@ defmodule Lux.Company.Objective do
         description: Map.fetch!(attrs, :description),
         success_criteria: Map.get(attrs, :success_criteria, ""),
         steps: Map.get(attrs, :steps, []),
+        input_schema: Map.get(attrs, :input_schema),
         metadata: Map.get(attrs, :metadata, %{})
       })
 

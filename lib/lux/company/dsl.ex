@@ -202,7 +202,8 @@ defmodule Lux.Company.DSL do
         name: unquote(name),
         description: nil,
         success_criteria: nil,
-        steps: []
+        steps: [],
+        input_schema: nil
       }
 
       unquote(block)
@@ -239,6 +240,12 @@ defmodule Lux.Company.DSL do
         |> Enum.reject(&(&1 == ""))
 
       var!(current_objective) = Map.put(var!(current_objective), :steps, steps)
+    end
+  end
+
+  defmacro input(schema) do
+    quote do
+      var!(current_objective) = Map.put(var!(current_objective), :input_schema, unquote(schema))
     end
   end
 
@@ -300,6 +307,11 @@ defmodule Lux.Company.DSL do
     if is_nil(objective.steps) or objective.steps == [] do
       raise CompileError,
         description: "Objective :#{objective.name} requires at least one step"
+    end
+
+    if is_nil(objective.input_schema) do
+      raise CompileError,
+        description: "Objective :#{objective.name} requires an input schema"
     end
   end
 end

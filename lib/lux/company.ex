@@ -235,6 +235,8 @@ defmodule Lux.Company do
   end
 
   def handle_call({:get_objective_status, objective_id}, _from, state) do
+    dbg()
+
     case Map.get(state.objectives, objective_id) do
       nil -> {:reply, {:error, :not_found}, state}
       objective -> {:reply, {:ok, objective.status}, state}
@@ -326,26 +328,34 @@ defmodule Lux.Company do
   end
 
   def handle_call({:run_objective, objective_id, input}, _from, state) do
+    require Logger
+
     Logger.debug("Running objective: #{objective_id} with input: #{inspect(input)}")
+    Logger.debug("Company state: #{inspect(state)}")
+    Logger.debug("Available roles: #{inspect(state.roles)}")
+    Logger.debug("Company module: #{inspect(state.module)}")
 
     case validate_objective(objective_id, input, state) do
       {:ok, objective} ->
-        # Create and start objective instance in a single atomic operation
+        Logger.debug("Objective validated: #{inspect(objective)}")
+        Logger.debug("Objective steps: #{inspect(objective.steps)}")
+        Logger.debug("WARNING: No actual execution engine implemented!")
+        Logger.debug("WARNING: Missing agent task distribution!")
+        Logger.debug("WARNING: Missing step progression logic!")
+        Logger.debug("WARNING: Missing agent collaboration system!")
+
+        # FIXME: This is just a mock implementation
         objective_instance = %{
           id: Lux.UUID.generate(),
           objective_id: objective_id,
           input: input,
-          # Changed from :in_progress to :completed
-          status: :completed,
-          # Changed from 20 to 100 to indicate completion
-          progress: 100,
+          status: :completed,  # FIXME: Should track real status
+          progress: 100,       # FIXME: Should track real progress
           started_at: DateTime.utc_now(),
-          # Added completed_at
           completed_at: DateTime.utc_now(),
           error: nil,
           metadata: %{
             original_objective: objective,
-            # Added type for response consistency
             type: "completion",
             result: %{
               "success" => true,
@@ -357,7 +367,8 @@ defmodule Lux.Company do
           }
         }
 
-        Logger.debug("Created and completed objective instance: #{inspect(objective_instance)}")
+        Logger.debug("Created mock objective instance: #{inspect(objective_instance)}")
+        Logger.debug("WARNING: No actual work performed!")
 
         # Single atomic state update
         updated_objectives = Map.put(state.objectives, objective_instance.id, objective_instance)
@@ -368,10 +379,9 @@ defmodule Lux.Company do
           payload: %{
             "type" => "completion",
             "status" => "completed",
-            "result" => %{
-              "success" => true,
-              "output" => objective_instance.metadata.result
-            }
+            "result" => objective_instance.metadata.result,
+            "objective_id" => objective_instance.objective_id,
+            "id" => objective_instance.id
           }
         }
 
@@ -379,20 +389,7 @@ defmodule Lux.Company do
 
       error ->
         Logger.error("Error validating objective: #{inspect(error)}")
-
-        error_response = %{
-          schema_id: TaskSignal,
-          payload: %{
-            "type" => "failure",
-            "status" => "failed",
-            "result" => %{
-              "success" => false,
-              "error" => inspect(error)
-            }
-          }
-        }
-
-        {:reply, {:ok, error_response}, state}
+        # ... rest of error handling ...
     end
   end
 
@@ -476,20 +473,57 @@ defmodule Lux.Company do
         {:error, :objective_not_found}
 
       objective ->
-        validate_objective_input(objective, input)
+        validate_objective_input(objective, input, state)
     end
   end
 
-  defp validate_objective_input(objective, input) do
-    # For blog posts, we require topic, target_audience, and tone
-    required_fields = ["topic", "target_audience", "tone"]
+  defp validate_objective_input(objective, input, _state) do
+    # Get the input schema from the objective
+    case objective.input_schema do
+      %{required: required_fields} = schema ->
+        # First validate required fields
+        missing_fields = Enum.reject(required_fields, &Map.has_key?(input, &1))
 
-    if Enum.all?(required_fields, &Map.has_key?(input, &1)) do
-      {:ok, objective}
-    else
-      {:error, :invalid_input}
+        if not Enum.empty?(missing_fields) do
+          {:error, {:missing_required_fields, missing_fields}}
+        else
+          # Then validate field types if specified
+          case validate_field_types(input, schema) do
+            :ok -> {:ok, objective}
+            {:error, reason} -> {:error, reason}
+          end
+        end
+
+      nil ->
+        {:error, :missing_input_schema}
     end
   end
+
+  defp validate_field_types(input, %{properties: properties}) do
+    Enum.reduce_while(input, :ok, fn {field, value}, _acc ->
+      case Map.get(properties, field) do
+        %{type: type} ->
+          if validate_type(value, type) do
+            {:cont, :ok}
+          else
+            {:halt, {:error, {:invalid_type, field, type, value}}}
+          end
+
+        _ ->
+          {:cont, :ok}  # Field not in schema, assume valid
+      end
+    end)
+  end
+
+  defp validate_field_types(_input, _schema), do: :ok
+
+  defp validate_type(value, "string") when is_binary(value), do: true
+  defp validate_type(value, "number") when is_number(value), do: true
+  defp validate_type(value, "integer") when is_integer(value), do: true
+  defp validate_type(value, "boolean") when is_boolean(value), do: true
+  defp validate_type(value, "array") when is_list(value), do: true
+  defp validate_type(value, "object") when is_map(value), do: true
+  defp validate_type(_, _), do: false
 
   defp init_roles(pid, _timeout) do
     # Initialize roles from the company module
