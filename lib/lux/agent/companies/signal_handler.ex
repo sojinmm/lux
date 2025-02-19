@@ -23,56 +23,56 @@ defmodule Lux.Agent.Companies.SignalHandler do
   Called when a task is assigned to the agent.
   Should evaluate the task and determine how to complete it.
   """
-  @callback handle_task_assignment(TaskSignal.t(), context :: map()) ::
+  @callback handle_task_assignment(TaskSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called to update task progress.
   Should evaluate current state and send progress update.
   """
-  @callback handle_task_update(TaskSignal.t(), context :: map()) ::
+  @callback handle_task_update(TaskSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called when a task is completed.
   Should validate completion and prepare completion report.
   """
-  @callback handle_task_completion(TaskSignal.t(), context :: map()) ::
+  @callback handle_task_completion(TaskSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called when a task fails.
   Should prepare failure report with reason and any recovery steps.
   """
-  @callback handle_task_failure(TaskSignal.t(), context :: map()) ::
+  @callback handle_task_failure(TaskSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called for CEO agents to evaluate objective progress.
   Should assess current state and decide next actions.
   """
-  @callback handle_objective_evaluation(ObjectiveSignal.t(), context :: map()) ::
+  @callback handle_objective_evaluation(ObjectiveSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called for CEO agents to determine next step in objective.
   Should analyze dependencies and assign appropriate agent.
   """
-  @callback handle_objective_next_step(ObjectiveSignal.t(), context :: map()) ::
+  @callback handle_objective_next_step(ObjectiveSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called to update objective status.
   Should evaluate progress and update objective metadata.
   """
-  @callback handle_objective_update(ObjectiveSignal.t(), context :: map()) ::
+  @callback handle_objective_update(ObjectiveSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @doc """
   Called when an objective is completed.
   Should validate all steps are complete and prepare completion report.
   """
-  @callback handle_objective_completion(ObjectiveSignal.t(), context :: map()) ::
+  @callback handle_objective_completion(ObjectiveSignal.signal(), context :: map()) ::
               {:ok, Signal.t()} | {:error, term()}
 
   @optional_callbacks [

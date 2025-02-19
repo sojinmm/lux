@@ -105,7 +105,6 @@ defmodule Lux.Integration.Agent.Companies.DefaultImplementationTest do
       %{context: context, signal: signal}
     end
 
-    @tag :integration
     test "executes task with real tools", %{context: context, signal: signal} do
       assert {:ok, response} = DefaultImplementation.handle_task_assignment(signal, context)
       assert response.schema_id == TaskSignal

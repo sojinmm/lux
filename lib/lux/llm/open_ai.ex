@@ -95,7 +95,6 @@ defmodule Lux.LLM.OpenAI do
     ]
     |> Keyword.merge(Application.get_env(:lux, __MODULE__, []))
     |> Req.new()
-    |> dbg()
     |> Req.post()
     |> case do
       {:ok, %{status: 200} = response} ->
@@ -178,6 +177,9 @@ defmodule Lux.LLM.OpenAI do
 
       beam?(tool_module) ->
         tool_to_function(tool_module.beam())
+
+      lens?(tool_module) ->
+        tool_to_function(tool_module.view())
 
       true ->
         raise "Unsupported tool type: #{inspect(tool_module)}"
@@ -337,4 +339,10 @@ defmodule Lux.LLM.OpenAI do
   end
 
   def prism?(_), do: false
+
+  def lens?(module) when is_atom(module) do
+    function_exported?(module, :focus, 2)
+  end
+
+  def lens?(_), do: false
 end
