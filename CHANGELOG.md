@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-02-20
+
+### Added
+- Company management system with execution engine and objectives
+- Role-based agent management for companies
+- New DSL for company and objective definitions
+- Artifact store for company execution outputs
+- Task tracking and objective process management
+- Local company hub implementation
+- Enhanced agent base functionality
+- New guides for company management and role management
+- Objective and task signal schemas
+- Company-specific signal handlers for agents
+
+### Changed
+- Updated agent hub implementation for company support
+- Enhanced signal router for company-related signals
+- Improved configuration system
+- Updated OpenAI LLM integration
+- Enhanced documentation across all guides
+- Refactored agent base implementation
+
+### Fixed
+- Various documentation improvements and corrections
+
 ## [0.2.0] - 2025-02-05
 
 ### Added

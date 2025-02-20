@@ -1,70 +1,90 @@
 defmodule Lux.Signal.Router do
   @moduledoc """
-  Defines the behaviour for signal routing between agents.
+  Defines the router behavior and provides a clean interface for signal routing.
 
-  Routers are responsible for:
-  - Validating signals before delivery
-  - Finding appropriate target agents
-  - Delivering signals to target agents
-  - Supporting subscriptions to signal delivery events
+  The router is responsible for delivering signals between agents and managing
+  subscriptions to signal events. It supports different implementations (e.g. Local, Remote)
+  through a behavior pattern.
 
-  Different implementations can handle routing in various ways:
-  - Local routing between agents in the same BEAM VM
-  - Remote routing to agents in different nodes
-  - External routing to agents in different systems/providers
+  ## Usage
+
+      # Start a local router
+      {:ok, _pid} = Router.Local.start_link(name: :my_router)
+
+      # Route a signal
+      Router.route(signal, implementation: Router.Local, name: :my_router, hub: :my_hub)
+
+      # Subscribe to signal events
+      Router.subscribe(signal_id, implementation: Router.Local, name: :my_router)
   """
 
-  @type router :: module() | {module(), term()}
-  @type routing_options :: keyword()
+  alias Lux.Signal.Router.Local
+
+  @type router :: GenServer.server()
+  @type signal :: Lux.Signal.t()
+  @type router_opts :: keyword()
 
   @doc """
-  Starts a router process.
+  Routes a signal through the router.
+
+  ## Options
+    * `:implementation` - The router implementation module (defaults to Local)
+    * `:name` - The registered name of the router process
+    * `:hub` - The hub to use for routing (required)
   """
-  @callback start_link(opts :: keyword()) :: GenServer.on_start()
+  @callback route(signal(), router_opts()) :: :ok | {:error, term()}
 
   @doc """
-  Routes a signal to its target agent.
-  Returns :ok if the signal was accepted for routing.
+  Subscribes to signal events.
+
+  ## Options
+    * `:implementation` - The router implementation module (defaults to Local)
+    * `:name` - The registered name of the router process
   """
-  @callback route(signal :: Lux.Signal.t(), opts :: routing_options()) ::
-              :ok | {:error, term()}
+  @callback subscribe(String.t(), router_opts()) :: :ok | {:error, term()}
 
   @doc """
-  Subscribes to future signal delivery events.
-  Subscribers will receive messages in the format:
-  {:signal_delivered, signal_id} | {:signal_failed, signal_id, reason}
+  Unsubscribes from signal events.
+
+  ## Options
+    * `:implementation` - The router implementation module (defaults to Local)
+    * `:name` - The registered name of the router process
   """
-  @callback subscribe(signal_id :: String.t(), opts :: routing_options()) ::
-              :ok | {:error, term()}
+  @callback unsubscribe(String.t(), router_opts()) :: :ok | {:error, term()}
 
   @doc """
-  Unsubscribes from signal delivery events.
+  Routes a signal through the router.
+
+  ## Options
+    * `:implementation` - The router implementation module (defaults to Local)
+    * `:name` - The registered name of the router process
+    * `:hub` - The hub to use for routing (required)
   """
-  @callback unsubscribe(signal_id :: String.t(), opts :: routing_options()) ::
-              :ok | {:error, term()}
-
-  # Convenience functions that delegate to the configured router
-  def route(signal, opts \\ []) do
-    {router, router_opts} = get_router(opts)
-    router.route(signal, router_opts)
+  def route(signal, opts) do
+    get_impl(opts).route(signal, opts)
   end
 
-  def subscribe(signal_id, opts \\ []) do
-    {router, router_opts} = get_router(opts)
-    router.subscribe(signal_id, router_opts)
+  @doc """
+  Subscribes to signal events.
+
+  ## Options
+    * `:implementation` - The router implementation module (defaults to Local)
+    * `:name` - The registered name of the router process
+  """
+  def subscribe(signal_id, opts) do
+    get_impl(opts).subscribe(signal_id, opts)
   end
 
-  def unsubscribe(signal_id, opts \\ []) do
-    {router, router_opts} = get_router(opts)
-    router.unsubscribe(signal_id, router_opts)
+  @doc """
+  Unsubscribes from signal events.
+
+  ## Options
+    * `:implementation` - The router implementation module (defaults to Local)
+    * `:name` - The registered name of the router process
+  """
+  def unsubscribe(signal_id, opts) do
+    get_impl(opts).unsubscribe(signal_id, opts)
   end
 
-  # Private Helpers
-
-  defp get_router(opts) do
-    case Keyword.get(opts, :router, Lux.Signal.Router.Local) do
-      {router, router_opts} -> {router, router_opts}
-      router when is_atom(router) -> {router, []}
-    end
-  end
+  defp get_impl(opts), do: Keyword.get(opts, :implementation, Local)
 end

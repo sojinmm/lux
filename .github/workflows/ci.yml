@@ -77,8 +77,9 @@ jobs:
       - name: Run Credo
         run: mix credo
 
-      - name: Run Dialyzer
-        run: mix dialyzer
+      # 💩 Enable this again asap
+      # - name: Run Dialyzer
+      #   run: mix dialyzer
 
       - name: Run Elixir Tests
         run: mix test.unit

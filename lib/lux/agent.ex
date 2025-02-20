@@ -2,6 +2,29 @@ defmodule Lux.Agent do
   @moduledoc """
   A Agent defines an autonomous agent's capabilities, behaviors and goals.
   The actual execution and supervision is handled by the Lux runtime.
+
+  Agents can be configured with different templates that provide specialized behaviors:
+  - :company_agent - Adds company-specific signal handling
+  - (other templates to be added)
+
+  ## Example
+      defmodule MyCompanyAgent do
+        use Lux.Agent,
+          template: :company_agent,
+          template_opts: %{
+            llm_config: %{temperature: 0.7}
+          } do
+
+          def init(opts) do
+            {:ok, opts}
+          end
+
+          # Can override template functions if needed
+          def handle_task_assignment(signal, context) do
+            # Custom implementation
+          end
+        end
+      end
   """
 
   @behaviour Access
@@ -23,6 +46,8 @@ defmodule Lux.Agent do
 
   @type t :: %__MODULE__{
           id: String.t(),
+          template: atom(),
+          template_opts: map(),
           name: String.t(),
           description: String.t(),
           goal: String.t(),
@@ -39,6 +64,8 @@ defmodule Lux.Agent do
         }
 
   defstruct id: nil,
+            template: nil,
+            template_opts: %{},
             name: "",
             description: "",
             goal: "",
@@ -62,16 +89,7 @@ defmodule Lux.Agent do
               {:ok, String.t()} | {:error, term()}
 
   defmacro __using__(opts) do
-    signal_handler_functions =
-      for {schema, prism} <- Keyword.get(opts, :signal_handlers, []) do
-        quote do
-          def handle_signal(agent, %{schema_id: schema_id} = signal)
-              when schema_id == unquote(schema) do
-            unquote(prism).handler(signal, agent)
-          end
-        end
-      end
-
+    # credo:disable-for-next-line
     quote location: :keep do
       @behaviour Lux.Agent
 
@@ -81,8 +99,32 @@ defmodule Lux.Agent do
 
       require Logger
 
+      Module.register_attribute(__MODULE__, :signal_handler_functions, accumulate: true)
+      Module.register_attribute(__MODULE__, :template_opts, accumulate: false)
+
+      @template_opts %{}
+
+      # First evaluate the user's block if provided
+      unquote(opts[:do])
+
+      @default_values %{
+        module: __MODULE__
+      }
+
+      Lux.Agent.inject_template(unquote(opts[:template]), unquote(opts[:template_opts]))
+
+      # Accumulate signal handlers passed by the user
+      for {schema, handler} <-
+            unquote(opts) |> Keyword.get(:signal_handlers, []) |> Enum.reverse() do
+        @signal_handler_functions {schema, handler}
+      end
+
+      @impl Lux.Agent
+
       @agent %Agent{
         id: Keyword.get(unquote(opts), :id, Lux.UUID.generate()),
+        template: unquote(opts[:template]),
+        template_opts: @template_opts,
         name: Keyword.get(unquote(opts), :name, "Anonymous Agent"),
         description: Keyword.get(unquote(opts), :description, ""),
         goal: Keyword.get(unquote(opts), :goal, ""),
@@ -94,6 +136,7 @@ defmodule Lux.Agent do
         memory_config: Keyword.get(unquote(opts), :memory_config),
         memory_pid: nil,
         scheduled_actions: Keyword.get(unquote(opts), :scheduled_actions, []),
+        signal_handlers: Enum.uniq_by(@signal_handler_functions, fn {schema, _} -> schema end),
         llm_config: Keyword.get(unquote(opts), :llm_config, %{})
       }
 
@@ -102,11 +145,33 @@ defmodule Lux.Agent do
         Agent.chat(agent, message, opts)
       end
 
-      unquote(signal_handler_functions)
+      def handle_signal(%{schema_id: schema_id} = signal, agent) do
+        case Enum.find(@agent.signal_handlers, fn {schema, _} -> schema_id == schema end) do
+          {_schema, handler} ->
+            case Lux.Agent.get_handler_type(handler) do
+              :prism ->
+                handler.handler(agent, signal)
 
-      def handle_signal(agent, signal) do
-        Logger.error("Agent #{agent.name} got unknown signal: #{inspect(signal)}")
-        :ignore
+              :beam ->
+                handler.run(agent, signal)
+
+              :lens ->
+                handler.focus(agent, signal)
+
+              :module_function ->
+                {module, function} = handler
+                apply(module, function, [signal, agent])
+
+              :unknown ->
+                raise "Unknown handler type: #{inspect(handler)}"
+
+              :ignore ->
+                :ignore
+            end
+
+          nil ->
+            :ignore
+        end
       end
 
       # GenServer Client API
@@ -183,7 +248,7 @@ defmodule Lux.Agent do
 
       @impl GenServer
       def handle_info({:signal, signal}, agent) do
-        _ = handle_signal(agent, signal)
+        _ = handle_signal(signal, agent)
         {:noreply, agent}
       end
 
@@ -202,10 +267,6 @@ defmodule Lux.Agent do
 
       defoverridable chat: 3
     end
-  end
-
-  def handle_signal(agent, signal) do
-    apply(agent.module, :handle_signal, [agent, signal])
   end
 
   def chat(agent, message, opts) do
@@ -306,6 +367,22 @@ defmodule Lux.Agent do
     |> String.downcase()
   end
 
+  defmacro inject_template(:company_agent, template_opts) do
+    quote do
+      use Lux.Agent.Companies.SignalHandler
+
+      # Store template options in module attribute at compile time
+      @template_opts (cond do
+                        is_nil(unquote(template_opts)) -> %{}
+                        is_list(unquote(template_opts)) -> Map.new(unquote(template_opts))
+                        is_map(unquote(template_opts)) -> unquote(template_opts)
+                        true -> %{}
+                      end)
+    end
+  end
+
+  defmacro inject_template(_, _), do: :ok
+
   def __handle_info__({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
     timeout = opts[:timeout] || 60_000
 
@@ -366,4 +443,21 @@ defmodule Lux.Agent do
 
   @impl Access
   defdelegate pop(data, key), to: Map
+
+  def get_handler_type({module, function}) when is_atom(module) and is_atom(function) do
+    :module_function
+  end
+
+  def get_handler_type(nil), do: :ignore
+
+  def get_handler_type(module) when is_atom(module) do
+    Code.ensure_compiled!(module)
+
+    cond do
+      Lux.prism?(module) -> :prism
+      Lux.beam?(module) -> :beam
+      Lux.lens?(module) -> :lens
+      true -> :unknown
+    end
+  end
 end

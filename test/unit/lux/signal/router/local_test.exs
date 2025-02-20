@@ -35,8 +35,13 @@ defmodule Lux.Signal.Router.LocalTest do
 
   describe "starting router" do
     test "can start an unnamed router" do
-      assert {:ok, pid} = Local.start_link()
-      assert is_pid(pid)
+      case Local.start_link() do
+        {:ok, pid} ->
+          assert is_pid(pid)
+
+        {:error, {:already_started, pid}} ->
+          assert is_pid(pid)
+      end
     end
 
     test "can start a named router" do

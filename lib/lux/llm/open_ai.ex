@@ -76,7 +76,7 @@ defmodule Lux.LLM.OpenAI do
 
     body =
       %{
-        model: config.model,
+        model: Lux.Config.resolve(config.model),
         messages: messages,
         temperature: config.temperature,
         frequency_penalty: config.frequency_penalty,
@@ -89,7 +89,7 @@ defmodule Lux.LLM.OpenAI do
       url: @endpoint,
       json: body,
       headers: [
-        {"Authorization", "Bearer #{config.api_key}"},
+        {"Authorization", "Bearer #{Lux.Config.resolve(config.api_key)}"},
         {"Content-Type", "application/json"}
       ]
     ]
@@ -176,6 +176,9 @@ defmodule Lux.LLM.OpenAI do
         tool_to_function(tool_module.view())
 
       Lux.beam?(tool_module) ->
+        tool_to_function(tool_module.view())
+
+      Lux.lens?(tool_module) ->
         tool_to_function(tool_module.view())
 
       true ->
@@ -297,6 +300,10 @@ defmodule Lux.LLM.OpenAI do
     |> case do
       {:module, module_name} ->
         execute_tool(module_name, args, ctx)
+
+      {:error, :nofile} ->
+        {:error,
+         "Failed to load tool module #{tool_name}: It doesn't seems to be implemented or reacheable"}
 
       {:error, error} ->
         {:error, "Failed to load tool module #{tool_name}: #{inspect(error)}"}

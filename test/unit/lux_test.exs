@@ -21,6 +21,11 @@ defmodule LuxTest do
     end
   end
 
+  defmodule TestLens do
+    @moduledoc false
+    use Lux.Lens
+  end
+
   test "greets the world" do
     assert Lux.hello() == :world
   end
@@ -33,5 +38,10 @@ defmodule LuxTest do
   test "checks if a module is a prism" do
     assert Lux.prism?(Lux) == false
     assert Lux.prism?(TestPrism) == true
+  end
+
+  test "checks if a module is a lens" do
+    assert Lux.lens?(Lux) == false
+    assert Lux.lens?(TestLens) == true
   end
 end

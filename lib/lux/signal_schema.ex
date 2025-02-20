@@ -95,6 +95,11 @@ defmodule Lux.SignalSchema do
         schema: @normalized_schema
       }
 
+      @typedoc """
+      A signal with a schema_id set to this module.
+      """
+      @type signal :: %Lux.Signal{schema_id: __MODULE__}
+
       def name, do: @schema_struct.name
       def schema, do: @schema_struct.schema
       def schema_id, do: @schema_struct.id

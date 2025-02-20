@@ -74,7 +74,7 @@ defmodule Lux.Integration.LLM.OpenAITest do
     test "will return a structured response according to the schema" do
       config = %{
         api_key: Application.get_env(:lux, :api_keys)[:integration_openai],
-        model: Application.get_env(:lux, :open_ai_models)[:cheapest],
+        model: Application.get_env(:lux, :open_ai_models)[:smartest],
         temperature: 0.7,
         json_schema: CapitalCitySchema
       }
