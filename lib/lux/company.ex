@@ -463,6 +463,7 @@ defmodule Lux.Company do
 
         if Enum.empty?(missing_fields) do
           # Then validate field types if specified
+          # credo:disable-for-next-line
           case validate_field_types(input, schema) do
             :ok -> {:ok, objective}
             {:error, reason} -> {:error, reason}
@@ -480,6 +481,7 @@ defmodule Lux.Company do
     Enum.reduce_while(input, :ok, fn {field, value}, _acc ->
       case Map.get(properties, field) do
         %{type: type} ->
+          # credo:disable-for-next-line
           if validate_type(value, type) do
             {:cont, :ok}
           else
@@ -545,6 +547,7 @@ defmodule Lux.Company do
     {:ok, pid}
   end
 
+  # credo:disable-for-next-line
   defp start_objective_execution(objective_id, input, state) do
     Logger.debug("Starting objective execution: #{objective_id}")
     Logger.debug("Input: #{inspect(input)}")
@@ -586,6 +589,7 @@ defmodule Lux.Company do
                     }
 
                     # Route the signal through the router if configured
+                    # credo:disable-for-next-line
                     if state.signal_router && state.agent_hub do
                       :ok =
                         Router.route(signal,

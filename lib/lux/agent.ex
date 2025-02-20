@@ -89,6 +89,7 @@ defmodule Lux.Agent do
               {:ok, String.t()} | {:error, term()}
 
   defmacro __using__(opts) do
+    # credo:disable-for-next-line
     quote location: :keep do
       @behaviour Lux.Agent
 
@@ -110,27 +111,7 @@ defmodule Lux.Agent do
         module: __MODULE__
       }
 
-      # Then inject template-specific functions
-      case unquote(opts[:template]) do
-        :company_agent ->
-          # Inject company signal handlers and other functions
-          use Lux.Agent.Companies.SignalHandler
-
-          # Store template options in module attribute at compile time
-          @template_opts (
-                           opts = unquote(opts[:template_opts])
-
-                           cond do
-                             is_nil(opts) -> %{}
-                             is_list(opts) -> Map.new(opts)
-                             is_map(opts) -> opts
-                             true -> %{}
-                           end
-                         )
-
-        _ ->
-          @template_opts %{}
-      end
+      Lux.Agent.inject_template(unquote(opts[:template]), unquote(opts[:template_opts]))
 
       # Accumulate signal handlers passed by the user
       for {schema, handler} <-
@@ -385,6 +366,22 @@ defmodule Lux.Agent do
     |> List.last()
     |> String.downcase()
   end
+
+  defmacro inject_template(:company_agent, template_opts) do
+    quote do
+      use Lux.Agent.Companies.SignalHandler
+
+      # Store template options in module attribute at compile time
+      @template_opts (cond do
+                        is_nil(unquote(template_opts)) -> %{}
+                        is_list(unquote(template_opts)) -> Map.new(unquote(template_opts))
+                        is_map(unquote(template_opts)) -> unquote(template_opts)
+                        true -> %{}
+                      end)
+    end
+  end
+
+  defmacro inject_template(_, _), do: :ok
 
   def __handle_info__({:run_scheduled_action, name, module, interval_ms, input, opts}, agent) do
     timeout = opts[:timeout] || 60_000

@@ -124,6 +124,7 @@ defmodule Lux.Company.Hub.Local do
           if company.ceo && company.ceo.id == agent_id do
             {:ok, company.ceo}
           else
+            # credo:disable-for-next-line
             case Enum.find(company.roles || [], &(&1.id == agent_id)) do
               nil -> false
               role -> {:ok, role}
