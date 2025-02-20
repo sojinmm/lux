@@ -33,4 +33,13 @@ defmodule Lux do
   end
 
   def prism?(_), do: false
+
+  @doc """
+  Check if a module is a lens.
+  """
+  def lens?(module) when is_atom(module) do
+    function_exported?(module, :focus, 2)
+  end
+
+  def lens?(_), do: false
 end

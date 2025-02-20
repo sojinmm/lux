@@ -21,9 +21,9 @@ defmodule Lux.AgentHubTest do
     end
 
     test "can start a named hub" do
-      assert {:ok, pid} = AgentHub.start_link(name: :test_hub)
+      assert {:ok, pid} = AgentHub.start_link(name: :test_hub_1)
       assert is_pid(pid)
-      assert Process.whereis(:test_hub) == pid
+      assert Process.whereis(:test_hub_1) == pid
     end
 
     test "can start multiple named hubs" do
@@ -34,24 +34,24 @@ defmodule Lux.AgentHubTest do
 
     test "can be started under a supervisor" do
       child_spec = %{
-        id: {AgentHub, :test_hub},
-        start: {AgentHub, :start_link, [[name: :test_hub]]},
+        id: {AgentHub, :test_hub_2},
+        start: {AgentHub, :start_link, [[name: :test_hub_2]]},
         type: :worker,
         restart: :permanent,
         shutdown: 5000
       }
 
-      assert AgentHub.child_spec(name: :test_hub) == child_spec
+      assert AgentHub.child_spec(name: :test_hub_2) == child_spec
     end
   end
 
   describe "agent registration and discovery" do
     setup do
-      {:ok, _hub} = start_supervised({AgentHub, name: :test_hub})
+      {:ok, _hub} = start_supervised({AgentHub, name: :test_hub_3})
       {:ok, agent_pid} = TestAgent.start_link()
       agent = :sys.get_state(agent_pid)
 
-      {:ok, hub: :test_hub, agent: agent, agent_pid: agent_pid}
+      {:ok, hub: :test_hub_3, agent: agent, agent_pid: agent_pid}
     end
 
     test "can register an agent", %{hub: hub, agent: agent, agent_pid: pid} do
@@ -80,12 +80,13 @@ defmodule Lux.AgentHubTest do
 
   describe "agent status management" do
     setup do
-      {:ok, _hub} = start_supervised({AgentHub, name: :test_hub})
+      unique_hub_id = :"hub_#{:erlang.unique_integer([:positive])}"
+      {:ok, _hub} = start_supervised({AgentHub, name: unique_hub_id})
       {:ok, agent_pid} = TestAgent.start_link()
       agent = :sys.get_state(agent_pid)
-      :ok = AgentHub.register(:test_hub, agent, agent_pid, [:test])
+      :ok = AgentHub.register(unique_hub_id, agent, agent_pid, [:test])
 
-      {:ok, hub: :test_hub, agent: agent, agent_pid: agent_pid}
+      {:ok, hub: unique_hub_id, agent: agent, agent_pid: agent_pid}
     end
 
     test "can update agent status", %{hub: hub, agent: agent} do

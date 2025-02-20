@@ -3,7 +3,7 @@
 ```elixir
 Mix.install(
   [
-    {:lux, "~> 0.3.0"},
+    {:lux, "~> 0.4.0"},
     {:kino, "~> 0.14.2"}
   ],
   config: [
@@ -446,7 +446,7 @@ Kino.nothing()
 
 ```elixir
 defmodule MyApp.Agents.ChatAgentTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias MyApp.Agents.ChatAgent
 

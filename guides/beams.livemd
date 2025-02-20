@@ -5,7 +5,7 @@
 ```elixir
 Mix.install(
   [
-    {:lux, "~> 0.3.0"}
+    {:lux, "~> 0.4.0"}
     {:kino, "~> 0.14.2"}
   ],
   start_applications: false
@@ -765,7 +765,7 @@ Example test:
 
 ```elixir
 defmodule MyApp.Beams.ContentProcessorTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   describe "run/2" do
     test "processes content successfully" do

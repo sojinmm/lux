@@ -1,16 +1,5 @@
 ExUnit.start(exclude: [:skip, :integration, :unit])
 
-defmodule UnitCase do
-  @moduledoc false
-  use ExUnit.CaseTemplate
-
-  using do
-    quote do
-      @moduletag :unit
-    end
-  end
-end
-
 defmodule UnitAPICase do
   @moduledoc false
   use ExUnit.CaseTemplate
