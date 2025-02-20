@@ -235,8 +235,6 @@ defmodule Lux.Company do
   end
 
   def handle_call({:get_objective_status, objective_id}, _from, state) do
-    dbg()
-
     case Map.get(state.objectives, objective_id) do
       nil -> {:reply, {:error, :not_found}, state}
       objective -> {:reply, {:ok, objective.status}, state}
@@ -349,8 +347,10 @@ defmodule Lux.Company do
           id: Lux.UUID.generate(),
           objective_id: objective_id,
           input: input,
-          status: :completed,  # FIXME: Should track real status
-          progress: 100,       # FIXME: Should track real progress
+          # FIXME: Should track real status
+          status: :completed,
+          # FIXME: Should track real progress
+          progress: 100,
           started_at: DateTime.utc_now(),
           completed_at: DateTime.utc_now(),
           error: nil,
@@ -484,14 +484,14 @@ defmodule Lux.Company do
         # First validate required fields
         missing_fields = Enum.reject(required_fields, &Map.has_key?(input, &1))
 
-        if not Enum.empty?(missing_fields) do
-          {:error, {:missing_required_fields, missing_fields}}
-        else
+        if Enum.empty?(missing_fields) do
           # Then validate field types if specified
           case validate_field_types(input, schema) do
             :ok -> {:ok, objective}
             {:error, reason} -> {:error, reason}
           end
+        else
+          {:error, {:missing_required_fields, missing_fields}}
         end
 
       nil ->
@@ -510,7 +510,8 @@ defmodule Lux.Company do
           end
 
         _ ->
-          {:cont, :ok}  # Field not in schema, assume valid
+          # Field not in schema, assume valid
+          {:cont, :ok}
       end
     end)
   end

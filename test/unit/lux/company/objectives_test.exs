@@ -1,5 +1,5 @@
 defmodule Lux.Company.ObjectivesTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias Lux.Company.Objectives
 

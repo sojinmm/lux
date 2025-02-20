@@ -765,7 +765,7 @@ Example test:
 
 ```elixir
 defmodule MyApp.Beams.ContentProcessorTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   describe "run/2" do
     test "processes content successfully" do

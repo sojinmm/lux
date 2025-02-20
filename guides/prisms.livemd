@@ -286,7 +286,7 @@ Example test:
 
 ```elixir
 defmodule MyApp.Prisms.TextAnalysisTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias MyApp.Prisms.TextAnalysis
 

@@ -473,7 +473,7 @@ When validation fails, you get detailed error messages:
 
 ```elixir
 defmodule MyApp.Schemas.TaskSchemaTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias MyApp.Schemas.TaskSchema
 
@@ -618,7 +618,7 @@ Example test:
 
 ```elixir
 defmodule MyApp.Signals.TaskTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   describe "new/1" do
     test "creates valid task signal" do

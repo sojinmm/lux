@@ -446,7 +446,7 @@ Kino.nothing()
 
 ```elixir
 defmodule MyApp.Agents.ChatAgentTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   alias MyApp.Agents.ChatAgent
 

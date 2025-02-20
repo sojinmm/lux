@@ -145,7 +145,10 @@ defmodule Test.Support.Companies.ContentTeam do
       required: ["topic", "target_audience", "tone"],
       properties: %{
         "topic" => %{type: "string", description: "The topic to write about"},
-        "target_audience" => %{type: "string", description: "The intended audience for the blog post"},
+        "target_audience" => %{
+          type: "string",
+          description: "The intended audience for the blog post"
+        },
         "tone" => %{type: "string", description: "The writing tone/style to use"}
       }
     })

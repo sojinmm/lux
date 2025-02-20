@@ -241,7 +241,7 @@ Example test:
 
 ```elixir
 defmodule MyApp.Lenses.WeatherAPITest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
 
   setup do
     Req.Test.verify_on_exit!()

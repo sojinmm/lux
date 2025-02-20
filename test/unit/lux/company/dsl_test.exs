@@ -37,6 +37,7 @@ defmodule Lux.Company.DSLTest do
         objective :run_test_suite do
           description("Run the complete test suite")
           success_criteria("All tests pass with >90% coverage")
+
           input(%{
             required: ["test_input"],
             properties: %{

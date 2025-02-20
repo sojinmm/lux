@@ -8,9 +8,14 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
   - Handling state transitions
   - Managing errors and failures
   - Coordinating with the company process
+  - Integrating with TaskTracker and ArtifactStore
   """
 
   use GenServer
+
+  alias Lux.Company.ExecutionEngine.ArtifactStore
+  alias Lux.Company.ExecutionEngine.TaskTracker
+
   require Logger
 
   # State machine: pending -> initializing -> in_progress -> completed
@@ -18,18 +23,19 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
   #                      \-> cancelled
 
   @type state :: %{
-    id: String.t(),
-    objective: Lux.Company.Objective.t(),
-    company_pid: pid(),
-    input: map(),
-    status: :pending | :initializing | :in_progress | :completed | :failed | :cancelled,
-    current_step: integer(),
-    progress: integer(),
-    error: term() | nil,
-    started_at: DateTime.t() | nil,
-    completed_at: DateTime.t() | nil,
-    artifacts: map()
-  }
+          id: String.t(),
+          objective: Lux.Company.Objective.t(),
+          company_pid: pid(),
+          input: map(),
+          status: :pending | :initializing | :in_progress | :completed | :failed | :cancelled,
+          current_step: integer(),
+          progress: integer(),
+          error: term() | nil,
+          started_at: DateTime.t() | nil,
+          completed_at: DateTime.t() | nil,
+          task_tracker: pid() | nil,
+          artifact_store: pid() | nil
+        }
 
   # Client API
 
@@ -53,11 +59,22 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
       nil ->
         Logger.error("Registry #{inspect(registry)} not found!")
         {:error, :registry_not_found}
-      registry_pid ->
-        Logger.debug("Found registry at #{inspect(registry_pid)}")
-        name = via_tuple(objective_id, registry)
-        Logger.debug("Registering with name: #{inspect(name)}")
-        GenServer.start_link(__MODULE__, opts, name: name)
+
+      _registry_pid ->
+        Logger.debug("Found registry")
+
+        Logger.debug(
+          "Current registry entries before process start: #{inspect(Registry.select(registry, [{{:"$1", :"$2", :"$3"}, [], [{{:"$1", :"$2", :"$3"}}]}]))}"
+        )
+
+        result = GenServer.start_link(__MODULE__, opts)
+        Logger.debug("Process start result: #{inspect(result)}")
+
+        Logger.debug(
+          "Registry entries after process start: #{inspect(Registry.select(registry, [{{:"$1", :"$2", :"$3"}, [], [{{:"$1", :"$2", :"$3"}}]}]))}"
+        )
+
+        result
     end
   end
 
@@ -91,29 +108,55 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
   @doc "Add an error message to the objective's error list"
   def add_error(pid, error), do: GenServer.call(pid, {:add_error, error})
 
+  @doc "Get the task tracker for this objective"
+  def get_task_tracker(pid), do: GenServer.call(pid, :get_task_tracker)
+
+  @doc "Get the artifact store for this objective"
+  def get_artifact_store(pid), do: GenServer.call(pid, :get_artifact_store)
+
   # Server callbacks
 
   @impl true
   def init(opts) do
     Logger.debug("Initializing ObjectiveProcess with opts: #{inspect(opts)}")
 
-    state = %{
-      id: Keyword.fetch!(opts, :objective_id),
-      objective: Keyword.fetch!(opts, :objective),
-      company_pid: Keyword.fetch!(opts, :company_pid),
-      input: Keyword.fetch!(opts, :input),
-      registry: Keyword.fetch!(opts, :registry),
-      status: :pending,
-      current_step: nil,
-      progress: 0,
-      error: nil,
-      started_at: nil,
-      completed_at: nil,
-      artifacts: %{}
-    }
+    objective_id = Keyword.fetch!(opts, :objective_id)
+    task_registry = Module.concat(objective_id, TaskRegistry)
+    artifact_registry = Module.concat(objective_id, ArtifactRegistry)
 
-    Logger.debug("Initial state: #{inspect(state)}")
-    {:ok, state}
+    Logger.debug("Looking up task tracker in registry: #{inspect(task_registry)}")
+    Logger.debug("Looking up artifact store in registry: #{inspect(artifact_registry)}")
+
+    with [{task_tracker, _}] <- Registry.lookup(task_registry, "task_tracker"),
+         [{artifact_store, _}] <- Registry.lookup(artifact_registry, "artifact_store") do
+      registry = Keyword.fetch!(opts, :registry)
+
+      # Register this process with the registry
+      Registry.register(registry, objective_id, nil)
+
+      state = %{
+        id: objective_id,
+        objective: Keyword.fetch!(opts, :objective),
+        company_pid: Keyword.fetch!(opts, :company_pid),
+        input: Keyword.fetch!(opts, :input),
+        registry: registry,
+        status: :pending,
+        current_step: nil,
+        progress: 0,
+        error: nil,
+        started_at: nil,
+        completed_at: nil,
+        task_tracker: task_tracker,
+        artifact_store: artifact_store
+      }
+
+      Logger.debug("Initial state: #{inspect(state)}")
+      {:ok, state}
+    else
+      _ ->
+        Logger.error("Failed to find task tracker or artifact store")
+        {:stop, :component_not_found}
+    end
   end
 
   @impl true
@@ -126,42 +169,28 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
 
   def handle_call(:start, _from, %{status: :initializing} = state) do
     Logger.debug("Starting objective #{state.id}")
-    new_state = %{state |
-      status: :in_progress,
-      started_at: DateTime.utc_now()
-    }
+    new_state = %{state | status: :in_progress, started_at: DateTime.utc_now()}
     notify_company(new_state)
     {:reply, :ok, new_state}
   end
 
   def handle_call(:complete, _from, %{status: :in_progress} = state) do
     Logger.debug("Completing objective #{state.id}")
-    new_state = %{state |
-      status: :completed,
-      progress: 100,
-      completed_at: DateTime.utc_now()
-    }
+    new_state = %{state | status: :completed, progress: 100, completed_at: DateTime.utc_now()}
     notify_company(new_state)
     {:reply, :ok, new_state}
   end
 
   def handle_call({:fail, reason}, _from, %{status: :in_progress} = state) do
     Logger.debug("Failing objective #{state.id} with reason: #{inspect(reason)}")
-    new_state = %{state |
-      status: :failed,
-      error: reason,
-      completed_at: DateTime.utc_now()
-    }
+    new_state = %{state | status: :failed, error: reason, completed_at: DateTime.utc_now()}
     notify_company(new_state)
     {:reply, :ok, new_state}
   end
 
   def handle_call(:cancel, _from, %{status: :in_progress} = state) do
     Logger.debug("Cancelling objective #{state.id}")
-    new_state = %{state |
-      status: :cancelled,
-      completed_at: DateTime.utc_now()
-    }
+    new_state = %{state | status: :cancelled, completed_at: DateTime.utc_now()}
     notify_company(new_state)
     {:reply, :ok, new_state}
   end
@@ -173,8 +202,13 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
     {:reply, :ok, new_state}
   end
 
-  def handle_call({:set_current_step, step}, _from, %{status: :in_progress, objective: objective} = state) do
+  def handle_call(
+        {:set_current_step, step},
+        _from,
+        %{status: :in_progress, objective: objective} = state
+      ) do
     Logger.debug("Setting current step for objective #{state.id} to: #{inspect(step)}")
+
     if step in objective.steps do
       new_state = %{state | current_step: step}
       notify_company(new_state)
@@ -192,37 +226,61 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
     {:reply, :ok, new_state}
   end
 
+  def handle_call(:get_task_tracker, _from, state) do
+    {:reply, {:ok, state.task_tracker}, state}
+  end
+
+  def handle_call(:get_artifact_store, _from, state) do
+    {:reply, {:ok, state.artifact_store}, state}
+  end
+
   # Invalid state transitions
   def handle_call(action, _from, state) do
-    Logger.warning("Invalid state transition: #{inspect(action)} in state #{inspect(state.status)}")
+    Logger.warning(
+      "Invalid state transition: #{inspect(action)} in state #{inspect(state.status)}"
+    )
+
     {:reply, {:error, :invalid_state_transition}, state}
   end
 
   @impl true
   def handle_info(:initialize, state) do
     Logger.debug("Received :initialize message in state #{inspect(state.status)}")
+
     case state.status do
       :pending ->
         Logger.debug("Auto-initializing objective #{state.id}")
         new_state = %{state | status: :initializing}
         notify_company(new_state)
         {:noreply, new_state}
+
       _ ->
         Logger.warning("Ignoring :initialize message in #{state.status} state")
         {:noreply, state}
     end
   end
 
+  def handle_info({:task_tracker_update, task_id, event}, state) do
+    Logger.debug("Received task tracker update for task #{task_id}: #{inspect(event)}")
+    # Handle task updates (e.g., update progress based on completed tasks)
+    {:noreply, state}
+  end
+
+  def handle_info({:artifact_store_update, artifact_id, event}, state) do
+    Logger.debug("Received artifact store update for artifact #{artifact_id}: #{inspect(event)}")
+    # Handle artifact updates (e.g., notify company of new artifacts)
+    {:noreply, state}
+  end
+
   def handle_info(msg, state) do
-    Logger.warning("Received unexpected message: #{inspect(msg)} in state #{inspect(state.status)}")
+    Logger.warning(
+      "Received unexpected message: #{inspect(msg)} in state #{inspect(state.status)}"
+    )
+
     {:noreply, state}
   end
 
   # Private functions
-
-  defp via_tuple(objective_id, registry) do
-    {:via, Registry, {registry, objective_id}}
-  end
 
   defp notify_company(state) do
     Logger.debug("Notifying company of state update for objective #{state.id}")

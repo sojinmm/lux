@@ -45,7 +45,6 @@ defmodule Lux.Integration.Company.ContentTeamTest do
 
       # 2. Wait for initial objective setup
       # :timer.sleep(500)
-      dbg("omgomgomg")
       {:ok, initial_status} = Lux.Company.get_objective_status(pid, objective_id)
       assert initial_status == :in_progress
 

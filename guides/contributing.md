@@ -43,7 +43,7 @@ end
 
 # test/lux/prisms/my_feature_prism_test.exs
 defmodule Lux.Prisms.MyFeaturePrismTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
   alias Lux.Prisms.MyFeaturePrism
   
   test "processes input correctly" do
@@ -77,7 +77,7 @@ end
 
 # test/lux/lenses/my_service_lens_test.exs
 defmodule Lux.Lenses.MyServiceLensTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
   alias Lux.Lenses.MyServiceLens
   
   test "integrates with service correctly" do
@@ -112,7 +112,7 @@ end
 
 # test/lux/beams/my_workflow_beam_test.exs
 defmodule Lux.Beams.MyWorkflowBeamTest do
-  use ExUnit.Case, async: true
+  use UnitCase, async: true
   alias Lux.Beams.MyWorkflowBeam
   
   test "executes workflow correctly" do
