@@ -4,13 +4,17 @@ defmodule Lux.MixProject do
   def project do
     [
       app: :lux,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       dialyzer: [plt_add_apps: [:mix]],
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
+      # Package
+      description:
+        "A framework for building and orchestrating LLM-powered agent workflows in Elixir",
+      package: package(),
       # Docs
       name: "Lux",
       source_url: "https://github.com/Spectral-Finance/lux",
@@ -49,6 +53,8 @@ defmodule Lux.MixProject do
       {:crontab, "~> 1.1"},
       {:ex_json_schema, "~> 0.10.2"},
       {:nodejs, "~> 2.0"},
+      {:ethers, "~> 0.6.4"},
+      {:ex_secp256k1, "~> 0.7.4"},
       # test and dev dependencies
       {:ex_doc, "~> 0.34", only: :dev, runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
@@ -66,6 +72,21 @@ defmodule Lux.MixProject do
         "test.integration": :test,
         "test.unit": :test
       ]
+    ]
+  end
+
+  def package do
+    [
+      name: "lux",
+      description:
+        "Lux is a powerful framework for building and orchestrating LLM-powered agent workflows. It provides a robust set of tools for creating, managing, and coordinating AI agents in complex business processes.",
+      licenses: ["MIT"],
+      links: %{
+        "GitHub" => "https://github.com/Spectral-Finance/lux",
+        "Changelog" => "https://github.com/Spectral-Finance/lux/blob/main/CHANGELOG.md"
+      },
+      files:
+        ~w(lib priv/python/lux/*.py priv/python/hyperliquid_utils/*.py priv/python/*.py priv/python/*.toml priv/node/*.json priv/node/*.mjs .formatter.exs mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
 

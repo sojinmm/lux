@@ -23,7 +23,18 @@ if config_env() in [:dev, :test] do
     integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, required: false)
 
   config :lux, :accounts,
+    wallet_address: env!("WALLET_ADDRESS", :string!),
     hyperliquid_private_key: env!("HYPERLIQUID_PRIVATE_KEY", :string!),
     hyperliquid_address: env!("HYPERLIQUID_ADDRESS", :string!, required: false),
     hyperliquid_api_url: env!("HYPERLIQUID_API_URL", :string!)
+
+  config :ethers,
+    default_signer: Ethers.Signer.Local,
+    default_signer_opts: [
+      private_key: env!("WALLET_PRIVATE_KEY", :string!),
+      rpc_url: env!("RPC_URL", :string!)
+    ]
+
+  config :ethereumex,
+    url: env!("RPC_URL", :string!)
 end
