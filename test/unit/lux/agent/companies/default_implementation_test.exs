@@ -2,6 +2,7 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
   use UnitCase, async: true
 
   alias Lux.Agent.Companies.SignalHandler.DefaultImplementation
+  alias Lux.AgentHub
   alias Lux.Schemas.Companies.ObjectiveSignal
   alias Lux.Schemas.Companies.TaskSignal
   alias Lux.Signal
@@ -55,10 +56,25 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
 
   describe "objective signal handling" do
     setup do
+      # Start a real AgentHub for testing
+      hub_name = :"agent_hub_#{:erlang.unique_integer([:positive])}"
+      start_supervised!({AgentHub, name: hub_name})
+
+      # Create a test agent with capabilities
+      test_agent = %{
+        id: "agent-1",
+        name: "Test Agent",
+        capabilities: ["research", "analysis"]
+      }
+
+      # Register the test agent with the hub
+      :ok = AgentHub.register(hub_name, test_agent, self(), test_agent.capabilities)
+
       context = %{
         beams: [],
         lenses: [],
-        prisms: []
+        prisms: [],
+        hub: hub_name
       }
 
       objective_signal = %Signal{
@@ -73,7 +89,8 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
             %{
               "index" => 0,
               "description" => "First step",
-              "status" => "pending"
+              "status" => "pending",
+              "required_capabilities" => ["research"]
             }
           ]
         }
@@ -83,8 +100,13 @@ defmodule Lux.Agent.Companies.DefaultImplementationTest do
     end
 
     test "handles objective evaluation signal", %{context: context, objective_signal: signal} do
-      assert {:ok, _} =
-               DefaultImplementation.handle_objective_evaluation(signal, context)
+      {:ok, response} = DefaultImplementation.handle_objective_evaluation(signal, context)
+
+      assert response.schema_id == ObjectiveSignal
+      assert response.payload["type"] == "evaluate"
+      assert response.payload["evaluation"]["decision"] == "continue"
+      assert response.payload["evaluation"]["assigned_agent"] == "agent-1"
+      assert response.payload["evaluation"]["required_capabilities"] == ["research"]
     end
 
     test "handles objective update signal", %{context: context, objective_signal: signal} do

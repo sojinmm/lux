@@ -7,6 +7,8 @@ defmodule Lux.Company do
   use GenServer
 
   alias Lux.Company.Roles
+  alias Lux.Schemas.Companies.ObjectiveSignal
+  alias Lux.Signal.Router
 
   require Logger
 
@@ -27,6 +29,8 @@ defmodule Lux.Company do
     :mission,
     :module,
     :ceo,
+    :signal_router,
+    :agent_hub,
     roles: [],
     objectives: [],
     metadata: %{}
@@ -189,10 +193,16 @@ defmodule Lux.Company do
       Logger.info("    Using agent: #{member.agent}")
     end)
 
+    # Store signal router and agent hub if provided
+    signal_router = Keyword.get(opts, :signal_router)
+    agent_hub = Keyword.get(opts, :agent_hub)
+
     {:ok,
      %{
        module: module,
        opts: opts,
+       signal_router: signal_router,
+       agent_hub: agent_hub,
        roles: %{},
        objectives: %{},
        artifacts: %{}
@@ -326,70 +336,12 @@ defmodule Lux.Company do
   end
 
   def handle_call({:run_objective, objective_id, input}, _from, state) do
-    require Logger
+    case start_objective_execution(objective_id, input, state) do
+      {:ok, updated_objective, new_state} ->
+        {:reply, {:ok, updated_objective}, new_state}
 
-    Logger.debug("Running objective: #{objective_id} with input: #{inspect(input)}")
-    Logger.debug("Company state: #{inspect(state)}")
-    Logger.debug("Available roles: #{inspect(state.roles)}")
-    Logger.debug("Company module: #{inspect(state.module)}")
-
-    case validate_objective(objective_id, input, state) do
-      {:ok, objective} ->
-        Logger.debug("Objective validated: #{inspect(objective)}")
-        Logger.debug("Objective steps: #{inspect(objective.steps)}")
-        Logger.debug("WARNING: No actual execution engine implemented!")
-        Logger.debug("WARNING: Missing agent task distribution!")
-        Logger.debug("WARNING: Missing step progression logic!")
-        Logger.debug("WARNING: Missing agent collaboration system!")
-
-        # FIXME: This is just a mock implementation
-        objective_instance = %{
-          id: Lux.UUID.generate(),
-          objective_id: objective_id,
-          input: input,
-          # FIXME: Should track real status
-          status: :completed,
-          # FIXME: Should track real progress
-          progress: 100,
-          started_at: DateTime.utc_now(),
-          completed_at: DateTime.utc_now(),
-          error: nil,
-          metadata: %{
-            original_objective: objective,
-            type: "completion",
-            result: %{
-              "success" => true,
-              "output" => %{
-                "search" => %{found: true},
-                "summary" => "Task completed successfully"
-              }
-            }
-          }
-        }
-
-        Logger.debug("Created mock objective instance: #{inspect(objective_instance)}")
-        Logger.debug("WARNING: No actual work performed!")
-
-        # Single atomic state update
-        updated_objectives = Map.put(state.objectives, objective_instance.id, objective_instance)
-        updated_state = %{state | objectives: updated_objectives}
-
-        response = %{
-          schema_id: TaskSignal,
-          payload: %{
-            "type" => "completion",
-            "status" => "completed",
-            "result" => objective_instance.metadata.result,
-            "objective_id" => objective_instance.objective_id,
-            "id" => objective_instance.id
-          }
-        }
-
-        {:reply, {:ok, response}, updated_state}
-
-      error ->
-        Logger.error("Error validating objective: #{inspect(error)}")
-        # ... rest of error handling ...
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 
@@ -405,12 +357,37 @@ defmodule Lux.Company do
         updated_objective =
           Map.merge(objective, %{
             status: status,
-            progress: progress,
-            completed_at: if(status in [:completed, :failed], do: DateTime.utc_now())
+            progress: progress
           })
 
         updated_objectives = Map.put(state.objectives, objective_id, updated_objective)
-        {:reply, {:ok, updated_objective}, %{state | objectives: updated_objectives}}
+        new_state = %{state | objectives: updated_objectives}
+
+        # Create status update signal for CEO
+        signal = %Lux.Signal{
+          id: Lux.UUID.generate(),
+          schema_id: ObjectiveSignal,
+          payload: %{
+            "type" => "status_update",
+            "objective_id" => objective_id,
+            "title" => to_string(objective.name),
+            "status" => to_string(status),
+            "progress" => progress
+          },
+          recipient: state.module.ceo().id,
+          sender: objective_id
+        }
+
+        # Route the signal through the router if configured
+        if state.signal_router && state.agent_hub do
+          :ok =
+            Router.route(signal,
+              router: state.signal_router,
+              hub: state.agent_hub
+            )
+        end
+
+        {:reply, {:ok, updated_objective}, new_state}
     end
   end
 
@@ -566,6 +543,85 @@ defmodule Lux.Company do
     end)
 
     {:ok, pid}
+  end
+
+  defp start_objective_execution(objective_id, input, state) do
+    Logger.debug("Starting objective execution: #{objective_id}")
+    Logger.debug("Input: #{inspect(input)}")
+
+    case Map.get(state.objectives, objective_id) do
+      nil ->
+        {:error, :not_found}
+
+      objective ->
+        # Validate input against objective schema
+        case validate_objective_input(objective, input, state) do
+          {:ok, _} ->
+            # Start the execution engine supervisor for this objective
+            supervisor_name = Module.concat(objective_id, ExecutionSupervisor)
+
+            case ExecutionEngine.Supervisor.start_link(name: supervisor_name) do
+              {:ok, _pid} ->
+                # Start the objective process
+                case ExecutionEngine.Supervisor.start_objective(
+                       supervisor_name,
+                       objective,
+                       self(),
+                       input,
+                       objective_id
+                     ) do
+                  {:ok, _pid} ->
+                    # Create initial signal for CEO evaluation
+                    signal = %Lux.Signal{
+                      id: Lux.UUID.generate(),
+                      schema_id: ObjectiveSignal,
+                      payload: %{
+                        "type" => "evaluate",
+                        "objective_id" => objective_id,
+                        "title" => to_string(objective.name),
+                        "input" => input
+                      },
+                      recipient: state.module.ceo().id,
+                      sender: objective_id
+                    }
+
+                    # Route the signal through the router if configured
+                    if state.signal_router && state.agent_hub do
+                      :ok =
+                        Router.route(signal,
+                          router: state.signal_router,
+                          hub: state.agent_hub
+                        )
+                    end
+
+                    # Update objective status
+                    updated_objective = %{
+                      objective
+                      | status: :in_progress,
+                        started_at: DateTime.utc_now()
+                    }
+
+                    updated_objectives =
+                      Map.put(state.objectives, objective_id, updated_objective)
+
+                    new_state = %{state | objectives: updated_objectives}
+
+                    {:ok, updated_objective, new_state}
+
+                  error ->
+                    Logger.error("Failed to start objective process: #{inspect(error)}")
+                    {:error, :start_failed}
+                end
+
+              error ->
+                Logger.error("Failed to start execution supervisor: #{inspect(error)}")
+                {:error, :supervisor_failed}
+            end
+
+          error ->
+            error
+        end
+    end
   end
 
   defmacro __using__(_opts) do

@@ -61,6 +61,14 @@ defmodule Lux.Company.Hub.Local do
     GenServer.call(hub, {:deregister_company, id})
   end
 
+  @doc """
+  Gets an agent by ID from the company.
+  """
+  @spec get_agent(String.t(), hub :: GenServer.server()) :: {:ok, map()} | {:error, term()}
+  def get_agent(agent_id, hub) do
+    GenServer.call(hub, {:get_agent, agent_id})
+  end
+
   # Server Callbacks
 
   @impl true
@@ -102,5 +110,28 @@ defmodule Lux.Company.Hub.Local do
   def handle_call({:deregister_company, id}, _from, state) do
     :ets.delete(state.table, id)
     {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:get_agent, agent_id}, _from, state) do
+    # Find company that has this agent (either as CEO or role)
+    result =
+      state.table
+      |> :ets.tab2list()
+      |> Enum.find_value(
+        {:error, :not_found},
+        fn {_id, company} ->
+          if company.ceo && company.ceo.id == agent_id do
+            {:ok, company.ceo}
+          else
+            case Enum.find(company.roles || [], &(&1.id == agent_id)) do
+              nil -> false
+              role -> {:ok, role}
+            end
+          end
+        end
+      )
+
+    {:reply, result, state}
   end
 end

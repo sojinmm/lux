@@ -9,7 +9,14 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
   setup do
     # Start the supervisor with a unique name for test isolation
     name = :"execution_engine_#{:erlang.unique_integer([:positive])}"
-    start_supervised!({ExecutionSupervisor, name: name})
+
+    # Start supervisor with explicit shutdown strategy
+    start_supervised!(
+      {ExecutionSupervisor, name: name},
+      restart: :temporary,
+      shutdown: 5000
+    )
+
     {:ok, supervisor: name}
   end
 
@@ -24,7 +31,9 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
 
   describe "objective management" do
     setup do
-      # Create a test objective
+      # Trap exits in test process to handle shutdown signals
+      Process.flag(:trap_exit, true)
+
       {:ok, objective} =
         Objective.new(%{
           name: :test_objective,
@@ -39,13 +48,16 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
           }
         })
 
-      # Create a mock company process
       company_pid =
         spawn_link(fn ->
           receive do
             _ -> :ok
           end
         end)
+
+      on_exit(fn ->
+        Process.flag(:trap_exit, false)
+      end)
 
       {:ok, objective: objective, company_pid: company_pid}
     end
@@ -101,6 +113,32 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
       assert artifact.name == "test_artifact"
     end
 
+    defp wait_for_process_termination(pid, retries \\ 50)
+    defp wait_for_process_termination(_pid, 0), do: false
+
+    defp wait_for_process_termination(pid, retries) do
+      if Process.alive?(pid) do
+        Process.sleep(10)
+        wait_for_process_termination(pid, retries - 1)
+      else
+        receive do
+          {:EXIT, ^pid, _reason} -> true
+        after
+          0 -> true
+        end
+      end
+    end
+
+    defp ensure_process_terminated(pid) do
+      ref = Process.monitor(pid)
+
+      receive do
+        {:DOWN, ^ref, :process, ^pid, _reason} -> :ok
+      after
+        1000 -> {:error, :timeout}
+      end
+    end
+
     test "stops an objective process and its components", %{
       supervisor: supervisor,
       objective: objective,
@@ -123,12 +161,27 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
       task_registry_pid = Process.whereis(task_registry)
       artifact_registry_pid = Process.whereis(artifact_registry)
 
+      # Store the PIDs we need to check
+      pids_to_check = [pid, task_registry_pid, artifact_registry_pid]
+
+      # Monitor all processes
+      refs = Enum.map(pids_to_check, &Process.monitor/1)
+
+      # Verify all processes are running
+      assert Enum.all?(pids_to_check, &Process.alive?/1)
+
+      # Stop the objective
       assert :ok = ExecutionSupervisor.stop_objective(supervisor, objective_id)
 
-      # Verify all processes are stopped
-      refute Process.alive?(pid)
-      refute Process.alive?(task_registry_pid)
-      refute Process.alive?(artifact_registry_pid)
+      # Wait for all monitors to receive DOWN messages
+      for ref <- refs do
+        assert_receive {:DOWN, ^ref, :process, _pid, _reason}, 1000
+      end
+
+      # Final verification that no processes are alive
+      # Small delay to ensure cleanup
+      :timer.sleep(50)
+      refute Enum.any?(pids_to_check, &Process.alive?/1)
     end
 
     test "lists running objectives", %{
