@@ -24,7 +24,7 @@ Lux is a powerful Elixir framework for building intelligent, adaptive, and colla
 # Add Lux to your dependencies
 def deps do
   [
-    {:lux, "~> 0.3.0"}
+    {:lux, "~> 0.4.0"}
   ]
 end
 

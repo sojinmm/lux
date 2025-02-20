@@ -13,9 +13,6 @@ defmodule Lux.Company.ExecutionEngine.ObjectiveProcess do
 
   use GenServer
 
-  alias Lux.Company.ExecutionEngine.ArtifactStore
-  alias Lux.Company.ExecutionEngine.TaskTracker
-
   require Logger
 
   # State machine: pending -> initializing -> in_progress -> completed
