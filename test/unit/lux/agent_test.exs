@@ -429,10 +429,10 @@ defmodule Lux.AgentTest do
     setup do
       input = %{
         name: "HelloAgent",
-        id: "qweasdweq",
+        id: Lux.UUID.generate(),
         description: "A very cool agent",
         module: "MyAgent#{:erlang.unique_integer([:positive])}",
-        goal: "Allways be so cool"
+        goal: "Always be so cool"
       }
 
       {:ok, input: input}
@@ -440,16 +440,13 @@ defmodule Lux.AgentTest do
 
     test "loads agent from json", %{input: input} do
       assert {:ok, agent} = input |> Jason.encode!() |> Agent.from_json()
-
       assert Code.ensure_compiled?(agent)
-
       agent_struct = agent.view()
-
-      assert agent_struct.name == "HelloAgent"
-      assert agent_struct.id == "qweasdweq"
-      assert agent_struct.description == "A very cool agent"
-      assert agent_struct.module == "MyAgent#{:erlang.unique_integer([:positive])}"
-      assert agent_struct.goal == "Allways be so cool"
+      assert agent_struct.name == input.name
+      assert agent_struct.id == input.id
+      assert agent_struct.description == input.description
+      assert agent_struct.module |> to_string() == "Elixir." <> input.module
+      assert agent_struct.goal == input.goal
     end
   end
 end

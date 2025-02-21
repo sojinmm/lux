@@ -36,7 +36,7 @@ defmodule Lux.Unit.Agent.Config.LoaderTest do
       path = Path.join(tmp_dir, "agent.json")
       File.write!(path, Jason.encode!(config))
 
-      assert {:ok, [agent]} = Loader.load(path)
+      assert {:ok, agent} = Loader.load(path)
       assert %Agent{} = agent
       assert agent.id == "test-agent"
       assert agent.name == "Test Agent"
@@ -137,7 +137,7 @@ defmodule Lux.Unit.Agent.Config.LoaderTest do
       path = Path.join(tmp_dir, "agent.json")
       File.write!(path, Jason.encode!(config))
 
-      assert {:ok, [agent]} = Loader.load(path)
+      assert {:ok, agent} = Loader.load(path)
       assert agent.module == :"Elixir.Test.JsonAgent"
       assert agent.prisms == [:"Elixir.Test.Prism"]
       assert agent.beams == [:"Elixir.Test.Beam"]

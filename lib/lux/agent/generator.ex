@@ -14,6 +14,7 @@ defmodule Lux.Agent.Generator do
       quoted =
         quote do
           use Lux.Agent,
+            id: unquote(config.id),
             name: unquote(config.name),
             description: unquote(config.description),
             goal: unquote(config.goal),

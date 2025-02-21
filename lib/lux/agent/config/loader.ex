@@ -41,6 +41,13 @@ defmodule Lux.Agent.Config.Loader do
           {:ok, agents}
       end
     end)
+    |> case do
+      {:ok, []} ->
+        {:error, :no_valid_agents_found}
+
+      {:ok, agents} ->
+        {:ok, Enum.reverse(agents)}
+    end
   end
 
   @doc """
