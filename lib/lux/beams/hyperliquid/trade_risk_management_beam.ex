@@ -112,7 +112,7 @@ defmodule Lux.Beams.Hyperliquid.TradeRiskManagementBeam do
         })
 
       false ->
-        step(:noop, Lux.Prisms.NoOp, %{
+        step(:return, Lux.Prisms.NoOp, %{
           status: "rejected",
           order_result: %{
             risk_metrics: [:steps, :risk_assessment, :result],
