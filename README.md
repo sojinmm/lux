@@ -6,363 +6,106 @@
 
 > ⚠️ **Note**: Lux is currently under heavy development and should be considered pre-alpha software. The API and architecture are subject to significant changes. We welcome feedback and contributions.
 
-Lux is a powerful Elixir framework for building intelligent, adaptive, and collaborative multi-agent systems. It enables autonomous entities (Agents) to communicate, learn, and execute complex workflows while continuously improving through reflection.
+Lux is a powerful language-agnostic framework for building intelligent, adaptive, and collaborative multi-agent systems. It enables autonomous entities (Agents) to communicate, learn, and execute complex workflows while continuously improving through reflection.
 
 ## Why Lux?
 
 - 🧠 **Self-Improving Agents**: Agents with built-in reflection capabilities (coming soon)
-- 🚀 **Modular Architecture**: Build complex systems from simple, reusable components
+- 🚀 **Language Agnostic**: Build agents in your favorite programming language
 - 🔄 **Type-Safe Communication**: Structured data flow with schema validation
 - 🤖 **AI-First**: Deep LLM integration with advanced prompting and context management
 - 🔌 **Extensible**: Easy integration with external services and APIs
 - 📊 **Observable**: Built-in monitoring, metrics, and debugging tools
 - 🧪 **Testable**: Comprehensive testing utilities for deterministic agent behavior
 
-## Quick Start
+## Documentation
 
-```elixir
-# Add Lux to your dependencies
-def deps do
-  [
-    {:lux, "~> 0.4.0"}
-  ]
-end
+📚 [Read the full documentation on hexdocs.pm/lux](https://hexdocs.pm/lux)
 
-# First, define a signal schema
-defmodule MyApp.Schemas.MarketSignal do
-  use Lux.SignalSchema,
-    id: "market-signal",
-    name: "Market Signal",
-    description: "Market data and trading signals",
-    schema: %{
-      type: :object,
-      properties: %{
-        asset: %{type: :string},
-        action: %{type: :string, enum: ["buy", "sell", "hold"]},
-        price: %{type: :number},
-        confidence: %{type: :number}
-      },
-      required: ["asset", "action", "price"]
-    }
-end
+### Getting Started
+- [Getting Started Guide](guides/getting_started.md) (docs coming soon) - Start here if you're new to Lux
+- [Core Concepts](guides/core_concepts.md) (docs coming soon) - Learn about Agents, Signals, Prisms, and Beams
+- [Language Support](guides/language_support.md) (docs coming soon) - Language integration details
 
-# Create an intelligent agent (Agent)
-defmodule MyApp.Agents.TradingAgent do
-  use Lux.Agent,
-    name: "Trading Agent",
-    description: "Analyzes market data and executes trades",
-    goal: "Maximize portfolio returns while managing risk",
-    prisms: [
-      MyApp.Prisms.MarketAnalysis,
-      MyApp.Prisms.RiskAssessment,
-      MyApp.Prisms.OrderExecution
-    ],
-    signal_handlers: [
-      {MyApp.Schemas.MarketSignal, MyApp.Prisms.OrderExecution}
-    ]
-end
+### Core Concepts
+- [Agents](guides/agents.livemd) - Building intelligent autonomous agents
+- [Signals](guides/signals.livemd) - Type-safe communication between agents
+- [Prisms](guides/prisms.livemd) - Modular functional components
+- [Beams](guides/beams.livemd) - Workflow orchestration
+- [Lenses](guides/lenses.livemd) - External service integration
 
-# Start and interact with your agent
-{:ok, pid} = MyApp.Agents.TradingAgent.start_link()
-```
+### Examples & Guides
+- [Multi-Agent Collaboration](guides/multi_agent_collaboration.livemd) - Build collaborative systems
+- [Trading System](guides/trading_system.livemd) - Complete crypto trading example
+- [Running a Company](guides/running_a_company.livemd) - Multi-agent content creation pipeline
+- [Role Management](guides/role_management.md) - Managing agent roles
+- [Companies](guides/companies.md) - Organizing agents into companies
+
+### Development
+- [Contributing Guide](guides/contributing.md) - Help improve Lux
+- [Testing Guide](guides/testing.md) - Testing your Lux applications
+- [Troubleshooting](guides/troubleshooting.md) - Common issues and solutions
 
 ## Core Concepts
 
-Lux is built around four powerful abstractions:
-
 ### 1. Agents 👻
-Autonomous agents that combine intelligence and execution:
-```elixir
-defmodule MyApp.Agents.CryptoHedgeFundCEO do
-  use Lux.Agent
-    name: "Crypto Hedge Fund CEO",
-    description: "Strategic decision maker for crypto investments",
-    goal: "Maximize fund performance and manage risk",
-    prisms: [
-      MyApp.Prisms.PortfolioAnalysis,
-      MyApp.Prisms.MarketResearch,
-      MyApp.Prisms.RiskManagement
-    ],
-    # Enable collaboration with other agents
-    collaboration_config: %{
-      trusted_agents: [
-        "trading-desk-head",
-        "risk-manager",
-        "research-analyst"
-      ],
-      collaboration_protocols: [:ask, :tell, :delegate]
-    },
-    signal_handlers: [
-      {MyApp.Schemas.PerformanceReport, MyApp.Prisms.PerformanceReport},
-      {MyApp.Schemas.MarketAlert, MyApp.Prisms.MarketAlert}
-    ]
-end
+[Learn more about Agents](guides/agents.livemd)
 
-# Start the CEO agent
-{:ok, ceo_pid} = MyApp.Agents.CryptoHedgeFundCEO.start_link()
-
-# The CEO agent will:
-# - Monitor fund performance
-# - Delegate trading decisions
-# - Manage risk exposure
-# - Coordinate with other agents
-# - Adapt strategy based on market conditions
-```
+Autonomous agents that combine intelligence and execution. Agents can:
+- Monitor and analyze data
+- Make strategic decisions
+- Delegate tasks to other agents
+- Adapt to changing conditions
+- Collaborate through structured protocols
 
 ### 2. Signals 📡
-Type-safe communication using predefined schemas:
-```elixir
-# Define a schema for performance reports
-defmodule MyApp.Schemas.PerformanceReport do
-  use Lux.SignalSchema,
-    id: "performance-report",
-    name: "Fund Performance Report",
-    description: "Daily fund performance metrics",
-    schema: %{
-      type: :object,
-      required: [:date, :returns, :risk_metrics],
-      properties: %{
-        date: %{type: :string, format: :date},
-        returns: %{
-          type: :object,
-          properties: %{
-            daily: %{type: :number},
-            mtd: %{type: :number},
-            ytd: %{type: :number}
-          }
-        },
-        risk_metrics: %{
-          type: :object,
-          properties: %{
-            sharpe_ratio: %{type: :number},
-            volatility: %{type: :number},
-            max_drawdown: %{type: :number}
-          }
-        }
-      }
-    }
-end
+[Learn more about Signals](guides/signals.livemd)
 
-# Create a signal using the schema
-signal = Lux.Signal.new(%{
-  schema_id: MyApp.Schemas.PerformanceReport,
-  payload: %{
-    date: "2024-03-14",
-    returns: %{daily: 0.025, mtd: 0.15, ytd: 0.45},
-    risk_metrics: %{
-      sharpe_ratio: 2.1,
-      volatility: 0.18,
-      max_drawdown: 0.12
-    }
-  }
-})
-```
+Type-safe communication using predefined schemas. Signals provide:
+- Structured data validation
+- Type safety across language boundaries
+- Clear communication protocols
+- Versioning and compatibility
 
 ### 3. Prisms 🔮
-Pure functional components for specific tasks:
-```elixir
-defmodule MyApp.Prisms.RiskAssessment do
-  use Lux.Prism,
-    name: "Risk Assessment",
-    description: "Evaluates portfolio risk metrics",
-    input_schema: MyApp.Schemas.PortfolioState,
-    output_schema: MyApp.Schemas.RiskMetrics
-
-  def handler(%{portfolio: portfolio}, _ctx) do
-    {:ok, %{
-      risk_score: calculate_risk_score(portfolio),
-      exposure_metrics: calculate_exposures(portfolio),
-      recommendations: generate_risk_recommendations(portfolio)
-    }}
-  end
-end
-```
 [Learn more about Prisms](guides/prisms.livemd)
 
+Pure functional components for specific tasks. Prisms enable:
+- Modular functionality
+- Language-specific implementations
+- Clear input/output contracts
+- Easy testing and validation
+
 ### 4. Beams 🌟
-Composable workflow orchestrators:
-```elixir
-defmodule MyApp.Beams.PortfolioRebalancing do
-  use Lux.Beam,
-    name: "Portfolio Rebalancing",
-    description: "End-to-end portfolio rebalancing workflow"
-
-  sequence do
-    step(:analyze, MyApp.Prisms.PortfolioAnalysis, %{
-      compute_metrics: true,
-      include_history: true
-    })
-
-    parallel do
-      step(:risk, MyApp.Prisms.RiskAssessment, %{
-        portfolio: {:ref, "analyze.portfolio"},
-        metrics: {:ref, "analyze.metrics"}
-      })
-
-      step(:market, MyApp.Prisms.MarketAnalysis, %{
-        assets: {:ref, "analyze.assets"}
-      })
-    end
-
-    step(:optimize, MyApp.Prisms.PortfolioOptimization, %{
-      current_state: {:ref, "analyze"},
-      risk_assessment: {:ref, "risk"},
-      market_data: {:ref, "market"}
-    })
-
-    step(:execute, MyApp.Prisms.TradeExecution, %{
-      trades: {:ref, "optimize.trades"}
-    })
-  end
-end
-```
 [Learn more about Beams](guides/beams.livemd)
 
-## Python Integration
+Composable workflow orchestrators. Beams allow you to:
+- Define complex workflows
+- Coordinate multiple agents
+- Handle parallel execution
+- Manage state and dependencies
 
-Lux provides seamless Python integration using heredocs, making it easy to leverage Python's rich ecosystem directly in your Elixir code. Here's an example using eth_abi to decode smart contract events:
+## Language Support
 
-```elixir
-defmodule MyApp.Lenses.EtherscanLens do
-  use Lux.Lens,
-    name: "Etherscan Lens",
-    description: "Fetches and decodes contract events",
-    url: "https://api.etherscan.io/api",
-    auth: %{
-      type: :api_key,
-      key: System.get_env("ETHERSCAN_API_KEY")
-    }
+Lux provides first-class support for multiple programming languages:
 
-  require Lux.Python
-  import Lux.Python
+- **Python**: Deep integration with Python's scientific and ML ecosystem
+- **JavaScript/TypeScript**: Frontend and Node.js support
+- **Other Languages**: Language-agnostic protocols for easy integration
 
-  def after_focus(response) do
-    # Import required Python packages
-    {:ok, %{success: true}} = Lux.Python.import_package("eth_abi")
-    {:ok, %{success: true}} = Lux.Python.import_package("eth_utils")
+[Learn more about language support](guides/language_support.md)
 
-    # Execute Python code with variable bindings
-    result = python variables: %{logs: response["result"]} do
-      ~PY"""
-      from eth_abi import decode
-      from eth_utils import event_abi_to_log_topic
+## Examples
 
-      # ERC20 Transfer event topic
-      transfer_topic = event_abi_to_log_topic({
-          'type': 'event',
-          'name': 'Transfer',
-          'inputs': [
-              {'type': 'address', 'indexed': True},
-              {'type': 'address', 'indexed': True},
-              {'type': 'uint256', 'indexed': False}
-          ]
-      })
+Check out these examples to see Lux in action:
 
-      # Decode transfer events
-      transfers = [{
-          'from': decode(['address'], bytes.fromhex(log['topics'][1][2:]))[0].hex(),
-          'to': decode(['address'], bytes.fromhex(log['topics'][2][2:]))[0].hex(),
-          'value': decode(['uint256'], bytes.fromhex(log['data'][2:]))[0]
-      } for log in logs if log['topics'][0] == transfer_topic]
-
-      {'transfers': transfers}
-      """
-    end
-
-    {:ok, result}
-  end
-end
-
-# Use the lens
-{:ok, result} = MyApp.Lenses.EtherscanLens.focus(%{
-  module: "account",
-  action: "txlist",
-  address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-  startblock: "0",
-  endblock: "99999999"
-}, with_after_focus: true)
-```
-
-This example shows how to:
-- Define a lens with proper URL and authentication
-- Transform API responses using Python in `after_focus`
-- Use powerful Python libraries for blockchain data processing
-- Handle complex binary data efficiently
-
-The Python code is executed in an isolated environment and has access to all installed Python packages. You can use this approach to leverage any Python library, from machine learning frameworks to data processing tools.
-
-
-## Development Setup
-
-### Prerequisites
-
-- **macOS** or **Linux** (Ubuntu/Debian or RHEL/CentOS recommended)
-- [asdf](https://asdf-vm.com/) version manager
-  - macOS: `brew install asdf`
-  - Linux: 
-    ```bash
-    git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.13.1
-    # Add to your shell config (~/.bashrc, ~/.zshrc, etc.):
-    . "$HOME/.asdf/asdf.sh"
-    . "$HOME/.asdf/completions/asdf.bash"
-    ```
-
-### Quick Setup
-
-We provide a Makefile to automate the setup process. Here's how to get started:
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/spectrallabs/lux.git
-cd lux
-
-# 2. View available setup commands
-make help
-
-# 3. For macOS users:
-make setup-mac    # Install macOS-specific dependencies first
-make setup        # Then run the complete setup
-
-# 3. For Linux users:
-make setup-linux  # Install Linux-specific dependencies first
-make setup        # Then run the complete setup
-
-# 4. Run tests to verify installation
-make test
-```
-
-The setup process will:
-- Install required asdf plugins (erlang, elixir, nodejs, python, poetry)
-- Install all tools with correct versions
-- Set up system dependencies
-- Install Elixir dependencies
-- Configure Python environment
-- Create necessary environment files
-
-### Troubleshooting
-
-If you encounter any issues during setup or development:
-1. Check our comprehensive [Troubleshooting Guide](guides/troubleshooting.md)
-2. Join our [Discord community](https://discord.gg/luxframework) for real-time help
-3. Search or open an issue on [GitHub](https://github.com/spectrallabs/lux/issues)
-
-Common issues and their solutions are documented in the troubleshooting guide, including:
-- ASDF and shell integration problems
-- Elixir/Mix installation issues
-- OpenSSL configuration on macOS
-- Python/Poetry setup problems
-- Permission and path-related errors
+- [Trading System](guides/trading_system.livemd): A complete crypto trading system
+- [Content Creation](guides/running_a_company.livemd): Multi-agent content creation pipeline
+- [Research Assistant](guides/multi_agent_collaboration.livemd): Collaborative research system
 
 ## Contributing
 
-We welcome contributions! Here's how you can help:
-
-1. 🐛 Report bugs and suggest features in [Issues](https://github.com/spectrallabs/lux/issues)
-2. 📖 Improve documentation
-3. 🧪 Add tests and examples
-4. 🔧 Submit pull requests
-
-See our [Contributing Guide](guides/contributing.md) for details.
+We welcome contributions! Whether you want to add support for a new language, improve documentation, or fix bugs, check out our [Contributing Guide](guides/contributing.md).
 
 ## Community
 
