@@ -101,6 +101,9 @@ defmodule Lux.MixProject do
         "guides/prisms.livemd",
         "guides/signals.livemd",
         "guides/lenses.livemd",
+        "guides/language_support.md",
+        "guides/language_support/python.livemd",
+        "guides/language_support/nodejs.livemd",
         "guides/multi_agent_collaboration.livemd",
         "guides/trading_system.livemd",
         "guides/testing.md",
@@ -112,6 +115,11 @@ defmodule Lux.MixProject do
       ],
       groups_for_extras: [
         Guides: Path.wildcard("guides/*.livemd"),
+        "Language Support": [
+          "guides/language_support.md",
+          "guides/language_support/python.livemd",
+          "guides/language_support/nodejs.livemd"
+        ],
         Setup: [
           "guides/troubleshooting.md",
           "guides/contributing.md"
