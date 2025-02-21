@@ -363,6 +363,278 @@ end
 MyApp.Agents.FunAgent.send_message(fun_agent_pid, "Hey, how are you?")
 ```
 
+## Defining Agents via JSON
+
+Agents can be defined and loaded dynamically using JSON configuration. This is particularly useful when:
+- You need to create agents dynamically at runtime
+- You want to store agent configurations in a database or files
+- You're building a system that allows users to define their own agents
+
+### Basic JSON Structure
+
+Here's a basic agent configuration in JSON:
+
+```json
+{
+  "id": "research-agent-1",
+  "name": "Research Assistant",
+  "description": "A specialized agent for conducting research",
+  "goal": "Provide thorough and accurate research results",
+  "module": "ResearchAgent",
+  "template": "company_agent",
+  "template_opts": {
+    "llm_config": {
+      "temperature": 0.3
+    }
+  },
+  "llm_config": {
+    "model": "gpt-4",
+    "temperature": 0.7,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a research assistant focused on providing accurate information."
+      }
+    ]
+  }
+}
+```
+
+### Loading JSON Agents
+
+You can load agents from various JSON sources:
+
+```elixir
+# From a JSON string
+json = ~s({
+  "id": "researcher-1",
+  "name": "Research Assistant",
+  "description": "Conducts thorough research",
+  "goal": "Provide accurate research results",
+  "module": "ResearchAgent"
+})
+
+{:ok, [agent_module]} = Lux.Agent.from_json(json)
+{:ok, pid} = agent_module.start_link()
+
+# From a JSON file
+{:ok, [agent_module]} = Lux.Agent.from_json("agents/researcher.json")
+
+# From a directory of JSON files
+{:ok, agent_modules} = Lux.Agent.from_json("agents/")
+
+# From multiple specific files
+{:ok, agent_modules} = Lux.Agent.from_json([
+  "agents/researcher.json",
+  "agents/writer.json"
+])
+```
+
+### Configuration Options
+
+The JSON configuration supports all standard agent options:
+
+```json
+{
+  "id": "advanced-agent-1",
+  "name": "Advanced Agent",
+  "description": "An agent with advanced configuration",
+  "goal": "Demonstrate advanced agent capabilities",
+  "module": "AdvancedAgent",
+  
+  // Optional template configuration
+  "template": "company_agent",
+  "template_opts": {
+    "llm_config": {
+      "temperature": 0.5
+    }
+  },
+  
+  // LLM configuration
+  "llm_config": {
+    "model": "gpt-4",
+    "temperature": 0.7,
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are an advanced agent..."
+      }
+    ]
+  },
+  
+  // Memory configuration
+  "memory_config": {
+    "backend": "Lux.Memory.SimpleMemory",
+    "name": "advanced_agent_memory"
+  },
+  
+  // Component lists
+  "prisms": [
+    "MyApp.Prisms.DataAnalysis",
+    "MyApp.Prisms.TextProcessor"
+  ],
+  "beams": [
+    "MyApp.Beams.WorkflowEngine",
+    "MyApp.Beams.DataPipeline"
+  ],
+  "lenses": [
+    "MyApp.Lenses.DataVisualizer"
+  ],
+  
+  // Signal handlers
+  "signal_handlers": [
+    {
+      "schema": "MyApp.Schemas.TaskSignal",
+      "handler": "MyApp.Handlers.TaskHandler"
+    }
+  ],
+  
+  // Scheduled actions
+  "scheduled_actions": [
+    {
+      "module": "MyApp.Prisms.HealthCheck",
+      "interval_ms": 60000,
+      "input": {
+        "scope": "full"
+      },
+      "opts": {
+        "name": "health_check",
+        "timeout": 30000
+      }
+    }
+  ]
+}
+```
+
+### Best Practices
+
+1. **Unique Identifiers**
+   - Always provide unique `id` and `module` names
+   - Use descriptive module names that reflect the agent's purpose
+
+2. **Module Names**
+   - Module names can be provided with or without the "Elixir." prefix
+   - Example: `"module": "MyApp.Agents.Researcher"` or `"module": "Researcher"`
+
+3. **Component References**
+   - All component references (prisms, beams, lenses) must be valid module names
+   - Components must be compiled and available in the application
+
+4. **Template Options**
+   - When using templates like `:company_agent`, provide appropriate `template_opts`
+   - Template-specific options are preserved as string keys in the configuration
+
+5. **Error Handling**
+   - The loader will skip invalid configurations when loading multiple agents
+   - Always check the return value for success/failure
+
+### Example: Company Agent
+
+Here's a complete example of a company agent configuration:
+
+```json
+{
+  "id": "content-writer-1",
+  "name": "Content Writer",
+  "description": "Specialized in creating high-quality content",
+  "goal": "Create engaging and informative content",
+  "module": "ContentWriter",
+  "template": "company_agent",
+  "template_opts": {
+    "llm_config": {
+      "temperature": 0.7
+    }
+  },
+  "llm_config": {
+    "model": "gpt-4",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a professional content writer..."
+      }
+    ]
+  },
+  "signal_handlers": [
+    {
+      "schema": "Lux.Schemas.Companies.TaskSignal",
+      "handler": "MyApp.Handlers.ContentTaskHandler"
+    },
+    {
+      "schema": "Lux.Schemas.Companies.ObjectiveSignal",
+      "handler": "MyApp.Handlers.ContentObjectiveHandler"
+    }
+  ]
+}
+```
+
+Let's create and use this agent:
+
+```elixir
+# Write the configuration to a file
+json = ~s({
+  "id": "writer-1",
+  "name": "Content Writer",
+  "description": "Creates high-quality content",
+  "goal": "Create engaging content",
+  "module": "ContentWriter",
+  "template": "company_agent",
+  "template_opts": {
+    "llm_config": {
+      "temperature": 0.7
+    }
+  }
+})
+
+# Create a temporary file
+path = Path.join(System.tmp_dir!(), "content_writer.json")
+File.write!(path, json)
+
+# Load and start the agent
+{:ok, [ContentWriter]} = Lux.Agent.from_json(path)
+{:ok, pid} = ContentWriter.start_link()
+
+# Chat with the agent
+ContentWriter.send_message(pid, "What kind of content can you create?")
+```
+
+### Validation and Error Handling
+
+The JSON loader performs several validations:
+
+1. **Required Fields**
+   - id
+   - name
+   - description
+   - goal
+   - module
+
+2. **Type Checking**
+   - Ensures all fields have correct types
+   - Validates module names and references
+
+3. **Template Validation**
+   - Verifies template existence
+   - Validates template-specific options
+
+Example error handling:
+
+```elixir
+# Handle potential errors
+case Lux.Agent.from_json("agents/") do
+  {:ok, modules} ->
+    Enum.map(modules, fn module ->
+      case module.start_link() do
+        {:ok, pid} -> {:ok, {module, pid}}
+        error -> {:error, {module, error}}
+      end
+    end)
+    
+  {:error, reason} ->
+    Logger.error("Failed to load agents: #{inspect(reason)}")
+    {:error, reason}
+end
+```
+
 ## Using Agents
 
 ### Starting an Agent
