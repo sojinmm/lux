@@ -506,5 +506,12 @@ defmodule Lux.AgentTest do
       agent_struct = agent.view()
       assert agent_struct.name == input.name
     end
+
+    test "can start a json agent just like normal ones", %{inputs: [input | _]} do
+      assert {:ok, [agent]} = Jason.encode!(input) |> Agent.from_json()
+
+      assert {:ok, pid} = agent.start_link()
+      assert Process.alive?(pid)
+    end
   end
 end
