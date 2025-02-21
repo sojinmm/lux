@@ -460,4 +460,10 @@ defmodule Lux.Agent do
       true -> :unknown
     end
   end
+
+  @doc """
+  Creates an agent module from JSON configuration.
+  See `Lux.Agent.Loaders.from_json/1` for details.
+  """
+  defdelegate from_json(source), to: Lux.Agent.Loaders
 end
