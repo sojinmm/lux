@@ -1,4 +1,4 @@
-defmodule Lux.Agent.ConfigTest do
+defmodule Lux.Unit.Agent.ConfigTest do
   use UnitCase, async: true
 
   alias Lux.Agent.Config

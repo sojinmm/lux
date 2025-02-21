@@ -5,7 +5,7 @@ defmodule Lux.Agent.Loaders do
 
   alias Lux.Agent.Config
   alias Lux.Agent.Generator
-  alias Lux.Agent.Loaders.Json
+  alias Lux.Agent.Loaders.Json, as: JsonLoader
 
   @doc """
   Creates an agent module from a JSON configuration.
@@ -34,7 +34,7 @@ defmodule Lux.Agent.Loaders do
   """
   @spec from_json(String.t()) :: {:ok, module()} | {:error, term()}
   def from_json(source) when is_binary(source) do
-    with {:ok, config} <- Json.load(source) do
+    with {:ok, config} <- JsonLoader.load(source) do
       Generator.generate(config)
     end
   end

@@ -424,4 +424,32 @@ defmodule Lux.AgentTest do
       assert :ignore = SimpleAgent.handle_signal(signal, %{})
     end
   end
+
+  describe "from_json/1" do
+    setup do
+      input = %{
+        name: "HelloAgent",
+        id: "qweasdweq",
+        description: "A very cool agent",
+        module: "MyAgent#{:erlang.unique_integer([:positive])}",
+        goal: "Allways be so cool"
+      }
+
+      {:ok, input: input}
+    end
+
+    test "loads agent from json", %{input: input} do
+      assert {:ok, agent} = input |> Jason.encode!() |> Agent.from_json()
+
+      assert Code.ensure_compiled?(agent)
+
+      agent_struct = agent.view()
+
+      assert agent_struct.name == "HelloAgent"
+      assert agent_struct.id == "qweasdweq"
+      assert agent_struct.description == "A very cool agent"
+      assert agent_struct.module == "MyAgent#{:erlang.unique_integer([:positive])}"
+      assert agent_struct.goal == "Allways be so cool"
+    end
+  end
 end

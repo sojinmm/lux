@@ -1,4 +1,4 @@
-defmodule Lux.Agent.Loaders.JsonTest do
+defmodule Lux.Unit.Agent.Loaders.JsonTest do
   use UnitCase, async: true
 
   alias Lux.Agent.Config
