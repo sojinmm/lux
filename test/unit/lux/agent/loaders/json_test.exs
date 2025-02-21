@@ -21,7 +21,7 @@ defmodule Lux.Unit.Agent.Loaders.JsonTest do
         "module": "Test.JsonAgent"
       })
 
-      assert {:ok, %Config{} = config} = Json.load(json)
+      assert {:ok, [%Config{} = config]} = Json.load(json)
       assert config.id == "test-agent"
       assert config.module == "Test.JsonAgent"
     end
@@ -38,7 +38,7 @@ defmodule Lux.Unit.Agent.Loaders.JsonTest do
       path = Path.join(tmp_dir, "agent.json")
       File.write!(path, Jason.encode!(config_map))
 
-      assert {:ok, %Config{} = config} = Json.load(path)
+      assert {:ok, [%Config{} = config]} = Json.load(path)
       assert config.id == "test-agent"
       assert config.module == "Test.JsonAgent"
     end
@@ -55,7 +55,7 @@ defmodule Lux.Unit.Agent.Loaders.JsonTest do
       path = Path.join(tmp_dir, "agent.json")
       File.write!(path, Jason.encode!(config_map))
 
-      assert {:ok, %Config{} = config} = Json.load(tmp_dir)
+      assert {:ok, [%Config{} = config]} = Json.load(tmp_dir)
       assert config.id == "test-agent"
       assert config.module == "Test.JsonAgent"
     end

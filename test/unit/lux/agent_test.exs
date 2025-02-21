@@ -427,26 +427,84 @@ defmodule Lux.AgentTest do
 
   describe "from_json/1" do
     setup do
-      input = %{
+      base_input = %{
         name: "HelloAgent",
         id: Lux.UUID.generate(),
         description: "A very cool agent",
-        module: "MyAgent#{:erlang.unique_integer([:positive])}",
         goal: "Always be so cool"
       }
 
-      {:ok, input: input}
+      # Create two unique module names
+      module1 = :"MyAgent#{:erlang.unique_integer([:positive])}"
+      module2 = :"MyAgent#{:erlang.unique_integer([:positive])}"
+
+      inputs = [
+        Map.put(base_input, :module, module1),
+        Map.put(base_input, :module, module2)
+      ]
+
+      {:ok, base_input: base_input, inputs: inputs}
     end
 
-    test "loads agent from json", %{input: input} do
-      assert {:ok, agent} = input |> Jason.encode!() |> Agent.from_json()
+    test "loads single agent from json", %{base_input: input} do
+      module_name = :"MyAgent#{:erlang.unique_integer([:positive])}"
+      input = Map.put(input, :module, module_name)
+
+      assert {:ok, [agent]} = input |> Jason.encode!() |> Agent.from_json()
       assert Code.ensure_compiled?(agent)
       agent_struct = agent.view()
       assert agent_struct.name == input.name
       assert agent_struct.id == input.id
       assert agent_struct.description == input.description
-      assert agent_struct.module |> to_string() == "Elixir." <> input.module
+      assert to_string(agent_struct.module) == "Elixir." <> to_string(input.module)
       assert agent_struct.goal == input.goal
+    end
+
+    test "loads multiple agents from directory", %{inputs: inputs} do
+      # Create a temporary directory for test files
+      tmp_dir = Path.join(System.tmp_dir!(), "lux_test_#{:erlang.unique_integer([:positive])}")
+      File.mkdir_p!(tmp_dir)
+      on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+      # Write test files
+      Enum.each(inputs, fn input ->
+        path = Path.join(tmp_dir, "#{input.module}.json")
+        File.write!(path, Jason.encode!(input))
+      end)
+
+      assert {:ok, agents} = Agent.from_json(tmp_dir)
+      assert length(agents) == 2
+
+      agents
+      |> Enum.zip(inputs)
+      |> Enum.each(fn {agent, input} ->
+        assert Code.ensure_compiled?(agent)
+        agent_struct = agent.view()
+        assert agent_struct.name == input.name
+        assert agent_struct.id == input.id
+        assert agent_struct.description == input.description
+        assert to_string(agent_struct.module) == "Elixir." <> to_string(input.module)
+        assert agent_struct.goal == input.goal
+      end)
+    end
+
+    test "handles invalid json files gracefully", %{base_input: input} do
+      # Create a temporary directory for test files
+      tmp_dir = Path.join(System.tmp_dir!(), "lux_test_#{:erlang.unique_integer([:positive])}")
+      File.mkdir_p!(tmp_dir)
+      on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+      # Write one valid and one invalid file
+      valid_path = Path.join(tmp_dir, "valid.json")
+      invalid_path = Path.join(tmp_dir, "invalid.json")
+
+      File.write!(valid_path, Jason.encode!(Map.put(input, :module, "ValidAgent")))
+      File.write!(invalid_path, "invalid json content")
+
+      assert {:ok, [agent]} = Agent.from_json(tmp_dir)
+      assert Code.ensure_compiled?(agent)
+      agent_struct = agent.view()
+      assert agent_struct.name == input.name
     end
   end
 end
