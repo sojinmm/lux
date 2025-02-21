@@ -14,11 +14,24 @@ defmodule Lux.Agent.Loaders.Json do
   - A list of JSON file paths
 
   Returns:
-  - `{:ok, Config.t()}` for single JSON string/file
-  - `{:ok, [Config.t()]}` for directory or list of files
+  - `{:ok, [Config.t()]}` for successful loads (always returns a list)
   - `{:error, term()}` on failure
+
+  ## Examples
+
+      # Load from a single JSON string
+      {:ok, [config]} = Json.load(~s({"name": "Test Agent", ...}))
+
+      # Load from a single file
+      {:ok, [config]} = Json.load("path/to/agent.json")
+
+      # Load from a directory
+      {:ok, configs} = Json.load("path/to/agents/")
+
+      # Load from multiple files
+      {:ok, configs} = Json.load(["agent1.json", "agent2.json"])
   """
-  @spec load(String.t() | [String.t()]) :: {:ok, Config.t() | [Config.t()]} | {:error, term()}
+  @spec load(String.t() | [String.t()]) :: {:ok, [Config.t()]} | {:error, term()}
   def load(sources) when is_list(sources) do
     results = Enum.map(sources, &load_file/1)
 
@@ -49,7 +62,7 @@ defmodule Lux.Agent.Loaders.Json do
 
   @doc """
   Parses a JSON string into a Config struct.
-  Returns `{:ok, config}` if successful, `{:error, reason}` otherwise.
+  Returns `{:ok, Config.t()}` if successful, `{:error, reason}` otherwise.
   """
   @spec parse(String.t()) :: {:ok, Config.t()} | {:error, term()}
   def parse(json) when is_binary(json) do
