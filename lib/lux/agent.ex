@@ -42,7 +42,7 @@ defmodule Lux.Agent do
 
   # {module, interval_ms, input, opts}
   @type scheduled_action :: {module(), pos_integer(), map(), map()}
-  @type signal_handler :: {module(), module()}
+  @type signal_handler :: {module(), module() | {:python, String.t()}}
 
   @type t :: %__MODULE__{
           id: String.t(),
@@ -161,6 +161,14 @@ defmodule Lux.Agent do
               :module_function ->
                 {module, function} = handler
                 apply(module, function, [signal, agent])
+
+              {:python, code} ->
+                Lux.Python.eval(code,
+                  variables: %{
+                    __lux_function__: :handle_signal,
+                    __lux_function_args__: [signal, agent]
+                  }
+                )
 
               :unknown ->
                 raise "Unknown handler type: #{inspect(handler)}"
@@ -443,6 +451,8 @@ defmodule Lux.Agent do
 
   @impl Access
   defdelegate pop(data, key), to: Map
+
+  def get_handler_type({:python, _} = handler), do: handler
 
   def get_handler_type({module, function}) when is_atom(module) and is_atom(function) do
     :module_function
