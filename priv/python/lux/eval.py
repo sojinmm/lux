@@ -116,6 +116,17 @@ def execute(code, variables=None):
         if isinstance(last, ast.Expr):
             result = eval(ast.unparse(last.value), globals_dict)
             return encode_term(result)
+        # If the last statement is a function definition and globals_dict has "__lux_function__"
+        elif isinstance(last, ast.FunctionDef) and '__lux_function__' in globals_dict:
+            exec(ast.unparse(tree.body[-1]), globals_dict)
+            func = globals_dict.get('__lux_function__')
+            args = globals_dict.get('__lux_function_args__', [])
+            constructor_args = globals_dict.get('__lux_constructor_args__', [])
+
+            constructor = globals_dict.get(last.name)
+            class_instance = constructor(*constructor_args)
+            result = getattr(class_instance, func)(*args) if func else None
+            return encode_term(result)
         else:
             # Execute the last statement if it's not an expression
             exec(ast.unparse(ast.Module(body=[last], type_ignores=[])), globals_dict)

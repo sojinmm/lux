@@ -38,6 +38,7 @@ defmodule Lux.Python do
 
   @doc """
   Evaluates Python code with optional variable bindings and other options.
+  If `code_or_path` is a file path, it reads the file content and evaluates it.
 
   ## Options
 
@@ -53,13 +54,17 @@ defmodule Lux.Python do
       {:ok, "value"}
   """
   @spec eval(String.t(), eval_options()) :: {:ok, term()} | {:error, String.t()}
-  def eval(code, opts \\ []) do
+  def eval(code_or_path, opts \\ []) do
+    code =
+      if File.regular?(code_or_path), do: File.read!(code_or_path), else: code_or_path
+
     variables = Keyword.get(opts, :variables, %{})
     timeout = Keyword.get(opts, :timeout)
+    func = Keyword.get(opts, :func, :execute)
 
     args = %SnakeArgs{
       module: :"lux.eval",
-      func: :execute,
+      func: func,
       args: [code, variables]
     }
 
