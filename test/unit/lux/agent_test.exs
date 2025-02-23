@@ -418,6 +418,28 @@ defmodule Lux.AgentTest do
                      5000
     end
 
+    test "can handle python signal" do
+      python_prism =
+        __DIR__
+        |> List.wrap()
+        |> Enum.concat(["..", "..", "support", "python_prism.py"])
+        |> Path.join()
+        |> Path.expand()
+
+
+      defmodule PythonAgent do
+        @moduledoc false
+        use Lux.Agent,
+          name: "Python Agent",
+          description: "An agent that handles Python signals",
+          prisms: [TestPrism],
+          signal_handlers: [{PythonSignal, {:python, python_prism}}]
+      end
+
+      signal = Lux.Signal.new(%{schema_id: PythonSignal, payload: %{test: "signal"}})
+      assert {:ok, %{"message" => "Hello, prism!"}} = PythonAgent.handle_signal(signal, %{})
+    end
+
     test "ignore unspecified signal" do
       # Would be nice to have this test using messages too.
       signal = %Lux.Signal{schema_id: Unsupported, payload: %{test: "signal"}}

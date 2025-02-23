@@ -25,6 +25,25 @@ defmodule Lux.PythonTest do
 
       assert {:ok, 120} = Lux.Python.eval(code, variables: %{n: 5})
     end
+
+    test "supports define a class and instantiate it" do
+      code = """
+      class Person:
+          def __init__(self, name):
+              self.name = name
+
+          def greet(self):
+              return f"Hello, {self.name}!"
+
+      def create(name):
+          return Person(name)
+      """
+
+      assert {:ok, "Hello, John!"} =
+               Lux.Python.eval(code,
+                 variables: %{__lux_function__: :greet, __lux_constructor_args__: ["John"]}
+               )
+    end
   end
 
   describe "eval!/2" do
