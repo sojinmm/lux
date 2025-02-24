@@ -38,7 +38,7 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
   end
 
   @impl true
-  def handle_task_assignment(%Signal{payload: payload} = signal, context) do
+  def handle_task_assignment(%Signal{payload: payload} = _signal, context) do
     Logger.info("Analyzing task: #{payload["title"]}")
     Logger.debug("Task context: #{inspect(context)}")
     Logger.debug("Task payload: #{inspect(payload)}")
@@ -344,25 +344,6 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
 
   defp get_next_step_index(_), do: 0
 
-  defp select_agent_for_step(
-         %{"steps" => steps, "context" => %{"available_agents" => agents}},
-         _context
-       ) do
-    case Enum.at(steps, get_next_step_index(%{"steps" => steps})) do
-      %{"assigned_to" => agent_id} when not is_nil(agent_id) ->
-        agent_id
-
-      _ ->
-        # Select first available agent if no assignment
-        case agents do
-          [%{"id" => id} | _] -> id
-          _ -> nil
-        end
-    end
-  end
-
-  defp select_agent_for_step(_, _), do: nil
-
   defp calculate_progress(%{"steps" => steps}) do
     completed = Enum.count(steps, &(&1["status"] == "completed"))
     total = length(steps)
@@ -385,7 +366,6 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
 
   defp evaluate_next_step(payload, context) do
     Logger.debug("Evaluating next step with context: #{inspect(context)}")
-    current_step = get_current_step(payload)
     next_step_index = get_next_step_index(payload)
 
     # Get the next step's required capabilities
@@ -414,10 +394,6 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
         Logger.debug("Error selecting agent: #{inspect(reason)}")
         error
     end
-  end
-
-  defp get_current_step(payload) do
-    payload["context"]["current_step"] || 0
   end
 
   defp get_step_capabilities(payload, step_index) do
@@ -457,9 +433,6 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
     end
   end
 
-  @doc """
-  Checks if an entity has all the required capabilities.
-  """
   defp has_required_capabilities?(%{capabilities: capabilities}, required)
        when is_list(required) do
     Enum.all?(required, &(&1 in capabilities))
