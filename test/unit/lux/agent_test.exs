@@ -539,6 +539,39 @@ defmodule Lux.AgentTest do
                temperature: 0.7,
                messages: [%{role: "system", content: "You are an advanced agent..."}]
              }
+
+      on_exit(fn ->
+        :code.purge(AdvancedAgent)
+        :code.delete(AdvancedAgent)
+      end)
+    end
+
+    test "can load a list of agents from a list of paths or a folder" do
+      assert {:ok, [AdvancedAgent, AdvancedAgent2]} =
+               Agent.from_json([
+                 "test/support/agents/json_agent.json",
+                 "test/support/agents/json_agent_2.json"
+               ])
+
+      assert {:error, :invalid_source} = Agent.from_json("non_existing_path")
+
+      on_exit(fn ->
+        :code.purge(AdvancedAgent)
+        :code.delete(AdvancedAgent)
+        :code.purge(AdvancedAgent2)
+        :code.delete(AdvancedAgent2)
+      end)
+    end
+
+    test "can load agents form a folder" do
+      assert {:ok, [AdvancedAgent, AdvancedAgent2]} = Agent.from_json("test/support/agents")
+
+      on_exit(fn ->
+        :code.purge(AdvancedAgent)
+        :code.delete(AdvancedAgent)
+        :code.purge(AdvancedAgent2)
+        :code.delete(AdvancedAgent2)
+      end)
     end
   end
 end
