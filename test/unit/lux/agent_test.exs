@@ -424,4 +424,154 @@ defmodule Lux.AgentTest do
       assert :ignore = SimpleAgent.handle_signal(signal, %{})
     end
   end
+
+  describe "from_json/1" do
+    setup do
+      base_input = %{
+        name: "HelloAgent",
+        id: Lux.UUID.generate(),
+        description: "A very cool agent",
+        goal: "Always be so cool"
+      }
+
+      # Create two unique module names
+      module1 = :"MyAgent#{:erlang.unique_integer([:positive])}"
+      module2 = :"MyAgent#{:erlang.unique_integer([:positive])}"
+
+      inputs = [
+        Map.put(base_input, :module, module1),
+        Map.put(base_input, :module, module2)
+      ]
+
+      {:ok, base_input: base_input, inputs: inputs}
+    end
+
+    test "loads single agent from json", %{base_input: input} do
+      module_name = :"MyAgent#{:erlang.unique_integer([:positive])}"
+      input = Map.put(input, :module, module_name)
+
+      assert {:ok, [agent]} = input |> Jason.encode!() |> Agent.from_json()
+      assert Code.ensure_compiled?(agent)
+      agent_struct = agent.view()
+      assert agent_struct.name == input.name
+      assert agent_struct.id == input.id
+      assert agent_struct.description == input.description
+      assert to_string(agent_struct.module) == "Elixir." <> to_string(input.module)
+      assert agent_struct.goal == input.goal
+    end
+
+    test "loads multiple agents from directory", %{inputs: inputs} do
+      # Create a temporary directory for test files
+      tmp_dir = Path.join(System.tmp_dir!(), "lux_test_#{:erlang.unique_integer([:positive])}")
+      File.mkdir_p!(tmp_dir)
+      on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+      # Write test files
+      Enum.each(inputs, fn input ->
+        path = Path.join(tmp_dir, "#{input.module}.json")
+        File.write!(path, Jason.encode!(input))
+      end)
+
+      assert {:ok, agents} = Agent.from_json(tmp_dir)
+      assert length(agents) == 2
+
+      agents
+      |> Enum.zip(inputs)
+      |> Enum.each(fn {agent, input} ->
+        assert Code.ensure_compiled?(agent)
+        agent_struct = agent.view()
+        assert agent_struct.name == input.name
+        assert agent_struct.id == input.id
+        assert agent_struct.description == input.description
+        assert to_string(agent_struct.module) == "Elixir." <> to_string(input.module)
+        assert agent_struct.goal == input.goal
+      end)
+    end
+
+    test "handles invalid json files gracefully", %{base_input: input} do
+      # Create a temporary directory for test files
+      tmp_dir = Path.join(System.tmp_dir!(), "lux_test_#{:erlang.unique_integer([:positive])}")
+      File.mkdir_p!(tmp_dir)
+      on_exit(fn -> File.rm_rf!(tmp_dir) end)
+
+      # Write one valid and one invalid file
+      valid_path = Path.join(tmp_dir, "valid.json")
+      invalid_path = Path.join(tmp_dir, "invalid.json")
+
+      File.write!(valid_path, Jason.encode!(Map.put(input, :module, "ValidAgent")))
+      File.write!(invalid_path, "invalid json content")
+
+      assert {:ok, [agent]} = Agent.from_json(tmp_dir)
+      assert Code.ensure_compiled?(agent)
+      agent_struct = agent.view()
+      assert agent_struct.name == input.name
+    end
+
+    test "can start a json agent just like normal ones", %{inputs: [input | _]} do
+      assert {:ok, [agent]} = input |> Jason.encode!() |> Agent.from_json()
+
+      assert {:ok, pid} = agent.start_link()
+      assert Process.alive?(pid)
+    end
+
+    test "can load an agent from an existing file" do
+      {:ok, [agent]} = Agent.from_json("test/support/agents/json_agent.json")
+      agent_struct = agent.view()
+      assert agent_struct.name == "Advanced Agent"
+      assert agent_struct.id == "advanced-agent-1"
+      assert agent_struct.description == "An agent with advanced configuration"
+      assert agent_struct.goal == "Demonstrate advanced agent capabilities"
+      assert agent_struct.module == AdvancedAgent
+      assert agent_struct.template == :company_agent
+      assert agent_struct.template_opts == %{llm_config: %{temperature: 0.5, json_response: true}}
+
+      assert agent_struct.signal_handlers == [
+               {Lux.Schemas.Companies.ObjectiveSignal, {AdvancedAgent, :handle_objective_signal}},
+               {Lux.Schemas.Companies.TaskSignal, {AdvancedAgent, :handle_task_signal}}
+             ]
+
+      assert agent_struct.beams == [MyApp.Beams.WorkflowEngine, MyApp.Beams.DataPipeline]
+      assert agent_struct.lenses == [MyApp.Lenses.DataVisualizer]
+      assert agent_struct.prisms == [MyApp.Prisms.DataAnalysis, MyApp.Prisms.TextProcessor]
+
+      assert agent_struct.llm_config == %{
+               model: "gpt-4",
+               temperature: 0.7,
+               messages: [%{role: "system", content: "You are an advanced agent..."}]
+             }
+
+      on_exit(fn ->
+        :code.purge(AdvancedAgent)
+        :code.delete(AdvancedAgent)
+      end)
+    end
+
+    test "can load a list of agents from a list of paths or a folder" do
+      assert {:ok, [AdvancedAgent, AdvancedAgent2]} =
+               Agent.from_json([
+                 "test/support/agents/json_agent.json",
+                 "test/support/agents/json_agent_2.json"
+               ])
+
+      assert {:error, :invalid_source} = Agent.from_json("non_existing_path")
+
+      on_exit(fn ->
+        :code.purge(AdvancedAgent)
+        :code.delete(AdvancedAgent)
+        :code.purge(AdvancedAgent2)
+        :code.delete(AdvancedAgent2)
+      end)
+    end
+
+    test "can load agents form a folder" do
+      assert {:ok, [AdvancedAgent, AdvancedAgent2]} = Agent.from_json("test/support/agents")
+
+      on_exit(fn ->
+        :code.purge(AdvancedAgent)
+        :code.delete(AdvancedAgent)
+        :code.purge(AdvancedAgent2)
+        :code.delete(AdvancedAgent2)
+      end)
+    end
+  end
 end

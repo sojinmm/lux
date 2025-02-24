@@ -37,4 +37,7 @@ if config_env() in [:dev, :test] do
 
   config :ethereumex,
     url: env!("RPC_URL", :string!)
+
+  config :logger,
+    level: env!("LOG_LEVEL", :atom!, :debug)
 end
