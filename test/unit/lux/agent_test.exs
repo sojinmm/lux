@@ -513,5 +513,32 @@ defmodule Lux.AgentTest do
       assert {:ok, pid} = agent.start_link()
       assert Process.alive?(pid)
     end
+
+    test "can load an agent from an existing file" do
+      {:ok, [agent]} = Agent.from_json("test/support/agents/json_agent.json")
+      agent_struct = agent.view()
+      assert agent_struct.name == "Advanced Agent"
+      assert agent_struct.id == "advanced-agent-1"
+      assert agent_struct.description == "An agent with advanced configuration"
+      assert agent_struct.goal == "Demonstrate advanced agent capabilities"
+      assert agent_struct.module == AdvancedAgent
+      assert agent_struct.template == :company_agent
+      assert agent_struct.template_opts == %{llm_config: %{temperature: 0.5, json_response: true}}
+
+      assert agent_struct.signal_handlers == [
+               {Lux.Schemas.Companies.ObjectiveSignal, {AdvancedAgent, :handle_objective_signal}},
+               {Lux.Schemas.Companies.TaskSignal, {AdvancedAgent, :handle_task_signal}}
+             ]
+
+      assert agent_struct.beams == [MyApp.Beams.WorkflowEngine, MyApp.Beams.DataPipeline]
+      assert agent_struct.lenses == [MyApp.Lenses.DataVisualizer]
+      assert agent_struct.prisms == [MyApp.Prisms.DataAnalysis, MyApp.Prisms.TextProcessor]
+
+      assert agent_struct.llm_config == %{
+               model: "gpt-4",
+               temperature: 0.7,
+               messages: [%{role: "system", content: "You are an advanced agent..."}]
+             }
+    end
   end
 end
