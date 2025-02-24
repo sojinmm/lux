@@ -60,13 +60,13 @@ defmodule Lux.Company.ExecutionEngine.Supervisor do
       with {:ok, _} <- Registry.start_link(keys: :unique, name: task_registry),
            {:ok, _} <- Registry.start_link(keys: :unique, name: artifact_registry),
            # Start task tracker
-           {:ok, task_tracker} <-
+           {:ok, _task_tracker} <-
              DynamicSupervisor.start_child(
                component_supervisor,
                {TaskTracker, objective_id: objective_id, company_pid: company_pid}
              ),
            # Start artifact store
-           {:ok, artifact_store} <-
+           {:ok, _artifact_store} <-
              DynamicSupervisor.start_child(
                component_supervisor,
                {ArtifactStore, objective_id: objective_id, company_pid: company_pid}

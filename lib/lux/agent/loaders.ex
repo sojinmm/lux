@@ -3,7 +3,6 @@ defmodule Lux.Agent.Loaders do
   Entry point for loading agent configurations from various sources.
   """
 
-  alias Lux.Agent.Config
   alias Lux.Agent.Generator
   alias Lux.Agent.Loaders.Json, as: JsonLoader
 

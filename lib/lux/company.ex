@@ -441,19 +441,6 @@ defmodule Lux.Company do
     end
   end
 
-  defp validate_objective(objective_id, input, state) do
-    company_config = state.module.__company__()
-    objectives = company_config.objectives
-
-    case Enum.find(objectives, &(&1.name == objective_id)) do
-      nil ->
-        {:error, :objective_not_found}
-
-      objective ->
-        validate_objective_input(objective, input, state)
-    end
-  end
-
   defp validate_objective_input(objective, input, _state) do
     # Get the input schema from the objective
     case objective.input_schema do
@@ -563,10 +550,10 @@ defmodule Lux.Company do
             # Start the execution engine supervisor for this objective
             supervisor_name = Module.concat(objective_id, ExecutionSupervisor)
 
-            case ExecutionEngine.Supervisor.start_link(name: supervisor_name) do
+            case Lux.Company.ExecutionEngine.Supervisor.start_link(name: supervisor_name) do
               {:ok, _pid} ->
                 # Start the objective process
-                case ExecutionEngine.Supervisor.start_objective(
+                case Lux.Company.ExecutionEngine.Supervisor.start_objective(
                        supervisor_name,
                        objective,
                        self(),

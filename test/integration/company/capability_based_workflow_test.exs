@@ -135,7 +135,7 @@ defmodule Lux.Integration.Company.CapabilityBasedWorkflowTest do
       # Verify load balancing among capable agents
       {:ok, company} = Local.get_company(company_id, hub)
 
-      capable_agents =
+      _capable_agents =
         Enum.filter(company.roles, fn role ->
           "research" in role.capabilities and "analysis" in role.capabilities
         end)

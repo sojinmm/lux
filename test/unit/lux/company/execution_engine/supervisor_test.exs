@@ -79,7 +79,7 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
       assert Process.alive?(pid)
 
       # Get the objective ID from the registry
-      [{objective_pid, objective_id}] = Registry.lookup(Module.concat(supervisor, Registry), pid)
+      [{_objective_pid, objective_id}] = Registry.lookup(Module.concat(supervisor, Registry), pid)
 
       # Verify task tracker is running
       task_registry = Module.concat(objective_id, TaskRegistry)
@@ -111,32 +111,6 @@ defmodule Lux.Company.ExecutionEngine.SupervisorTest do
 
       assert {:ok, artifact} = ArtifactStore.get_artifact(artifact_store_pid, artifact_id)
       assert artifact.name == "test_artifact"
-    end
-
-    defp wait_for_process_termination(pid, retries \\ 50)
-    defp wait_for_process_termination(_pid, 0), do: false
-
-    defp wait_for_process_termination(pid, retries) do
-      if Process.alive?(pid) do
-        Process.sleep(10)
-        wait_for_process_termination(pid, retries - 1)
-      else
-        receive do
-          {:EXIT, ^pid, _reason} -> true
-        after
-          0 -> true
-        end
-      end
-    end
-
-    defp ensure_process_terminated(pid) do
-      ref = Process.monitor(pid)
-
-      receive do
-        {:DOWN, ^ref, :process, ^pid, _reason} -> :ok
-      after
-        1000 -> {:error, :timeout}
-      end
     end
 
     test "stops an objective process and its components", %{
