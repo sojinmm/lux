@@ -23,7 +23,7 @@ Struct Conversion:
     - 'user' -> Elixir.User
     - 'data.types.point' -> Elixir.Data.Types.Point
 """
-from lux.atoms import Atom
+from erlport.erlterms import Atom
 from lux.packages import list_packages, get_package_version, safe_import
 import ast
 
@@ -67,7 +67,7 @@ def encode_term(term):
 def decode_term(term):
     """Convert Erlang terms to Python types."""
     if isinstance(term, Atom):
-        return term.name.decode('utf-8')
+        return term.decode('utf-8')
     elif isinstance(term, (list, tuple)):
         return [decode_term(item) for item in term]
     elif isinstance(term, dict):
@@ -79,6 +79,15 @@ def decode_term(term):
 def is_expression(node):
     """Check if an AST node represents an expression that can be evaluated."""
     return isinstance(node, (ast.Expr, ast.Expression))
+
+def execute_simple(code, variables=None):
+    if isinstance(code, bytes):
+        code = code.decode('utf-8')
+    globals_dict = {'__builtins__': __builtins__}
+    tree = ast.parse(code, mode='exec')
+
+    exec(ast.unparse(ast.Module(body=tree.body, type_ignores=[])), globals_dict)
+
 
 def execute(code, variables=None):
     """Execute Python code with optional variable bindings."""
