@@ -419,10 +419,10 @@ defmodule Lux.AgentTest do
     end
 
     test "can handle python signal" do
-      python_prism =
+      simple_prism =
         __DIR__
         |> List.wrap()
-        |> Enum.concat(["..", "..", "support", "python_prism.py"])
+        |> Enum.concat(["..", "..", "support", "simple_prism.py"])
         |> Path.join()
         |> Path.expand()
 
@@ -432,7 +432,7 @@ defmodule Lux.AgentTest do
           name: "Python Agent",
           description: "An agent that handles Python signals",
           prisms: [TestPrism],
-          signal_handlers: [{PythonSignal, {:python, python_prism}}]
+          signal_handlers: [{PythonSignal, {:python, simple_prism}}]
       end
 
       signal = Lux.Signal.new(%{schema_id: PythonSignal, payload: %{test: "signal"}})
