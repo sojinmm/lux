@@ -10,8 +10,9 @@ class Prism(ABC):
         self.input_schema = kwargs.get('input_schema', {})
         self.output_schema = kwargs.get('output_schema', {})
     
-    def get_metadata(self):
+    def view(self):
         return {
+            '__class__': self.__class__.__name__,
             'id': self.id,
             'name': self.name,
             'description': self.description,

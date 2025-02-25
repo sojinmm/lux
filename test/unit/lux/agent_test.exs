@@ -426,7 +426,6 @@ defmodule Lux.AgentTest do
         |> Path.join()
         |> Path.expand()
 
-
       defmodule PythonAgent do
         @moduledoc false
         use Lux.Agent,
