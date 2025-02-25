@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from erlport.erlterms import Atom
 import uuid
 import os
 
@@ -13,8 +14,10 @@ class Prism(ABC):
     def view(self):
         return {
             '__class__': self.__class__.__name__,
+            '__struct__': Atom(b'Elixir.Lux.Prism'),
             'id': self.id,
             'name': self.name,
+            'examples': '',
             'description': self.description,
             'input_schema': self.input_schema,
             'output_schema': self.output_schema,

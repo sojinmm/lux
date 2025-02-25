@@ -57,7 +57,8 @@ def encode_term(term):
                 encoded_dict[Atom(k.encode('utf-8'))] = encode_term(v)
             
             # Add the __struct__ field as an atom
-            encoded_dict[Atom(b'__struct__')] = Atom(module_name.encode('utf-8'))
+            if not "__struct__" in term:
+                encoded_dict[Atom(b'__struct__')] = Atom(module_name.encode('utf-8'))
             return encoded_dict
         else:
             # Regular dict - encode both keys and values

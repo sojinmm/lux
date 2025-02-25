@@ -132,6 +132,23 @@ defmodule Lux.Prism do
     end
   end
 
+  def view(path) when is_binary(path) do
+    ext = Path.extname(path)
+    view(path, ext)
+  end
+
+  def view(path, ".py") do
+    Lux.Python.eval!(path,
+      variables: %{
+        __lux_function__: :view
+      }
+    )
+  end
+
+  def view(path, _ext) do
+    {:error, "Unsupported prism file: #{path}"}
+  end
+
   def run(schema, input, context \\ nil)
 
   def run(module, input, context) when is_atom(module) do

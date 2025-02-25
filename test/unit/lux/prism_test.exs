@@ -117,4 +117,20 @@ defmodule Lux.PrismTest do
       assert prism.name == "Lux.PrismTest.DefaultNamePrism"
     end
   end
+
+  describe "python prism" do
+    test "view" do
+      simple_prism =
+        __DIR__
+        |> List.wrap()
+        |> Enum.concat(["..", "..", "support", "simple_prism.py"])
+        |> Path.join()
+        |> Path.expand()
+
+      prism = Lux.Prism.view(simple_prism)
+      assert %Prism{} = prism
+      assert prism.name == "Simple Prism"
+      assert prism.description == "A very simple prism"
+    end
+  end
 end
