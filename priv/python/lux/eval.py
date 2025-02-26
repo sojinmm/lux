@@ -23,7 +23,7 @@ Struct Conversion:
     - 'user' -> Elixir.User
     - 'data.types.point' -> Elixir.Data.Types.Point
 """
-from lux.atoms import Atom
+from erlport.erlterms import Atom
 from lux.packages import list_packages, get_package_version, safe_import
 import ast
 
@@ -57,7 +57,8 @@ def encode_term(term):
                 encoded_dict[Atom(k.encode('utf-8'))] = encode_term(v)
             
             # Add the __struct__ field as an atom
-            encoded_dict[Atom(b'__struct__')] = Atom(module_name.encode('utf-8'))
+            if not "__struct__" in term:
+                encoded_dict[Atom(b'__struct__')] = Atom(module_name.encode('utf-8'))
             return encoded_dict
         else:
             # Regular dict - encode both keys and values
@@ -67,7 +68,7 @@ def encode_term(term):
 def decode_term(term):
     """Convert Erlang terms to Python types."""
     if isinstance(term, Atom):
-        return term.name.decode('utf-8')
+        return term.decode('utf-8')
     elif isinstance(term, (list, tuple)):
         return [decode_term(item) for item in term]
     elif isinstance(term, dict):
@@ -79,6 +80,15 @@ def decode_term(term):
 def is_expression(node):
     """Check if an AST node represents an expression that can be evaluated."""
     return isinstance(node, (ast.Expr, ast.Expression))
+
+def execute_simple(code, variables=None):
+    if isinstance(code, bytes):
+        code = code.decode('utf-8')
+    globals_dict = {'__builtins__': __builtins__}
+    tree = ast.parse(code, mode='exec')
+
+    exec(ast.unparse(ast.Module(body=tree.body, type_ignores=[])), globals_dict)
+
 
 def execute(code, variables=None):
     """Execute Python code with optional variable bindings."""
@@ -115,6 +125,16 @@ def execute(code, variables=None):
         # If the last statement is an expression, evaluate it
         if isinstance(last, ast.Expr):
             result = eval(ast.unparse(last.value), globals_dict)
+            return encode_term(result)
+        elif isinstance(last, ast.ClassDef) and '__lux_function__' in globals_dict:
+            exec(ast.unparse(tree.body[-1]), globals_dict)
+            func = globals_dict.get('__lux_function__')
+            args = globals_dict.get('__lux_function_args__', [])
+            constructor_args = globals_dict.get('__lux_constructor_args__', [])
+
+            cls = globals_dict.get(last.name)
+            cls_instance = cls.new(*constructor_args)
+            result = getattr(cls_instance, func)(*args) if func else None
             return encode_term(result)
         else:
             # Execute the last statement if it's not an expression

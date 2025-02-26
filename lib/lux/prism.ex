@@ -132,14 +132,49 @@ defmodule Lux.Prism do
     end
   end
 
+  def view(path) when is_binary(path) do
+    ext = Path.extname(path)
+    view(path, ext)
+  end
+
+  def view(path, ".py") do
+    Lux.Python.eval!(path,
+      variables: %{
+        __lux_function__: :view
+      }
+    )
+  end
+
+  def view(path, _ext) do
+    {:error, "Unsupported prism file: #{path}"}
+  end
+
   def run(schema, input, context \\ nil)
 
   def run(module, input, context) when is_atom(module) do
     module.handler(input, context)
   end
 
-  def run(%__MODULE__{handler: handler}, input, context) do
+  def run(%__MODULE__{handler: handler}, input, context) when is_function(handler) do
     handler.(input, context)
+  end
+
+  def run(%__MODULE__{handler: {:python, path}}, input, context) do
+    run(path, ".py", input, context)
+  end
+
+  def run(path, input, context) when is_binary(path) do
+    ext = Path.extname(path)
+    run(path, ext, input, context)
+  end
+
+  def run(path, ".py", input, context) do
+    Lux.Python.eval(path,
+      variables: %{
+        __lux_function__: :handler,
+        __lux_function_args__: [input, context]
+      }
+    )
   end
 
   @optional_callbacks []

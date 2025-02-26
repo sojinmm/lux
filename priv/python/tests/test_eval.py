@@ -1,6 +1,6 @@
 """Tests for the eval module."""
 import pytest
-from lux.atoms import Atom
+from erlport.erlterms import Atom
 
 from lux.eval import encode_term, decode_term, execute
 
