@@ -9,8 +9,6 @@ const NodeEditorHooks = {
 
   NodeDraggable: {
     mounted() {
-      console.log(`NodeDraggable hook mounted for node: ${this.el.dataset.nodeId}`);
-      
       this.el.addEventListener('mousedown', (e) => {
         // Only handle left mouse button
         if (e.button !== 0) return;
@@ -27,7 +25,6 @@ const NodeEditorHooks = {
         const mouseY = e.clientY - svgRect.top;
         
         console.log(`NodeDraggable: mousedown on node ${nodeId} at position (${mouseX}, ${mouseY})`);
-        console.log(`NodeDraggable: pushing mousedown event to canvas with node_id: ${nodeId}, clientX: ${mouseX}, clientY: ${mouseY}`);
         
         // Push event to the canvas hook
         this.pushEventTo('#node-editor-canvas', 'mousedown', {
@@ -43,8 +40,6 @@ const NodeEditorHooks = {
 
   NodeCanvas: {
     mounted() {
-      console.log("NodeCanvas hook mounted");
-      
       this.isDragging = false;
       this.draggedNode = null;
       this.isDrawingEdge = false;
@@ -118,6 +113,9 @@ const NodeEditorHooks = {
     },
 
     handleNodeMouseDown(e) {
+      // If the click is on a port, don't initiate node dragging
+      if (e.target.closest('.port')) return;
+      
       const node = e.target.closest('.node');
       if (!node || e.button !== 0) return;
 
@@ -129,9 +127,6 @@ const NodeEditorHooks = {
         x: e.clientX - svgRect.left,
         y: e.clientY - svgRect.top
       };
-
-      console.log(`NodeCanvas: handleNodeMouseDown - node: ${node.dataset.nodeId}, position: (${this.dragStartPosition.x}, ${this.dragStartPosition.y})`);
-      console.log(`NodeCanvas: pushing mousedown event with node_id: ${node.dataset.nodeId}, clientX: ${this.dragStartPosition.x}, clientY: ${this.dragStartPosition.y}`);
 
       // Notify server about drag start
       this.pushEvent('mousedown', {
@@ -155,8 +150,7 @@ const NodeEditorHooks = {
       const movementX = currentX - this.dragStartPosition.x;
       const movementY = currentY - this.dragStartPosition.y;
 
-      console.log(`NodeCanvas: dragging node ${this.draggedNode.dataset.nodeId} to position (${currentX}, ${currentY}), movement: (${movementX}, ${movementY})`);
-      console.log(`NodeCanvas: pushing mousemove event with clientX: ${currentX}, clientY: ${currentY}, movementX: ${movementX}, movementY: ${movementY}`);
+      console.log(`NodeCanvas: dragging node to position (${currentX}, ${currentY})`);
 
       // Notify server about movement
       this.pushEvent('mousemove', {
@@ -166,6 +160,9 @@ const NodeEditorHooks = {
         movementY: movementY
       });
 
+      // Update edge paths during drag
+      this.updateEdgePaths();
+
       e.preventDefault();
     },
 
@@ -174,7 +171,6 @@ const NodeEditorHooks = {
 
       const nodeId = this.draggedNode ? this.draggedNode.dataset.nodeId : 'unknown';
       console.log(`NodeCanvas: finished dragging node ${nodeId}`);
-      console.log(`NodeCanvas: pushing mouseup event`);
 
       this.isDragging = false;
       this.draggedNode = null;
@@ -182,6 +178,9 @@ const NodeEditorHooks = {
 
       // Notify server about drag end
       this.pushEvent('mouseup', {});
+
+      // Update edge paths after drag is complete
+      this.updateEdgePaths();
 
       e.preventDefault();
     },
@@ -204,33 +203,78 @@ const NodeEditorHooks = {
         const node = port.closest('.node');
         if (!node) return;
 
+        // Stop event propagation to prevent node dragging
+        e.stopPropagation();
+        
+        console.log('Port mousedown detected:', {
+          nodeId: node.dataset.nodeId,
+          isOutput: port.classList.contains('output'),
+          isInput: port.classList.contains('input'),
+          portElement: port,
+          nodeElement: node
+        });
+
+        // Get the port's position in SVG coordinates
+        const nodeTransform = node.getAttribute('transform');
+        const nodePos = this.parseTransform(nodeTransform);
+        
+        // Calculate port position based on its cx/cy attributes and node position
+        const portCx = parseFloat(port.getAttribute('cx'));
+        const portCy = parseFloat(port.getAttribute('cy'));
+        const portX = nodePos.x + portCx;
+        const portY = nodePos.y + portCy;
+        
+        console.log('Port position:', { portX, portY });
+
         this.isDrawingEdge = true;
         this.startPort = {
           nodeId: node.dataset.nodeId,
-          isOutput: port.classList.contains('output')
+          isOutput: port.classList.contains('output'),
+          x: portX,
+          y: portY
         };
 
         // Notify server that we started drawing an edge
         this.pushEvent('edge_started', {
           source_id: this.startPort.nodeId
         });
+        
+        console.log('Edge drawing started:', this.isDrawingEdge, this.startPort);
       });
 
       this.el.addEventListener('mouseup', (e) => {
+        console.log('Mouseup detected, isDrawingEdge:', this.isDrawingEdge);
         if (!this.isDrawingEdge) return;
 
         const port = e.target.closest('.port');
+        console.log('Target port:', port);
+        
         if (port) {
+          // Stop event propagation to prevent node dragging
+          e.stopPropagation();
+          
           const node = port.closest('.node');
+          console.log('Target node:', node);
+          
           if (node) {
             const endNodeId = node.dataset.nodeId;
             const isInput = port.classList.contains('input');
 
+            console.log('Edge completion candidate:', {
+              sourceId: this.startPort.nodeId,
+              targetId: endNodeId,
+              sourceIsOutput: this.startPort.isOutput,
+              targetIsInput: isInput
+            });
+
             // Only connect if we're going from output to input
             if (this.startPort.isOutput && isInput) {
+              console.log('Edge completed successfully');
               this.pushEvent('edge_completed', {
                 target_id: endNodeId
               });
+            } else {
+              console.log('Edge not completed: port type mismatch');
             }
           }
         }
@@ -238,6 +282,7 @@ const NodeEditorHooks = {
         this.isDrawingEdge = false;
         this.startPort = null;
         this.pushEvent('edge_cancelled', {});
+        console.log('Edge drawing cancelled/completed');
       });
     },
 
@@ -245,48 +290,67 @@ const NodeEditorHooks = {
       if (!this.isDrawingEdge || !this.startPort) return;
 
       const drawingEdge = this.el.querySelector('#drawing-edge');
-      if (!drawingEdge) return;
+      if (!drawingEdge) {
+        console.error('Drawing edge element not found');
+        return;
+      }
 
-      const startNode = this.el.querySelector(`[data-node-id="${this.startPort.nodeId}"]`);
-      if (!startNode) return;
-
-      const startNodeTransform = startNode.getAttribute('transform');
-      const startPos = this.parseTransform(startNodeTransform);
-
-      const path = this.calculateEdgePath(
-        startPos,
-        this.mousePosition,
-        this.startPort.isOutput
-      );
+      // Use the exact port position instead of calculating from the node
+      const startX = this.startPort.x;
+      const startY = this.startPort.y;
+      
+      // Create a path from the port to the current mouse position
+      const path = `M ${startX} ${startY} 
+                    C ${startX + 50} ${startY},
+                      ${this.mousePosition.x - 50} ${this.mousePosition.y},
+                      ${this.mousePosition.x} ${this.mousePosition.y}`;
 
       drawingEdge.setAttribute('d', path);
+      console.log('Drawing edge updated');
     },
 
     updateEdgePaths() {
       const edges = this.el.querySelectorAll('.edge-path');
       edges.forEach(edge => {
-        const sourceNode = this.el.querySelector(`[data-node-id="${edge.dataset.source}"]`);
-        const targetNode = this.el.querySelector(`[data-node-id="${edge.dataset.target}"]`);
-
-        if (!sourceNode || !targetNode) return;
-
-        const sourceTransform = sourceNode.getAttribute('transform');
-        const targetTransform = targetNode.getAttribute('transform');
-
-        const sourcePos = this.parseTransform(sourceTransform);
-        const targetPos = this.parseTransform(targetTransform);
-
-        const path = this.calculateEdgePath(sourcePos, targetPos, true);
+        const sourceId = edge.dataset.source;
+        const targetId = edge.dataset.target;
+        
+        if (!sourceId || !targetId) return;
+        
+        const path = this.calculateEdgePath(
+          { nodeId: sourceId },
+          { nodeId: targetId },
+          true
+        );
+        
         edge.setAttribute('d', path);
       });
     },
 
     calculateEdgePath(start, end, isOutput) {
-      // Add the port offset to the node position
-      const startX = start.x + (isOutput ? 200 : 0);
-      const startY = start.y + 50;
-      const endX = end.x + (isOutput ? 0 : 200);
-      const endY = end.y + 50;
+      // Calculate port positions based on node positions
+      const sourceNode = this.el.querySelector(`[data-node-id="${start.nodeId || start.x}"]`);
+      const targetNode = this.el.querySelector(`[data-node-id="${end.nodeId || end.x}"]`);
+      
+      let startX, startY, endX, endY;
+      
+      if (sourceNode && targetNode) {
+        // For existing edges between nodes
+        const sourcePos = this.parseTransform(sourceNode.getAttribute('transform'));
+        const targetPos = this.parseTransform(targetNode.getAttribute('transform'));
+        
+        // Add the port offset to the node position
+        startX = sourcePos.x + 200; // Output port is on the right side
+        startY = sourcePos.y + 50;  // Ports are vertically centered
+        endX = targetPos.x;         // Input port is on the left side
+        endY = targetPos.y + 50;    // Ports are vertically centered
+      } else {
+        // For drawing edges or other cases
+        startX = start.x !== undefined ? start.x : start.x + (isOutput ? 200 : 0);
+        startY = start.y !== undefined ? start.y : start.y + 50;
+        endX = end.x !== undefined ? end.x : end.x + (isOutput ? 0 : 200);
+        endY = end.y !== undefined ? end.y : end.y + 50;
+      }
 
       // Calculate control points for the curve
       const dx = Math.abs(endX - startX);

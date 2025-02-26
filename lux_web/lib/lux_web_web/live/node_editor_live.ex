@@ -102,7 +102,7 @@ defmodule LuxWebWeb.NodeEditorLive do
 
   def handle_event("mousemove", %{"clientX" => x, "clientY" => y}, socket) do
     case socket.assigns.dragging_node do
-      %{"id" => node_id, "mouse_offset_x" => offset_x, "mouse_offset_y" => offset_y, "original_position" => original_position} ->
+      %{"id" => node_id, "mouse_offset_x" => offset_x, "mouse_offset_y" => offset_y, "original_position" => _original_position} ->
         # Calculate new position by subtracting the initial offset
         new_x = x - offset_x
         new_y = y - offset_y
@@ -169,13 +169,16 @@ defmodule LuxWebWeb.NodeEditorLive do
   end
 
   def handle_event("edge_started", %{"source_id" => source_id}, socket) do
+    Logger.info("Edge started from source: #{source_id}")
     {:noreply, assign(socket, :drawing_edge, %{"source_id" => source_id})}
   end
 
   def handle_event("edge_completed", %{"target_id" => target_id}, socket) do
+    Logger.info("Edge completed to target: #{target_id}")
     case socket.assigns.drawing_edge do
       %{"source_id" => source_id} when not is_nil(source_id) ->
         edge_id = "edge-#{source_id}-#{target_id}"
+        Logger.info("Creating new edge: #{edge_id}")
         new_edge = %{
           "id" => edge_id,
           "source" => source_id,
@@ -185,11 +188,13 @@ defmodule LuxWebWeb.NodeEditorLive do
         edges = [new_edge | socket.assigns.edges]
         {:noreply, socket |> assign(:edges, edges) |> assign(:drawing_edge, nil)}
       _ ->
+        Logger.warn("Edge completion failed: No source node in drawing_edge state")
         {:noreply, socket}
     end
   end
 
   def handle_event("edge_cancelled", _params, socket) do
+    Logger.info("Edge drawing cancelled")
     {:noreply, assign(socket, :drawing_edge, nil)}
   end
 

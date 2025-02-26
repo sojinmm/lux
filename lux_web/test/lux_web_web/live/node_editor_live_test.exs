@@ -846,5 +846,122 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       |> element("#node-editor-canvas")
       |> render_hook("mouseup", %{})
     end
+
+    test "edge paths are updated when nodes are moved", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add two nodes
+      source_node = %{
+        "id" => "agent-edge-test",
+        "type" => "agent",
+        "position" => %{"x" => 100, "y" => 100},
+        "data" => %{
+          "label" => "Source Agent",
+          "description" => "Edge test source"
+        }
+      }
+
+      target_node = %{
+        "id" => "prism-edge-test",
+        "type" => "prism",
+        "position" => %{"x" => 300, "y" => 100},
+        "data" => %{
+          "label" => "Target Prism",
+          "description" => "Edge test target"
+        }
+      }
+
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+
+      # Create an edge
+      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-edge-test"})
+      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-edge-test"})
+
+      # Verify edge exists
+      html = render(view)
+      assert html =~ "edge-agent-edge-test-prism-edge-test"
+
+      # Get the initial node position
+      node_position_before = view
+                           |> element("g.node[data-node-id='agent-edge-test']")
+                           |> render()
+
+      assert node_position_before =~ "translate(100,100)"
+
+      # Move the source node
+      view |> element("#node-editor-canvas") |> render_hook("mousedown", %{
+        "node_id" => "agent-edge-test",
+        "clientX" => 100,
+        "clientY" => 100
+      })
+
+      view |> element("#node-editor-canvas") |> render_hook("mousemove", %{
+        "clientX" => 200,
+        "clientY" => 200
+      })
+
+      view |> element("#node-editor-canvas") |> render_hook("mouseup", %{})
+
+      # Get the updated node position
+      node_position_after = view
+                          |> element("g.node[data-node-id='agent-edge-test']")
+                          |> render()
+
+      # The node position should be updated
+      assert node_position_after =~ "translate(200,200)"
+    end
+
+    test "edge creation process works correctly", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # First add two nodes
+      source_node = %{
+        "id" => "agent-edge-source",
+        "type" => "agent",
+        "position" => %{"x" => 100, "y" => 100},
+        "data" => %{
+          "label" => "Source Agent",
+          "description" => "Edge test source"
+        }
+      }
+
+      target_node = %{
+        "id" => "prism-edge-target",
+        "type" => "prism",
+        "position" => %{"x" => 300, "y" => 100},
+        "data" => %{
+          "label" => "Target Prism",
+          "description" => "Edge test target"
+        }
+      }
+
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+
+      # Verify both nodes exist
+      html = render(view)
+      assert html =~ "agent-edge-source"
+      assert html =~ "prism-edge-target"
+
+      # Verify the drawing edge element exists in the DOM
+      assert has_element?(view, "#drawing-edge") == false
+
+      # Start drawing the edge
+      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-edge-source"})
+
+      # Verify the drawing edge element now exists
+      assert has_element?(view, "#drawing-edge") == true
+
+      # Complete the edge
+      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-edge-target"})
+
+      # Verify that the edge was added
+      html = render(view)
+      assert html =~ "edge-agent-edge-source-prism-edge-target"
+
+      # Verify the drawing edge is no longer visible
+      assert has_element?(view, "#drawing-edge") == false
+    end
   end
 end
