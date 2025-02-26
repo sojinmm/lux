@@ -165,7 +165,7 @@ defmodule Lux.Agent do
               {:python, code} ->
                 Lux.Python.eval(code,
                   variables: %{
-                    __lux_function__: :handle_signal,
+                    __lux_function__: :handler,
                     __lux_function_args__: [signal, agent]
                   }
                 )

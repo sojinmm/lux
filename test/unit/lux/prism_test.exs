@@ -118,19 +118,29 @@ defmodule Lux.PrismTest do
     end
   end
 
-  describe "python prism" do
-    test "view" do
-      simple_prism =
-        __DIR__
-        |> List.wrap()
-        |> Enum.concat(["..", "..", "support", "simple_prism.py"])
-        |> Path.join()
-        |> Path.expand()
+  describe "Work with python prism" do
+    def get_test_prism(file) do
+      __DIR__
+      |> List.wrap()
+      |> Enum.concat(["..", "..", "support", file])
+      |> Path.join()
+      |> Path.expand()
+    end
 
-      prism = Lux.Prism.view(simple_prism)
+    test "view/1" do
+      prism_path = get_test_prism("simple_prism.py")
+
+      prism = Prism.view(prism_path)
       assert %Prism{} = prism
       assert prism.name == "Simple Prism"
       assert prism.description == "A very simple prism"
+    end
+
+    test "run/3" do
+      prism_path = get_test_prism("simple_prism.py")
+
+      assert {:ok, %{"message" => message}} = Prism.run(prism_path, %{name: "John"}, nil)
+      assert message == "Hello, John!"
     end
   end
 end

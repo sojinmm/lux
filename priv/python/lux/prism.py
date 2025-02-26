@@ -22,11 +22,11 @@ class Prism(ABC):
             'input_schema': self.input_schema,
             'output_schema': self.output_schema,
             'handler': {
-                'type': 'python',
-                'path': os.path.abspath(__file__)
+                Atom(b'type'): Atom(b'python'),
+                Atom(b'path'): os.path.abspath(__file__)
             }
         }
 
     @abstractmethod
-    def handle_signal(self, signal, context):
+    def handler(self, input, context):
         pass
