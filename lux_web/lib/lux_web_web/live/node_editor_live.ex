@@ -61,6 +61,7 @@ defmodule LuxWebWeb.NodeEditorLive do
      |> assign(:drawing_edge, nil)}
   end
 
+  # Node selection and canvas interaction
   def handle_event("node_selected", %{"node_id" => node_id}, socket) do
     selected_node = Enum.find(socket.assigns.nodes, &(&1["id"] == node_id))
 
@@ -77,6 +78,7 @@ defmodule LuxWebWeb.NodeEditorLive do
     {:noreply, assign(socket, :selected_node, nil)}
   end
 
+  # Node dragging and movement
   def handle_event("node_dragged", %{"node_id" => node_id, "x" => x, "y" => y}, socket) do
     nodes =
       Enum.map(socket.assigns.nodes, fn node ->
@@ -205,6 +207,7 @@ defmodule LuxWebWeb.NodeEditorLive do
     end
   end
 
+  # Edge handling
   def handle_event("edge_started", %{"source_id" => source_id}, socket) do
     Logger.info("Edge started from source: #{source_id}")
     {:noreply, assign(socket, :drawing_edge, %{"source_id" => source_id})}
@@ -219,9 +222,10 @@ defmodule LuxWebWeb.NodeEditorLive do
         Logger.info("Creating new edge: #{edge_id}")
 
         # Check if this edge already exists to avoid duplicates
-        existing_edge = Enum.find(socket.assigns.edges, fn edge ->
-          edge["id"] == edge_id
-        end)
+        existing_edge =
+          Enum.find(socket.assigns.edges, fn edge ->
+            edge["id"] == edge_id
+          end)
 
         if existing_edge do
           Logger.info("Edge already exists: #{edge_id}")
@@ -249,15 +253,12 @@ defmodule LuxWebWeb.NodeEditorLive do
     end
   end
 
-  def handle_info({:broadcast_edge_created, edge}, socket) do
-    {:noreply, socket |> push_event("edge_created", %{edge: edge})}
-  end
-
   def handle_event("edge_cancelled", _params, socket) do
     Logger.info("Edge drawing cancelled")
     {:noreply, assign(socket, :drawing_edge, nil)}
   end
 
+  # Node management
   def handle_event("node_added", %{"node" => node}, socket) do
     nodes = [node | socket.assigns.nodes]
 
@@ -322,6 +323,11 @@ defmodule LuxWebWeb.NodeEditorLive do
     {:noreply, socket}
   end
 
+  # Broadcast event handlers
+  def handle_info({:broadcast_edge_created, edge}, socket) do
+    {:noreply, socket |> push_event("edge_created", %{edge: edge})}
+  end
+
   def handle_info({:broadcast_node_selected, node_id}, socket) do
     {:noreply, socket |> push_event("node_selected", %{node_id: node_id})}
   end
@@ -374,7 +380,7 @@ defmodule LuxWebWeb.NodeEditorLive do
           <% end %>
         </div>
       </div>
-
+      
     <!-- Node Editor Canvas -->
       <div
         class="flex-1 relative"
@@ -388,7 +394,7 @@ defmodule LuxWebWeb.NodeEditorLive do
             <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
               <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#333" stroke-width="0.5" />
             </pattern>
-
+            
     <!-- Glow filters for nodes and ports -->
             <filter id="glow-selected" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="5" result="blur" />
@@ -412,7 +418,7 @@ defmodule LuxWebWeb.NodeEditorLive do
             </filter>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
-
+          
     <!-- Edges -->
           <%= for edge <- @edges do %>
             <g class="edge">
@@ -428,12 +434,12 @@ defmodule LuxWebWeb.NodeEditorLive do
               />
             </g>
           <% end %>
-
+          
     <!-- Drawing Edge (if any) -->
           <%= if @drawing_edge do %>
             <path id="drawing-edge" stroke="#666" stroke-width="2" stroke-dasharray="5,5" fill="none" />
           <% end %>
-
+          
     <!-- Nodes -->
           <%= for node <- @nodes do %>
             <g
@@ -460,7 +466,7 @@ defmodule LuxWebWeb.NodeEditorLive do
                 filter="url(#glow-selected)"
                 style={"opacity: #{if @selected_node && @selected_node["id"] == node["id"], do: "1", else: "0"}"}
               />
-
+              
     <!-- Main node rectangle -->
               <rect
                 class="node-body"
@@ -474,7 +480,7 @@ defmodule LuxWebWeb.NodeEditorLive do
               />
               <text x="10" y="30" fill="white" font-weight="bold">{node["data"]["label"]}</text>
               <text x="10" y="50" fill="#999" font-size="12">{node["data"]["description"]}</text>
-
+              
     <!-- Node Ports -->
               <circle class="port input" cx="0" cy="50" r="5" fill={@node_types[node["type"]].color} />
               <circle
@@ -488,7 +494,7 @@ defmodule LuxWebWeb.NodeEditorLive do
           <% end %>
         </svg>
       </div>
-
+      
     <!-- Properties Panel -->
       <div class="w-64 border-l border-gray-700 p-4 overflow-y-auto">
         <h2 class="text-xl font-bold mb-4">Properties</h2>
