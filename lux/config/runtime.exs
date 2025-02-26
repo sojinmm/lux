@@ -3,8 +3,8 @@ import Dotenvy
 
 if config_env() == :test do
   source([
-    "test.envrc",
-    "test.override.envrc"
+    "../test.envrc",
+    "../test.override.envrc"
   ])
 else
   source(["../#{config_env()}.envrc", "../#{config_env()}.override.envrc", System.get_env()])
