@@ -9,6 +9,12 @@ const NodeEditorHooks = {
 
   NodeDraggable: {
     mounted() {
+      // Add hover effects
+      this.setupHoverEffects();
+      
+      // Handle node selection
+      this.handleNodeSelection();
+      
       this.el.addEventListener('mousedown', (e) => {
         // Only handle left mouse button
         if (e.button !== 0) return;
@@ -35,6 +41,51 @@ const NodeEditorHooks = {
         
         e.preventDefault();
       });
+    },
+    
+    handleNodeSelection() {
+      // Listen for node selection events from the server
+      this.handleEvent("node_selected", ({ node_id }) => {
+        // If this is the selected node, apply the glow effect
+        if (this.el.dataset.nodeId === node_id) {
+          const nodeBody = this.el.querySelector('.node-body');
+          nodeBody.setAttribute('filter', 'url(#glow-selected)');
+        } else {
+          // Remove glow effect from other nodes
+          const nodeBody = this.el.querySelector('.node-body');
+          nodeBody.removeAttribute('filter');
+        }
+      });
+      
+      // Also listen for canvas clicks to handle deselection
+      this.handleEvent("canvas_clicked", () => {
+        const nodeBody = this.el.querySelector('.node-body');
+        nodeBody.removeAttribute('filter');
+      });
+    },
+    
+    setupHoverEffects() {
+      // Create a glow effect for hover state
+      const nodeBody = this.el.querySelector('.node-body');
+      const nodeGlow = this.el.querySelector('.node-glow');
+      
+      // Add hover effect to the node
+      this.el.addEventListener('mouseenter', () => {
+        // Only apply hover effect if the node is not selected
+        if (!this.el.classList.contains('selected')) {
+          nodeBody.setAttribute('filter', 'url(#glow-hover)');
+        }
+      });
+      
+      this.el.addEventListener('mouseleave', () => {
+        // Remove hover effect
+        if (!this.el.classList.contains('selected')) {
+          nodeBody.removeAttribute('filter');
+        } else {
+          // If selected, make sure the selected glow is applied
+          nodeBody.setAttribute('filter', 'url(#glow-selected)');
+        }
+      });
     }
   },
 
@@ -46,6 +97,7 @@ const NodeEditorHooks = {
       this.startPort = null;
       this.mousePosition = { x: 0, y: 0 };
       this.dragStartPosition = { x: 0, y: 0 };
+      this.selectedNodeId = null;
 
       // Get SVG element for coordinate calculations
       this.svg = this.el.querySelector('svg');
@@ -66,6 +118,32 @@ const NodeEditorHooks = {
       
       // Setup edge path calculations
       this.updateEdgePaths();
+      
+      // Listen for node selection events
+      this.handleEvent("node_selected", ({ node_id }) => {
+        console.log("Node selected:", node_id);
+        this.selectedNodeId = node_id;
+        
+        // Update all nodes to reflect the selection state
+        document.querySelectorAll('.node').forEach(node => {
+          if (node.dataset.nodeId === node_id) {
+            node.classList.add('selected');
+          } else {
+            node.classList.remove('selected');
+          }
+        });
+      });
+      
+      // Listen for canvas click events (deselection)
+      this.handleEvent("canvas_clicked", () => {
+        console.log("Canvas clicked, deselecting node");
+        this.selectedNodeId = null;
+        
+        // Remove selected class from all nodes
+        document.querySelectorAll('.node').forEach(node => {
+          node.classList.remove('selected');
+        });
+      });
     },
 
     destroyed() {
@@ -283,6 +361,30 @@ const NodeEditorHooks = {
         this.startPort = null;
         this.pushEvent('edge_cancelled', {});
         console.log('Edge drawing cancelled/completed');
+      });
+      
+      // Add hover effects for ports
+      this.setupPortHoverEffects();
+    },
+    
+    setupPortHoverEffects() {
+      // Use event delegation for port hover effects
+      this.el.addEventListener('mouseover', (e) => {
+        const port = e.target.closest('.port');
+        if (port) {
+          // Apply glow effect to port
+          port.setAttribute('filter', 'url(#port-glow)');
+          port.setAttribute('r', '6'); // Slightly increase size
+        }
+      });
+      
+      this.el.addEventListener('mouseout', (e) => {
+        const port = e.target.closest('.port');
+        if (port) {
+          // Remove glow effect
+          port.removeAttribute('filter');
+          port.setAttribute('r', '5'); // Reset to original size
+        }
       });
     },
 

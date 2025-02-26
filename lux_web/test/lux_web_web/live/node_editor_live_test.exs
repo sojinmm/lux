@@ -64,7 +64,9 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       assert html =~ "Test description"
 
       # Now remove the node
-      view |> element("#node-editor-canvas") |> render_hook("node_removed", %{"id" => "agent-to-remove"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_removed", %{"id" => "agent-to-remove"})
 
       # Verify the node was removed
       html = render(view)
@@ -126,14 +128,23 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         }
       }
 
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => source_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => target_node})
 
       # Start drawing the edge
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-source"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-source"})
 
       # Complete the edge
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-target"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "prism-target"})
 
       # Verify that the edge was added
       html = render(view)
@@ -165,9 +176,12 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
 
       # Properties panel should now show the node's details
       html = render(view)
-      assert html =~ "Ultimate Assistant" # Node name in form
-      assert html =~ "Tools Agent" # Node description in form
-      assert html =~ "Help users with various tasks" # Node goal in form
+      # Node name in form
+      assert html =~ "Ultimate Assistant"
+      # Node description in form
+      assert html =~ "Tools Agent"
+      # Node goal in form
+      assert html =~ "Help users with various tasks"
     end
 
     test "selecting different nodes updates the properties panel correctly", %{conn: conn} do
@@ -208,7 +222,8 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       html = render(view)
       assert html =~ "Test Prism"
       assert html =~ "Test Description"
-      refute html =~ "Help users with various tasks" # Goal field should not be present for non-agent nodes
+      # Goal field should not be present for non-agent nodes
+      refute html =~ "Help users with various tasks"
     end
 
     test "deselecting a node clears the properties panel", %{conn: conn} do
@@ -264,7 +279,9 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       assert html =~ "Updated Goal"
 
       # Check node display on canvas
-      assert html =~ ~s(<text x="10" y="30" fill="white" font-weight="bold">Updated Agent Name</text>)
+      assert html =~
+               ~s(<text x="10" y="30" fill="white" font-weight="bold">Updated Agent Name</text>)
+
       assert html =~ ~s(<text x="10" y="50" fill="#999" font-size="12">Updated Description</text>)
     end
 
@@ -314,8 +331,11 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       assert html =~ "Updated Prism Description"
 
       # Check node display on canvas
-      assert html =~ ~s(<text x="10" y="30" fill="white" font-weight="bold">Updated Prism Name</text>)
-      assert html =~ ~s(<text x="10" y="50" fill="#999" font-size="12">Updated Prism Description</text>)
+      assert html =~
+               ~s(<text x="10" y="30" fill="white" font-weight="bold">Updated Prism Name</text>)
+
+      assert html =~
+               ~s(<text x="10" y="50" fill="#999" font-size="12">Updated Prism Description</text>)
 
       # Verify that goal field is not present for prism nodes
       refute html =~ "Goal"
@@ -334,9 +354,11 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         "node" => %{
           "id" => "agent-1",
           "data" => %{
-            "label" => "Ultimate Assistant",  # Keep original name
+            # Keep original name
+            "label" => "Ultimate Assistant",
             "description" => "This is a new description that should appear in the node",
-            "goal" => "Help users with various tasks"  # Keep original goal
+            # Keep original goal
+            "goal" => "Help users with various tasks"
           }
         }
       }
@@ -352,10 +374,13 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       assert html =~ "This is a new description that should appear in the node"
 
       # Check the exact SVG text element for description (y=50 is where description appears)
-      assert html =~ ~s(<text x="10" y="50" fill="#999" font-size="12">This is a new description that should appear in the node</text>)
+      assert html =~
+               ~s(<text x="10" y="50" fill="#999" font-size="12">This is a new description that should appear in the node</text>)
 
       # Verify the label and goal weren't changed
-      assert html =~ ~s(<text x="10" y="30" fill="white" font-weight="bold">Ultimate Assistant</text>)
+      assert html =~
+               ~s(<text x="10" y="30" fill="white" font-weight="bold">Ultimate Assistant</text>)
+
       assert html =~ "Help users with various tasks"
     end
 
@@ -370,25 +395,41 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       # Test label update with cmd+enter
       view
       |> element("input[name='node[data][label]']")
-      |> render_keydown(%{"key" => "Enter", "metaKey" => true, "value" => "Real-time Label Update"})
+      |> render_keydown(%{
+        "key" => "Enter",
+        "metaKey" => true,
+        "value" => "Real-time Label Update"
+      })
 
       html = render(view)
       assert html =~ "Real-time Label Update"
-      assert html =~ ~s(<text x="10" y="30" fill="white" font-weight="bold">Real-time Label Update</text>)
+
+      assert html =~
+               ~s(<text x="10" y="30" fill="white" font-weight="bold">Real-time Label Update</text>)
 
       # Test description update with cmd+enter
       view
       |> element("textarea[name='node[data][description]']")
-      |> render_keydown(%{"key" => "Enter", "metaKey" => true, "value" => "Real-time Description Update"})
+      |> render_keydown(%{
+        "key" => "Enter",
+        "metaKey" => true,
+        "value" => "Real-time Description Update"
+      })
 
       html = render(view)
       assert html =~ "Real-time Description Update"
-      assert html =~ ~s(<text x="10" y="50" fill="#999" font-size="12">Real-time Description Update</text>)
+
+      assert html =~
+               ~s(<text x="10" y="50" fill="#999" font-size="12">Real-time Description Update</text>)
 
       # Test goal update with cmd+enter (only for agent nodes)
       view
       |> element("textarea[name='node[data][goal]']")
-      |> render_keydown(%{"key" => "Enter", "metaKey" => true, "value" => "Real-time Goal Update"})
+      |> render_keydown(%{
+        "key" => "Enter",
+        "metaKey" => true,
+        "value" => "Real-time Goal Update"
+      })
 
       html = render(view)
       assert html =~ "Real-time Goal Update"
@@ -419,20 +460,32 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       # Test label update with ctrl+enter
       view
       |> element("input[name='node[data][label]']")
-      |> render_keydown(%{"key" => "Enter", "ctrlKey" => true, "value" => "Real-time Prism Update"})
+      |> render_keydown(%{
+        "key" => "Enter",
+        "ctrlKey" => true,
+        "value" => "Real-time Prism Update"
+      })
 
       html = render(view)
       assert html =~ "Real-time Prism Update"
-      assert html =~ ~s(<text x="10" y="30" fill="white" font-weight="bold">Real-time Prism Update</text>)
+
+      assert html =~
+               ~s(<text x="10" y="30" fill="white" font-weight="bold">Real-time Prism Update</text>)
 
       # Test description update with ctrl+enter
       view
       |> element("textarea[name='node[data][description]']")
-      |> render_keydown(%{"key" => "Enter", "ctrlKey" => true, "value" => "Real-time Prism Description"})
+      |> render_keydown(%{
+        "key" => "Enter",
+        "ctrlKey" => true,
+        "value" => "Real-time Prism Description"
+      })
 
       html = render(view)
       assert html =~ "Real-time Prism Description"
-      assert html =~ ~s(<text x="10" y="50" fill="#999" font-size="12">Real-time Prism Description</text>)
+
+      assert html =~
+               ~s(<text x="10" y="50" fill="#999" font-size="12">Real-time Prism Description</text>)
 
       # Verify goal field is not present for prism nodes
       refute has_element?(view, "textarea[name='node[data][goal]']")
@@ -614,6 +667,7 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       view
       |> element("#node-editor-canvas")
       |> render_hook("edge_started", %{"source_id" => "agent-1"})
+
       view
       |> element("#node-editor-canvas")
       |> render_hook("edge_completed", %{"target_id" => "prism-1"})
@@ -683,9 +737,12 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
 
       # Verify initial positions
       html = render(view)
-      assert html =~ ~s[transform="translate(200,300)"]  # lens-1
-      assert html =~ ~s[transform="translate(700,400)"]  # beam-1
-      assert html =~ ~s[transform="translate(400,200)"]  # agent-1 (initial node)
+      # lens-1
+      assert html =~ ~s[transform="translate(200,300)"]
+      # beam-1
+      assert html =~ ~s[transform="translate(700,400)"]
+      # agent-1 (initial node)
+      assert html =~ ~s[transform="translate(400,200)"]
 
       # Drag each node to new positions
       positions = [
@@ -706,9 +763,12 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
 
       # Verify all nodes moved to their new positions
       html = render(view)
-      assert html =~ ~s[transform="translate(250,350)"]  # lens-1
-      assert html =~ ~s[transform="translate(750,450)"]  # beam-1
-      assert html =~ ~s[transform="translate(450,250)"]  # agent-1
+      # lens-1
+      assert html =~ ~s[transform="translate(250,350)"]
+      # beam-1
+      assert html =~ ~s[transform="translate(750,450)"]
+      # agent-1
+      assert html =~ ~s[transform="translate(450,250)"]
     end
 
     test "dragging updates node position in real-time", %{conn: conn} do
@@ -871,32 +931,47 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         }
       }
 
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => source_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => target_node})
 
       # Create an edge
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-edge-test"})
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-edge-test"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-edge-test"})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "prism-edge-test"})
 
       # Verify edge exists
       html = render(view)
       assert html =~ "edge-agent-edge-test-prism-edge-test"
 
       # Get the initial node position
-      node_position_before = view
-                           |> element("g.node[data-node-id='agent-edge-test']")
-                           |> render()
+      node_position_before =
+        view
+        |> element("g.node[data-node-id='agent-edge-test']")
+        |> render()
 
       assert node_position_before =~ "translate(100,100)"
 
       # Move the source node
-      view |> element("#node-editor-canvas") |> render_hook("mousedown", %{
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("mousedown", %{
         "node_id" => "agent-edge-test",
         "clientX" => 100,
         "clientY" => 100
       })
 
-      view |> element("#node-editor-canvas") |> render_hook("mousemove", %{
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("mousemove", %{
         "clientX" => 200,
         "clientY" => 200
       })
@@ -904,9 +979,10 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       view |> element("#node-editor-canvas") |> render_hook("mouseup", %{})
 
       # Get the updated node position
-      node_position_after = view
-                          |> element("g.node[data-node-id='agent-edge-test']")
-                          |> render()
+      node_position_after =
+        view
+        |> element("g.node[data-node-id='agent-edge-test']")
+        |> render()
 
       # The node position should be updated
       assert node_position_after =~ "translate(200,200)"
@@ -936,8 +1012,13 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         }
       }
 
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => source_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => target_node})
 
       # Verify both nodes exist
       html = render(view)
@@ -948,13 +1029,17 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       assert has_element?(view, "#drawing-edge") == false
 
       # Start drawing the edge
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-edge-source"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-edge-source"})
 
       # Verify the drawing edge element now exists
       assert has_element?(view, "#drawing-edge") == true
 
       # Complete the edge
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-edge-target"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "prism-edge-target"})
 
       # Verify that the edge was added
       html = render(view)
@@ -988,26 +1073,44 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         }
       }
 
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => source_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => target_node})
 
       # Create an edge between the nodes
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-move-edge"})
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-move-edge"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-move-edge"})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "prism-move-edge"})
 
       # Verify the edge exists
       html = render(view)
       assert html =~ "edge-agent-move-edge-prism-move-edge"
-      assert has_element?(view, "path.edge-path[data-source='agent-move-edge'][data-target='prism-move-edge']")
+
+      assert has_element?(
+               view,
+               "path.edge-path[data-source='agent-move-edge'][data-target='prism-move-edge']"
+             )
 
       # Simulate node dragging
-      view |> element("#node-editor-canvas") |> render_hook("mousedown", %{
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("mousedown", %{
         "node_id" => "agent-move-edge",
         "clientX" => 100,
         "clientY" => 100
       })
 
-      view |> element("#node-editor-canvas") |> render_hook("mousemove", %{
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("mousemove", %{
         "clientX" => 150,
         "clientY" => 150,
         "movementX" => 50,
@@ -1020,7 +1123,11 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       # Verify the edge still exists after dragging
       html = render(view)
       assert html =~ "edge-agent-move-edge-prism-move-edge"
-      assert has_element?(view, "path.edge-path[data-source='agent-move-edge'][data-target='prism-move-edge']")
+
+      assert has_element?(
+               view,
+               "path.edge-path[data-source='agent-move-edge'][data-target='prism-move-edge']"
+             )
 
       # Verify the node position has changed
       assert html =~ ~r/transform="translate\((\d+),(\d+)\)"/
@@ -1051,12 +1158,22 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         }
       }
 
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => source_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => target_node})
 
       # Create an edge between the nodes
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-select-edge"})
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-select-edge"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-select-edge"})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "prism-select-edge"})
 
       # Verify the edge exists
       html = render(view)
@@ -1120,16 +1237,34 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
         }
       }
 
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => middle_node})
-      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => source_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => middle_node})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{"node" => target_node})
 
       # Create two edges
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-stable-edge"})
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-stable-middle"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-stable-edge"})
 
-      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "prism-stable-middle"})
-      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "lens-stable-target"})
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "prism-stable-middle"})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "prism-stable-middle"})
+
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "lens-stable-target"})
 
       # Verify both edges exist
       html = render(view)
@@ -1161,13 +1296,17 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       assert html =~ "edge-prism-stable-middle-lens-stable-target"
 
       # Drag the middle node
-      view |> element("#node-editor-canvas") |> render_hook("mousedown", %{
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("mousedown", %{
         "node_id" => "prism-stable-middle",
         "clientX" => 300,
         "clientY" => 100
       })
 
-      view |> element("#node-editor-canvas") |> render_hook("mousemove", %{
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("mousemove", %{
         "clientX" => 350,
         "clientY" => 150,
         "movementX" => 50,
@@ -1186,6 +1325,236 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       html = render(view)
       assert html =~ "edge-agent-stable-edge-prism-stable-middle"
       assert html =~ "edge-prism-stable-middle-lens-stable-target"
+    end
+
+    test "node selection applies the correct CSS class and glow effect", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add a test node
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{
+        "node" => %{
+          "id" => "test-node-1",
+          "type" => "agent",
+          "position" => %{"x" => 300, "y" => 300},
+          "data" => %{
+            "label" => "Test Node",
+            "description" => "Test Description"
+          }
+        }
+      })
+
+      # Initially, the node should not have the selected class
+      html = render(view)
+      assert html =~ ~s[class="node "]
+      refute html =~ ~s[class="node selected"]
+
+      # Select the node
+      view
+      |> element("g.node[data-node-id='test-node-1']")
+      |> render_click()
+
+      # Verify the node now has the selected class
+      html = render(view)
+      assert html =~ ~s[class="node selected"]
+
+      # Verify the node glow element has opacity 1
+      assert html =~ ~s[style="opacity: 1"]
+
+      # Click on the canvas to deselect
+      view
+      |> element("#node-editor-canvas")
+      |> render_click()
+
+      # Verify the node no longer has the selected class
+      html = render(view)
+      refute html =~ ~s[class="node selected"]
+      assert html =~ ~s[style="opacity: 0"]
+    end
+
+    test "node selection updates properties panel with visual effects", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add a test node
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{
+        "node" => %{
+          "id" => "test-node-2",
+          "type" => "agent",
+          "position" => %{"x" => 300, "y" => 300},
+          "data" => %{
+            "label" => "Properties Test",
+            "description" => "Testing Properties Panel",
+            "goal" => "Test Goal"
+          }
+        }
+      })
+
+      # Initially, the properties panel should show the default message
+      html = render(view)
+      assert html =~ "Select a node to view and edit its properties"
+
+      # Select the node
+      view
+      |> element("g.node[data-node-id='test-node-2']")
+      |> render_click()
+
+      # Verify the properties panel now shows the node's properties
+      html = render(view)
+      assert html =~ "Properties Test"
+      assert html =~ "Testing Properties Panel"
+      assert html =~ "Test Goal"
+
+      # Verify the form inputs are populated
+      assert has_element?(view, "input[name='node[data][label]'][value='Properties Test']")
+
+      assert has_element?(
+               view,
+               "textarea[name='node[data][description]']",
+               "Testing Properties Panel"
+             )
+
+      assert has_element?(view, "textarea[name='node[data][goal]']", "Test Goal")
+    end
+
+    test "selecting multiple nodes in sequence works correctly", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add two test nodes
+      nodes = [
+        %{
+          "id" => "multi-test-1",
+          "type" => "agent",
+          "position" => %{"x" => 200, "y" => 200},
+          "data" => %{
+            "label" => "First Node",
+            "description" => "First Description"
+          }
+        },
+        %{
+          "id" => "multi-test-2",
+          "type" => "prism",
+          "position" => %{"x" => 500, "y" => 200},
+          "data" => %{
+            "label" => "Second Node",
+            "description" => "Second Description"
+          }
+        }
+      ]
+
+      # Add the nodes
+      for node <- nodes do
+        view
+        |> element("#node-editor-canvas")
+        |> render_hook("node_added", %{"node" => node})
+      end
+
+      # Select the first node
+      view
+      |> element("g.node[data-node-id='multi-test-1']")
+      |> render_click()
+
+      # Verify first node is selected and shown in properties panel
+      html = render(view)
+      assert html =~ "First Node"
+      assert html =~ "First Description"
+      assert has_element?(view, "input[name='node[data][label]'][value='First Node']")
+
+      # Select the second node
+      view
+      |> element("g.node[data-node-id='multi-test-2']")
+      |> render_click()
+
+      # Verify second node is now selected and shown in properties panel
+      html = render(view)
+      assert html =~ "Second Node"
+      assert html =~ "Second Description"
+      assert has_element?(view, "input[name='node[data][label]'][value='Second Node']")
+
+      # Verify first node's properties are no longer in the properties panel
+      refute has_element?(view, "input[name='node[data][label]'][value='First Node']")
+    end
+
+    test "edge creation with visual feedback", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add a second node
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("node_added", %{
+        "node" => %{
+          "id" => "edge-test-target",
+          "type" => "prism",
+          "position" => %{"x" => 600, "y" => 200},
+          "data" => %{
+            "label" => "Target Node",
+            "description" => "Edge Target"
+          }
+        }
+      })
+
+      # Start edge creation
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-1"})
+
+      # Verify drawing edge element is present
+      html = render(view)
+      assert html =~ ~s[id="drawing-edge"]
+      assert html =~ ~s[stroke-dasharray="5,5"]
+
+      # Complete edge creation
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_completed", %{"target_id" => "edge-test-target"})
+
+      # Verify edge was created and drawing edge is gone
+      html = render(view)
+      assert html =~ ~s[data-edge-id="edge-agent-1-edge-test-target"]
+      refute html =~ ~s[id="drawing-edge"]
+    end
+
+    test "cancelling edge creation removes drawing edge", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Start edge creation
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_started", %{"source_id" => "agent-1"})
+
+      # Verify drawing edge element is present
+      html = render(view)
+      assert html =~ ~s[id="drawing-edge"]
+
+      # Cancel edge creation
+      view
+      |> element("#node-editor-canvas")
+      |> render_hook("edge_cancelled", %{})
+
+      # Verify drawing edge is gone
+      html = render(view)
+      refute html =~ ~s[id="drawing-edge"]
+    end
+
+    test "SVG filters are properly defined for visual effects", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Verify that the SVG filters for glow effects are defined
+      html = render(view)
+
+      # Check for glow-selected filter
+      assert html =~ ~s[id="glow-selected"]
+      assert html =~ ~s[flood-color="#fff" flood-opacity="0.3"]
+
+      # Check for glow-hover filter
+      assert html =~ ~s[id="glow-hover"]
+      assert html =~ ~s[flood-color="#fff" flood-opacity="0.2"]
+
+      # Check for port-glow filter
+      assert html =~ ~s[id="port-glow"]
+      assert html =~ ~s[flood-color="#fff" flood-opacity="0.5"]
     end
   end
 end

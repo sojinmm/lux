@@ -36,7 +36,12 @@ defmodule LuxWebWeb.NodeEditorLive do
           "description" => "Tools Agent",
           "goal" => "Help users with various tasks",
           "components" => [
-            %{"id" => "comp-1", "type" => "prism", "name" => "Chat Model", "label" => "Chat Model"},
+            %{
+              "id" => "comp-1",
+              "type" => "prism",
+              "name" => "Chat Model",
+              "label" => "Chat Model"
+            },
             %{"id" => "comp-2", "type" => "lens", "name" => "Memory", "label" => "Memory"},
             %{"id" => "comp-3", "type" => "beam", "name" => "Tool", "label" => "Tool"}
           ]
@@ -66,13 +71,15 @@ defmodule LuxWebWeb.NodeEditorLive do
   end
 
   def handle_event("node_dragged", %{"node_id" => node_id, "x" => x, "y" => y}, socket) do
-    nodes = Enum.map(socket.assigns.nodes, fn node ->
-      if node["id"] == node_id do
-        %{node | "position" => %{"x" => x, "y" => y}}
-      else
-        node
-      end
-    end)
+    nodes =
+      Enum.map(socket.assigns.nodes, fn node ->
+        if node["id"] == node_id do
+          %{node | "position" => %{"x" => x, "y" => y}}
+        else
+          node
+        end
+      end)
+
     {:noreply, assign(socket, :nodes, nodes)}
   end
 
@@ -92,17 +99,23 @@ defmodule LuxWebWeb.NodeEditorLive do
       mouse_offset_y: mouse_offset_y
     })
 
-    {:noreply, assign(socket, :dragging_node, %{
-      "id" => node_id,
-      "mouse_offset_x" => mouse_offset_x,
-      "mouse_offset_y" => mouse_offset_y,
-      "original_position" => original_position
-    })}
+    {:noreply,
+     assign(socket, :dragging_node, %{
+       "id" => node_id,
+       "mouse_offset_x" => mouse_offset_x,
+       "mouse_offset_y" => mouse_offset_y,
+       "original_position" => original_position
+     })}
   end
 
   def handle_event("mousemove", %{"clientX" => x, "clientY" => y}, socket) do
     case socket.assigns.dragging_node do
-      %{"id" => node_id, "mouse_offset_x" => offset_x, "mouse_offset_y" => offset_y, "original_position" => _original_position} ->
+      %{
+        "id" => node_id,
+        "mouse_offset_x" => offset_x,
+        "mouse_offset_y" => offset_y,
+        "original_position" => _original_position
+      } ->
         # Calculate new position by subtracting the initial offset
         new_x = x - offset_x
         new_y = y - offset_y
@@ -112,8 +125,10 @@ defmodule LuxWebWeb.NodeEditorLive do
         snapped_y = round(new_y / 20) * 20
 
         # Apply bounds constraints
-        bounded_x = max(0, min(snapped_x, 1720))  # 1920 - node width (200)
-        bounded_y = max(0, min(snapped_y, 980))   # 1080 - node height (100)
+        # 1920 - node width (200)
+        bounded_x = max(0, min(snapped_x, 1720))
+        # 1080 - node height (100)
+        bounded_y = max(0, min(snapped_y, 980))
 
         Logger.debug(%{
           node_id: node_id,
@@ -123,14 +138,17 @@ defmodule LuxWebWeb.NodeEditorLive do
           bounded: %{bounded_x: bounded_x, bounded_y: bounded_y}
         })
 
-        nodes = Enum.map(socket.assigns.nodes, fn node ->
-          if node["id"] == node_id do
-            %{node | "position" => %{"x" => bounded_x, "y" => bounded_y}}
-          else
-            node
-          end
-        end)
+        nodes =
+          Enum.map(socket.assigns.nodes, fn node ->
+            if node["id"] == node_id do
+              %{node | "position" => %{"x" => bounded_x, "y" => bounded_y}}
+            else
+              node
+            end
+          end)
+
         {:noreply, assign(socket, :nodes, nodes)}
+
       nil ->
         {:noreply, socket}
     end
@@ -141,11 +159,14 @@ defmodule LuxWebWeb.NodeEditorLive do
     case socket.assigns.dragging_node do
       %{"id" => node_id} ->
         node = Enum.find(socket.assigns.nodes, &(&1["id"] == node_id))
+
         Logger.debug(%{
           node_id: node_id,
           final_position: %{x: node["position"]["x"], y: node["position"]["y"]}
         })
-      _ -> :ok
+
+      _ ->
+        :ok
     end
 
     {:noreply, assign(socket, :dragging_node, nil)}
@@ -155,14 +176,17 @@ defmodule LuxWebWeb.NodeEditorLive do
     case socket.assigns.dragging_node do
       %{"id" => node_id, "original_position" => original_position} ->
         # Revert the node to its original position
-        nodes = Enum.map(socket.assigns.nodes, fn node ->
-          if node["id"] == node_id do
-            %{node | "position" => original_position}
-          else
-            node
-          end
-        end)
+        nodes =
+          Enum.map(socket.assigns.nodes, fn node ->
+            if node["id"] == node_id do
+              %{node | "position" => original_position}
+            else
+              node
+            end
+          end)
+
         {:noreply, socket |> assign(:nodes, nodes) |> assign(:dragging_node, nil)}
+
       _ ->
         {:noreply, socket}
     end
@@ -175,20 +199,24 @@ defmodule LuxWebWeb.NodeEditorLive do
 
   def handle_event("edge_completed", %{"target_id" => target_id}, socket) do
     Logger.info("Edge completed to target: #{target_id}")
+
     case socket.assigns.drawing_edge do
       %{"source_id" => source_id} when not is_nil(source_id) ->
         edge_id = "edge-#{source_id}-#{target_id}"
         Logger.info("Creating new edge: #{edge_id}")
+
         new_edge = %{
           "id" => edge_id,
           "source" => source_id,
           "target" => target_id,
           "type" => "signal"
         }
+
         edges = [new_edge | socket.assigns.edges]
         {:noreply, socket |> assign(:edges, edges) |> assign(:drawing_edge, nil)}
+
       _ ->
-        Logger.warn("Edge completion failed: No source node in drawing_edge state")
+        Logger.warning("Edge completion failed: No source node in drawing_edge state")
         {:noreply, socket}
     end
   end
@@ -209,29 +237,35 @@ defmodule LuxWebWeb.NodeEditorLive do
   end
 
   def handle_event("update_node", %{"node" => node_params}, socket) do
-    nodes = Enum.map(socket.assigns.nodes, fn node ->
-      if node["id"] == node_params["id"] do
-        # Update the node's data while preserving other fields
-        %{node | "data" => Map.merge(node["data"], node_params["data"])}
-      else
-        node
-      end
-    end)
+    nodes =
+      Enum.map(socket.assigns.nodes, fn node ->
+        if node["id"] == node_params["id"] do
+          # Update the node's data while preserving other fields
+          %{node | "data" => Map.merge(node["data"], node_params["data"])}
+        else
+          node
+        end
+      end)
 
     # Update both nodes list and selected node
     selected_node = Enum.find(nodes, &(&1["id"] == node_params["id"]))
     {:noreply, socket |> assign(:nodes, nodes) |> assign(:selected_node, selected_node)}
   end
 
-  def handle_event("update_property", %{"key" => "Enter", "value" => value, "field" => field} = params, socket) do
+  def handle_event(
+        "update_property",
+        %{"key" => "Enter", "value" => value, "field" => field} = params,
+        socket
+      ) do
     if (params["metaKey"] == true or params["ctrlKey"] == true) and socket.assigns.selected_node do
-      nodes = Enum.map(socket.assigns.nodes, fn node ->
-        if node["id"] == socket.assigns.selected_node["id"] do
-          put_in(node, ["data", field], value)
-        else
-          node
-        end
-      end)
+      nodes =
+        Enum.map(socket.assigns.nodes, fn node ->
+          if node["id"] == socket.assigns.selected_node["id"] do
+            put_in(node, ["data", field], value)
+          else
+            node
+          end
+        end)
 
       # Update both nodes list and selected node
       selected_node = Enum.find(nodes, &(&1["id"] == socket.assigns.selected_node["id"]))
@@ -261,12 +295,15 @@ defmodule LuxWebWeb.NodeEditorLive do
               data-type={type}
             >
               <div class="flex items-center">
-                <div class={"w-8 h-8 rounded-full mr-2 flex items-center justify-center"} style={"background: #{info.color}20"}>
-                  <div class={"w-5 h-5"} style={"background: #{info.color}"}></div>
+                <div
+                  class="w-8 h-8 rounded-full mr-2 flex items-center justify-center"
+                  style={"background: #{info.color}20"}
+                >
+                  <div class="w-5 h-5" style={"background: #{info.color}"}></div>
                 </div>
                 <div>
-                  <div class="font-medium"><%= info.label %></div>
-                  <div class="text-xs text-gray-400"><%= info.description %></div>
+                  <div class="font-medium">{info.label}</div>
+                  <div class="text-xs text-gray-400">{info.description}</div>
                 </div>
               </div>
             </div>
@@ -274,18 +311,45 @@ defmodule LuxWebWeb.NodeEditorLive do
         </div>
       </div>
 
-      <!-- Node Editor Canvas -->
-      <div class="flex-1 relative" id="node-editor-canvas" phx-hook="NodeCanvas" phx-click="canvas_clicked">
+    <!-- Node Editor Canvas -->
+      <div
+        class="flex-1 relative"
+        id="node-editor-canvas"
+        phx-hook="NodeCanvas"
+        phx-click="canvas_clicked"
+      >
         <svg class="w-full h-full absolute inset-0">
           <!-- Grid Background -->
           <defs>
             <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
-              <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#333" stroke-width="0.5"/>
+              <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#333" stroke-width="0.5" />
             </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)"/>
 
-          <!-- Edges -->
+    <!-- Glow filters for nodes and ports -->
+            <filter id="glow-selected" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="5" result="blur" />
+              <feFlood flood-color="#fff" flood-opacity="0.3" result="color" />
+              <feComposite in="color" in2="blur" operator="in" result="glow" />
+              <feComposite in="glow" in2="SourceGraphic" operator="over" />
+            </filter>
+
+            <filter id="glow-hover" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feFlood flood-color="#fff" flood-opacity="0.2" result="color" />
+              <feComposite in="color" in2="blur" operator="in" result="glow" />
+              <feComposite in="glow" in2="SourceGraphic" operator="over" />
+            </filter>
+
+            <filter id="port-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feFlood flood-color="#fff" flood-opacity="0.5" result="color" />
+              <feComposite in="color" in2="blur" operator="in" result="glow" />
+              <feComposite in="glow" in2="SourceGraphic" operator="over" />
+            </filter>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+
+    <!-- Edges -->
           <%= for edge <- @edges do %>
             <g class="edge">
               <!-- We'll implement the edge path calculation in JS -->
@@ -301,21 +365,15 @@ defmodule LuxWebWeb.NodeEditorLive do
             </g>
           <% end %>
 
-          <!-- Drawing Edge (if any) -->
+    <!-- Drawing Edge (if any) -->
           <%= if @drawing_edge do %>
-            <path
-              id="drawing-edge"
-              stroke="#666"
-              stroke-width="2"
-              stroke-dasharray="5,5"
-              fill="none"
-            />
+            <path id="drawing-edge" stroke="#666" stroke-width="2" stroke-dasharray="5,5" fill="none" />
           <% end %>
 
-          <!-- Nodes -->
+    <!-- Nodes -->
           <%= for node <- @nodes do %>
             <g
-              class="node"
+              class={"node #{if @selected_node && @selected_node["id"] == node["id"], do: "selected", else: ""}"}
               transform={"translate(#{node["position"]["x"]},#{node["position"]["y"]})"}
               phx-click="node_selected"
               phx-value-node_id={node["id"]}
@@ -323,7 +381,25 @@ defmodule LuxWebWeb.NodeEditorLive do
               phx-hook="NodeDraggable"
               id={"node-#{node["id"]}"}
             >
+              <!-- Glow effect for selected node (only visible when selected) -->
               <rect
+                class="node-glow"
+                width="210"
+                height="110"
+                x="-5"
+                y="-5"
+                rx="10"
+                ry="10"
+                fill="none"
+                stroke={@node_types[node["type"]].color}
+                stroke-width="3"
+                filter="url(#glow-selected)"
+                style={"opacity: #{if @selected_node && @selected_node["id"] == node["id"], do: "1", else: "0"}"}
+              />
+
+    <!-- Main node rectangle -->
+              <rect
+                class="node-body"
                 width="200"
                 height="100"
                 rx="5"
@@ -332,18 +408,24 @@ defmodule LuxWebWeb.NodeEditorLive do
                 stroke={@node_types[node["type"]].color}
                 stroke-width="2"
               />
-              <text x="10" y="30" fill="white" font-weight="bold"><%= node["data"]["label"] %></text>
-              <text x="10" y="50" fill="#999" font-size="12"><%= node["data"]["description"] %></text>
+              <text x="10" y="30" fill="white" font-weight="bold">{node["data"]["label"]}</text>
+              <text x="10" y="50" fill="#999" font-size="12">{node["data"]["description"]}</text>
 
-              <!-- Node Ports -->
-              <circle class="port input" cx="0" cy="50" r="5" fill={@node_types[node["type"]].color}/>
-              <circle class="port output" cx="200" cy="50" r="5" fill={@node_types[node["type"]].color}/>
+    <!-- Node Ports -->
+              <circle class="port input" cx="0" cy="50" r="5" fill={@node_types[node["type"]].color} />
+              <circle
+                class="port output"
+                cx="200"
+                cy="50"
+                r="5"
+                fill={@node_types[node["type"]].color}
+              />
             </g>
           <% end %>
         </svg>
       </div>
 
-      <!-- Properties Panel -->
+    <!-- Properties Panel -->
       <div class="w-64 border-l border-gray-700 p-4 overflow-y-auto">
         <h2 class="text-xl font-bold mb-4">Properties</h2>
         <%= if @selected_node do %>

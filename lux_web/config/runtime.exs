@@ -21,7 +21,9 @@ else
 
   # Add MIX_ENV_FILE if it exists
   mix_env_file = System.get_env("MIX_ENV_FILE")
-  sources = if mix_env_file && File.exists?(mix_env_file), do: sources ++ [mix_env_file], else: sources
+
+  sources =
+    if mix_env_file && File.exists?(mix_env_file), do: sources ++ [mix_env_file], else: sources
 
   # Load from sources and then from system env
   source(sources ++ [System.get_env()])
@@ -40,8 +42,7 @@ if config_env() == :dev do
 
   # Configure endpoint
   if port = env!("PORT", :integer, nil) do
-    config :lux_web, LuxWebWeb.Endpoint,
-      http: [port: port]
+    config :lux_web, LuxWebWeb.Endpoint, http: [port: port]
   end
 end
 
