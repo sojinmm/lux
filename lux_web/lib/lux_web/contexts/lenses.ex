@@ -16,6 +16,7 @@ defmodule LuxWeb.Contexts.Lenses do
       {:ok, {[%Lens{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_lenses(map()) :: {:ok, {[Lens.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_lenses(params) do
     Flop.validate_and_run(Lens, params, for: Lens)
   end
@@ -34,6 +35,7 @@ defmodule LuxWeb.Contexts.Lenses do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_lens!(Ecto.UUID.t()) :: Lens.t()
   def get_lens!(id), do: Repo.get!(Lens, id)
 
   @doc """
@@ -50,6 +52,7 @@ defmodule LuxWeb.Contexts.Lenses do
       nil
 
   """
+  @spec get_lens(Ecto.UUID.t()) :: Lens.t() | nil
   def get_lens(id), do: Repo.get(Lens, id)
 
   @doc """
@@ -64,6 +67,7 @@ defmodule LuxWeb.Contexts.Lenses do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_lens(map()) :: {:ok, Lens.t()} | {:error, Ecto.Changeset.t()}
   def create_lens(attrs \\ %{}) do
     %Lens{}
     |> Lens.changeset(attrs)
@@ -82,6 +86,7 @@ defmodule LuxWeb.Contexts.Lenses do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_lens(Lens.t(), map()) :: {:ok, Lens.t()} | {:error, Ecto.Changeset.t()}
   def update_lens(%Lens{} = lens, attrs) do
     lens
     |> Lens.changeset(attrs)
@@ -100,6 +105,7 @@ defmodule LuxWeb.Contexts.Lenses do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_lens(Lens.t()) :: {:ok, Lens.t()} | {:error, Ecto.Changeset.t()}
   def delete_lens(%Lens{} = lens) do
     Repo.delete(lens)
   end
@@ -113,6 +119,7 @@ defmodule LuxWeb.Contexts.Lenses do
       %Ecto.Changeset{data: %Lens{}}
 
   """
+  @spec change_lens(Lens.t(), map()) :: Ecto.Changeset.t()
   def change_lens(%Lens{} = lens, attrs \\ %{}) do
     Lens.changeset(lens, attrs)
   end

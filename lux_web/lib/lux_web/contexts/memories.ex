@@ -17,6 +17,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:ok, {[%Memory{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_memories(map()) :: {:ok, {[Memory.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_memories(params) do
     Flop.validate_and_run(Memory, params, for: Memory)
   end
@@ -35,6 +36,7 @@ defmodule LuxWeb.Contexts.Memories do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_memory!(Ecto.UUID.t()) :: Memory.t()
   def get_memory!(id), do: Repo.get!(Memory, id)
 
   @doc """
@@ -51,6 +53,7 @@ defmodule LuxWeb.Contexts.Memories do
       nil
 
   """
+  @spec get_memory(Ecto.UUID.t()) :: Memory.t() | nil
   def get_memory(id), do: Repo.get(Memory, id)
 
   @doc """
@@ -65,6 +68,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_memory(map()) :: {:ok, Memory.t()} | {:error, Ecto.Changeset.t()}
   def create_memory(attrs \\ %{}) do
     %Memory{}
     |> Memory.changeset(attrs)
@@ -83,6 +87,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_memory(Memory.t(), map()) :: {:ok, Memory.t()} | {:error, Ecto.Changeset.t()}
   def update_memory(%Memory{} = memory, attrs) do
     memory
     |> Memory.changeset(attrs)
@@ -101,6 +106,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_memory(Memory.t()) :: {:ok, Memory.t()} | {:error, Ecto.Changeset.t()}
   def delete_memory(%Memory{} = memory) do
     Repo.delete(memory)
   end
@@ -114,6 +120,7 @@ defmodule LuxWeb.Contexts.Memories do
       %Ecto.Changeset{data: %Memory{}}
 
   """
+  @spec change_memory(Memory.t(), map()) :: Ecto.Changeset.t()
   def change_memory(%Memory{} = memory, attrs \\ %{}) do
     Memory.changeset(memory, attrs)
   end
@@ -129,6 +136,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:ok, {[%MemoryEntry{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_memory_entries(map()) :: {:ok, {[MemoryEntry.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_memory_entries(params) do
     Flop.validate_and_run(MemoryEntry, params, for: MemoryEntry)
   end
@@ -142,6 +150,8 @@ defmodule LuxWeb.Contexts.Memories do
       {:ok, {[%MemoryEntry{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_memory_entries_by_memory(Ecto.UUID.t(), map()) ::
+          {:ok, {[MemoryEntry.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_memory_entries_by_memory(memory_id, params) do
     query = from e in MemoryEntry, where: e.memory_id == ^memory_id
     Flop.validate_and_run(query, params, for: MemoryEntry)
@@ -161,6 +171,7 @@ defmodule LuxWeb.Contexts.Memories do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_memory_entry!(Ecto.UUID.t()) :: MemoryEntry.t()
   def get_memory_entry!(id), do: Repo.get!(MemoryEntry, id)
 
   @doc """
@@ -175,6 +186,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_memory_entry(map()) :: {:ok, MemoryEntry.t()} | {:error, Ecto.Changeset.t()}
   def create_memory_entry(attrs \\ %{}) do
     %MemoryEntry{}
     |> MemoryEntry.changeset(attrs)
@@ -193,6 +205,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_memory_entry(MemoryEntry.t(), map()) :: {:ok, MemoryEntry.t()} | {:error, Ecto.Changeset.t()}
   def update_memory_entry(%MemoryEntry{} = memory_entry, attrs) do
     memory_entry
     |> MemoryEntry.changeset(attrs)
@@ -211,6 +224,7 @@ defmodule LuxWeb.Contexts.Memories do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_memory_entry(MemoryEntry.t()) :: {:ok, MemoryEntry.t()} | {:error, Ecto.Changeset.t()}
   def delete_memory_entry(%MemoryEntry{} = memory_entry) do
     Repo.delete(memory_entry)
   end
@@ -224,6 +238,7 @@ defmodule LuxWeb.Contexts.Memories do
       %Ecto.Changeset{data: %MemoryEntry{}}
 
   """
+  @spec change_memory_entry(MemoryEntry.t(), map()) :: Ecto.Changeset.t()
   def change_memory_entry(%MemoryEntry{} = memory_entry, attrs \\ %{}) do
     MemoryEntry.changeset(memory_entry, attrs)
   end

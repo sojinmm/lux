@@ -16,6 +16,7 @@ defmodule LuxWeb.Contexts.Prisms do
       {:ok, {[%Prism{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_prisms(map()) :: {:ok, {[Prism.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_prisms(params) do
     Flop.validate_and_run(Prism, params, for: Prism)
   end
@@ -34,6 +35,7 @@ defmodule LuxWeb.Contexts.Prisms do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_prism!(Ecto.UUID.t()) :: Prism.t()
   def get_prism!(id), do: Repo.get!(Prism, id)
 
   @doc """
@@ -50,6 +52,7 @@ defmodule LuxWeb.Contexts.Prisms do
       nil
 
   """
+  @spec get_prism(Ecto.UUID.t()) :: Prism.t() | nil
   def get_prism(id), do: Repo.get(Prism, id)
 
   @doc """
@@ -64,6 +67,7 @@ defmodule LuxWeb.Contexts.Prisms do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_prism(map()) :: {:ok, Prism.t()} | {:error, Ecto.Changeset.t()}
   def create_prism(attrs \\ %{}) do
     %Prism{}
     |> Prism.changeset(attrs)
@@ -82,6 +86,7 @@ defmodule LuxWeb.Contexts.Prisms do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_prism(Prism.t(), map()) :: {:ok, Prism.t()} | {:error, Ecto.Changeset.t()}
   def update_prism(%Prism{} = prism, attrs) do
     prism
     |> Prism.changeset(attrs)
@@ -100,6 +105,7 @@ defmodule LuxWeb.Contexts.Prisms do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_prism(Prism.t()) :: {:ok, Prism.t()} | {:error, Ecto.Changeset.t()}
   def delete_prism(%Prism{} = prism) do
     Repo.delete(prism)
   end
@@ -113,6 +119,7 @@ defmodule LuxWeb.Contexts.Prisms do
       %Ecto.Changeset{data: %Prism{}}
 
   """
+  @spec change_prism(Prism.t(), map()) :: Ecto.Changeset.t()
   def change_prism(%Prism{} = prism, attrs \\ %{}) do
     Prism.changeset(prism, attrs)
   end

@@ -16,6 +16,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       {:ok, {[%SignalSchema{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_signal_schemas(map()) :: {:ok, {[SignalSchema.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_signal_schemas(params) do
     Flop.validate_and_run(SignalSchema, params, for: SignalSchema)
   end
@@ -34,6 +35,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_signal_schema!(Ecto.UUID.t()) :: SignalSchema.t()
   def get_signal_schema!(id), do: Repo.get!(SignalSchema, id)
 
   @doc """
@@ -50,6 +52,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       nil
 
   """
+  @spec get_signal_schema(Ecto.UUID.t()) :: SignalSchema.t() | nil
   def get_signal_schema(id), do: Repo.get(SignalSchema, id)
 
   @doc """
@@ -64,6 +67,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_signal_schema(map()) :: {:ok, SignalSchema.t()} | {:error, Ecto.Changeset.t()}
   def create_signal_schema(attrs \\ %{}) do
     %SignalSchema{}
     |> SignalSchema.changeset(attrs)
@@ -82,6 +86,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_signal_schema(SignalSchema.t(), map()) :: {:ok, SignalSchema.t()} | {:error, Ecto.Changeset.t()}
   def update_signal_schema(%SignalSchema{} = signal_schema, attrs) do
     signal_schema
     |> SignalSchema.changeset(attrs)
@@ -100,6 +105,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_signal_schema(SignalSchema.t()) :: {:ok, SignalSchema.t()} | {:error, Ecto.Changeset.t()}
   def delete_signal_schema(%SignalSchema{} = signal_schema) do
     Repo.delete(signal_schema)
   end
@@ -113,6 +119,7 @@ defmodule LuxWeb.Contexts.SignalSchemas do
       %Ecto.Changeset{data: %SignalSchema{}}
 
   """
+  @spec change_signal_schema(SignalSchema.t(), map()) :: Ecto.Changeset.t()
   def change_signal_schema(%SignalSchema{} = signal_schema, attrs \\ %{}) do
     SignalSchema.changeset(signal_schema, attrs)
   end

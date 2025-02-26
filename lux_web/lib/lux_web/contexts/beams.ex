@@ -16,6 +16,7 @@ defmodule LuxWeb.Contexts.Beams do
       {:ok, {[%Beam{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_beams(map()) :: {:ok, {[Beam.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_beams(params) do
     Flop.validate_and_run(Beam, params, for: Beam)
   end
@@ -34,6 +35,7 @@ defmodule LuxWeb.Contexts.Beams do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_beam!(Ecto.UUID.t()) :: Beam.t()
   def get_beam!(id), do: Repo.get!(Beam, id)
 
   @doc """
@@ -50,6 +52,7 @@ defmodule LuxWeb.Contexts.Beams do
       nil
 
   """
+  @spec get_beam(Ecto.UUID.t()) :: Beam.t() | nil
   def get_beam(id), do: Repo.get(Beam, id)
 
   @doc """
@@ -64,6 +67,7 @@ defmodule LuxWeb.Contexts.Beams do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_beam(map()) :: {:ok, Beam.t()} | {:error, Ecto.Changeset.t()}
   def create_beam(attrs \\ %{}) do
     %Beam{}
     |> Beam.changeset(attrs)
@@ -82,6 +86,7 @@ defmodule LuxWeb.Contexts.Beams do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_beam(Beam.t(), map()) :: {:ok, Beam.t()} | {:error, Ecto.Changeset.t()}
   def update_beam(%Beam{} = beam, attrs) do
     beam
     |> Beam.changeset(attrs)
@@ -100,6 +105,7 @@ defmodule LuxWeb.Contexts.Beams do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_beam(Beam.t()) :: {:ok, Beam.t()} | {:error, Ecto.Changeset.t()}
   def delete_beam(%Beam{} = beam) do
     Repo.delete(beam)
   end
@@ -113,6 +119,7 @@ defmodule LuxWeb.Contexts.Beams do
       %Ecto.Changeset{data: %Beam{}}
 
   """
+  @spec change_beam(Beam.t(), map()) :: Ecto.Changeset.t()
   def change_beam(%Beam{} = beam, attrs \\ %{}) do
     Beam.changeset(beam, attrs)
   end

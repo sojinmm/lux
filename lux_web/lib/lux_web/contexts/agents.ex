@@ -16,6 +16,7 @@ defmodule LuxWeb.Contexts.Agents do
       {:ok, {[%Agent{}, ...], %Flop.Meta{}}}
 
   """
+  @spec list_agents(map()) :: {:ok, {[Agent.t()], Flop.Meta.t()}} | {:error, Flop.Meta.t()}
   def list_agents(params) do
     Flop.validate_and_run(Agent, params, for: Agent)
   end
@@ -34,6 +35,7 @@ defmodule LuxWeb.Contexts.Agents do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_agent!(Ecto.UUID.t()) :: Agent.t()
   def get_agent!(id), do: Repo.get!(Agent, id)
 
   @doc """
@@ -50,6 +52,7 @@ defmodule LuxWeb.Contexts.Agents do
       nil
 
   """
+  @spec get_agent(Ecto.UUID.t()) :: Agent.t() | nil
   def get_agent(id), do: Repo.get(Agent, id)
 
   @doc """
@@ -64,6 +67,7 @@ defmodule LuxWeb.Contexts.Agents do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec create_agent(map()) :: {:ok, Agent.t()} | {:error, Ecto.Changeset.t()}
   def create_agent(attrs \\ %{}) do
     %Agent{}
     |> Agent.changeset(attrs)
@@ -82,6 +86,7 @@ defmodule LuxWeb.Contexts.Agents do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec update_agent(Agent.t(), map()) :: {:ok, Agent.t()} | {:error, Ecto.Changeset.t()}
   def update_agent(%Agent{} = agent, attrs) do
     agent
     |> Agent.changeset(attrs)
@@ -100,6 +105,7 @@ defmodule LuxWeb.Contexts.Agents do
       {:error, %Ecto.Changeset{}}
 
   """
+  @spec delete_agent(Agent.t()) :: {:ok, Agent.t()} | {:error, Ecto.Changeset.t()}
   def delete_agent(%Agent{} = agent) do
     Repo.delete(agent)
   end
@@ -113,6 +119,7 @@ defmodule LuxWeb.Contexts.Agents do
       %Ecto.Changeset{data: %Agent{}}
 
   """
+  @spec change_agent(Agent.t(), map()) :: Ecto.Changeset.t()
   def change_agent(%Agent{} = agent, attrs \\ %{}) do
     Agent.changeset(agent, attrs)
   end
