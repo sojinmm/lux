@@ -35,8 +35,8 @@ defmodule Lux.PythonTest do
           def greet(self):
               return f"Hello, {self.name}!"
 
-      def create(name):
-          return Person(name)
+          def new(name):
+              return Person(name)
       """
 
       assert {:ok, "Hello, John!"} =
