@@ -11,6 +11,9 @@ config :lux_web,
   ecto_repos: [LuxWeb.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+# Configure Flop to use LuxWeb.Repo
+config :flop, repo: LuxWeb.Repo
+
 # Configures the endpoint
 config :lux_web, LuxWebWeb.Endpoint,
   url: [host: "localhost"],
