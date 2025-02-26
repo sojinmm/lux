@@ -7,7 +7,7 @@ if config_env() == :test do
     "test.override.envrc"
   ])
 else
-  source(["#{config_env()}.envrc", "#{config_env()}.override.envrc", System.get_env()])
+  source(["../#{config_env()}.envrc", "../#{config_env()}.override.envrc", System.get_env()])
 end
 
 config :lux, env: config_env()
