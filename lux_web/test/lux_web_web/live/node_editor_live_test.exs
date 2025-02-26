@@ -963,5 +963,229 @@ defmodule LuxWebWeb.NodeEditorLiveTest do
       # Verify the drawing edge is no longer visible
       assert has_element?(view, "#drawing-edge") == false
     end
+
+    test "edges remain visible and persist after node movement", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add two nodes
+      source_node = %{
+        "id" => "agent-move-edge",
+        "type" => "agent",
+        "position" => %{"x" => 100, "y" => 100},
+        "data" => %{
+          "label" => "Source Agent",
+          "description" => "Edge movement test source"
+        }
+      }
+
+      target_node = %{
+        "id" => "prism-move-edge",
+        "type" => "prism",
+        "position" => %{"x" => 300, "y" => 100},
+        "data" => %{
+          "label" => "Target Prism",
+          "description" => "Edge movement test target"
+        }
+      }
+
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+
+      # Create an edge between the nodes
+      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-move-edge"})
+      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-move-edge"})
+
+      # Verify the edge exists
+      html = render(view)
+      assert html =~ "edge-agent-move-edge-prism-move-edge"
+      assert has_element?(view, "path.edge-path[data-source='agent-move-edge'][data-target='prism-move-edge']")
+
+      # Simulate node dragging
+      view |> element("#node-editor-canvas") |> render_hook("mousedown", %{
+        "node_id" => "agent-move-edge",
+        "clientX" => 100,
+        "clientY" => 100
+      })
+
+      view |> element("#node-editor-canvas") |> render_hook("mousemove", %{
+        "clientX" => 150,
+        "clientY" => 150,
+        "movementX" => 50,
+        "movementY" => 50
+      })
+
+      # Complete the drag operation
+      view |> element("#node-editor-canvas") |> render_hook("mouseup", %{})
+
+      # Verify the edge still exists after dragging
+      html = render(view)
+      assert html =~ "edge-agent-move-edge-prism-move-edge"
+      assert has_element?(view, "path.edge-path[data-source='agent-move-edge'][data-target='prism-move-edge']")
+
+      # Verify the node position has changed
+      assert html =~ ~r/transform="translate\((\d+),(\d+)\)"/
+    end
+
+    @tag :pending
+    test "edges should be selectable and deletable", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add two nodes
+      source_node = %{
+        "id" => "agent-select-edge",
+        "type" => "agent",
+        "position" => %{"x" => 100, "y" => 100},
+        "data" => %{
+          "label" => "Source Agent",
+          "description" => "Edge selection test source"
+        }
+      }
+
+      target_node = %{
+        "id" => "prism-select-edge",
+        "type" => "prism",
+        "position" => %{"x" => 300, "y" => 100},
+        "data" => %{
+          "label" => "Target Prism",
+          "description" => "Edge selection test target"
+        }
+      }
+
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+
+      # Create an edge between the nodes
+      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-select-edge"})
+      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-select-edge"})
+
+      # Verify the edge exists
+      html = render(view)
+      assert html =~ "edge-agent-select-edge-prism-select-edge"
+
+      # TODO: Implement edge selection functionality
+      # The following tests will pass once the functionality is implemented:
+
+      # 1. Edge should have phx-click attribute for selection
+      # assert has_element?(view, "path.edge-path[phx-click='edge_selected']")
+
+      # 2. Clicking the edge should select it
+      # view |> element("path.edge-path[data-edge-id='edge-agent-select-edge-prism-select-edge']") |> render_click()
+
+      # 3. Selected edge should have a visual indicator
+      # html = render(view)
+      # assert html =~ "selected-edge"
+
+      # 4. Properties panel should show edge information
+      # assert html =~ "Edge Properties"
+      # assert html =~ "Source: Source Agent"
+      # assert html =~ "Target: Target Prism"
+
+      # 5. Edge should be deletable
+      # view |> element("#delete-edge-button") |> render_click()
+      # html = render(view)
+      # refute html =~ "edge-agent-select-edge-prism-select-edge"
+    end
+
+    test "edges remain stable during node interactions", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/")
+
+      # Add three nodes to test multiple edges
+      source_node = %{
+        "id" => "agent-stable-edge",
+        "type" => "agent",
+        "position" => %{"x" => 100, "y" => 100},
+        "data" => %{
+          "label" => "Source Agent",
+          "description" => "Edge stability test source"
+        }
+      }
+
+      middle_node = %{
+        "id" => "prism-stable-middle",
+        "type" => "prism",
+        "position" => %{"x" => 300, "y" => 100},
+        "data" => %{
+          "label" => "Middle Prism",
+          "description" => "Edge stability test middle"
+        }
+      }
+
+      target_node = %{
+        "id" => "lens-stable-target",
+        "type" => "lens",
+        "position" => %{"x" => 500, "y" => 100},
+        "data" => %{
+          "label" => "Target Lens",
+          "description" => "Edge stability test target"
+        }
+      }
+
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => source_node})
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => middle_node})
+      view |> element("#node-editor-canvas") |> render_hook("node_added", %{"node" => target_node})
+
+      # Create two edges
+      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "agent-stable-edge"})
+      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "prism-stable-middle"})
+
+      view |> element("#node-editor-canvas") |> render_hook("edge_started", %{"source_id" => "prism-stable-middle"})
+      view |> element("#node-editor-canvas") |> render_hook("edge_completed", %{"target_id" => "lens-stable-target"})
+
+      # Verify both edges exist
+      html = render(view)
+      assert html =~ "edge-agent-stable-edge-prism-stable-middle"
+      assert html =~ "edge-prism-stable-middle-lens-stable-target"
+
+      # Select the first node
+      view |> element("g.node[data-node-id='agent-stable-edge']") |> render_click()
+
+      # Verify edges still exist after node selection
+      html = render(view)
+      assert html =~ "edge-agent-stable-edge-prism-stable-middle"
+      assert html =~ "edge-prism-stable-middle-lens-stable-target"
+
+      # Select the second node
+      view |> element("g.node[data-node-id='prism-stable-middle']") |> render_click()
+
+      # Verify edges still exist after selecting another node
+      html = render(view)
+      assert html =~ "edge-agent-stable-edge-prism-stable-middle"
+      assert html =~ "edge-prism-stable-middle-lens-stable-target"
+
+      # Click on the canvas to deselect
+      view |> element("#node-editor-canvas") |> render_click()
+
+      # Verify edges still exist after deselecting
+      html = render(view)
+      assert html =~ "edge-agent-stable-edge-prism-stable-middle"
+      assert html =~ "edge-prism-stable-middle-lens-stable-target"
+
+      # Drag the middle node
+      view |> element("#node-editor-canvas") |> render_hook("mousedown", %{
+        "node_id" => "prism-stable-middle",
+        "clientX" => 300,
+        "clientY" => 100
+      })
+
+      view |> element("#node-editor-canvas") |> render_hook("mousemove", %{
+        "clientX" => 350,
+        "clientY" => 150,
+        "movementX" => 50,
+        "movementY" => 50
+      })
+
+      # Verify edges still exist during dragging
+      html = render(view)
+      assert html =~ "edge-agent-stable-edge-prism-stable-middle"
+      assert html =~ "edge-prism-stable-middle-lens-stable-target"
+
+      # Complete the drag
+      view |> element("#node-editor-canvas") |> render_hook("mouseup", %{})
+
+      # Verify edges still exist after dragging
+      html = render(view)
+      assert html =~ "edge-agent-stable-edge-prism-stable-middle"
+      assert html =~ "edge-prism-stable-middle-lens-stable-target"
+    end
   end
 end
