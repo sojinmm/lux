@@ -63,10 +63,17 @@ defmodule LuxWebWeb.NodeEditorLive do
 
   def handle_event("node_selected", %{"node_id" => node_id}, socket) do
     selected_node = Enum.find(socket.assigns.nodes, &(&1["id"] == node_id))
+
+    # Broadcast node selection to all clients
+    send(self(), {:broadcast_node_selected, node_id})
+
     {:noreply, assign(socket, :selected_node, selected_node)}
   end
 
   def handle_event("canvas_clicked", _params, socket) do
+    # Broadcast canvas click to all clients
+    send(self(), {:broadcast_canvas_clicked})
+
     {:noreply, assign(socket, :selected_node, nil)}
   end
 
@@ -79,6 +86,9 @@ defmodule LuxWebWeb.NodeEditorLive do
           node
         end
       end)
+
+    # Broadcast node update to all clients
+    send(self(), {:broadcast_node_updated, node_id})
 
     {:noreply, assign(socket, :nodes, nodes)}
   end
@@ -165,6 +175,9 @@ defmodule LuxWebWeb.NodeEditorLive do
           final_position: %{x: node["position"]["x"], y: node["position"]["y"]}
         })
 
+        # Broadcast node update to all clients after drag is complete
+        send(self(), {:broadcast_node_updated, node_id})
+
       _ ->
         :ok
     end
@@ -205,20 +218,39 @@ defmodule LuxWebWeb.NodeEditorLive do
         edge_id = "edge-#{source_id}-#{target_id}"
         Logger.info("Creating new edge: #{edge_id}")
 
-        new_edge = %{
-          "id" => edge_id,
-          "source" => source_id,
-          "target" => target_id,
-          "type" => "signal"
-        }
+        # Check if this edge already exists to avoid duplicates
+        existing_edge = Enum.find(socket.assigns.edges, fn edge ->
+          edge["id"] == edge_id
+        end)
 
-        edges = [new_edge | socket.assigns.edges]
-        {:noreply, socket |> assign(:edges, edges) |> assign(:drawing_edge, nil)}
+        if existing_edge do
+          Logger.info("Edge already exists: #{edge_id}")
+          {:noreply, socket |> assign(:drawing_edge, nil)}
+        else
+          new_edge = %{
+            "id" => edge_id,
+            "source" => source_id,
+            "target" => target_id,
+            "type" => "signal"
+          }
+
+          edges = [new_edge | socket.assigns.edges]
+          Logger.info("Added new edge. Total edges: #{length(edges)}")
+
+          # Broadcast the edge creation to all clients
+          send(self(), {:broadcast_edge_created, new_edge})
+
+          {:noreply, socket |> assign(:edges, edges) |> assign(:drawing_edge, nil)}
+        end
 
       _ ->
         Logger.warning("Edge completion failed: No source node in drawing_edge state")
         {:noreply, socket}
     end
+  end
+
+  def handle_info({:broadcast_edge_created, edge}, socket) do
+    {:noreply, socket |> push_event("edge_created", %{edge: edge})}
   end
 
   def handle_event("edge_cancelled", _params, socket) do
@@ -228,11 +260,19 @@ defmodule LuxWebWeb.NodeEditorLive do
 
   def handle_event("node_added", %{"node" => node}, socket) do
     nodes = [node | socket.assigns.nodes]
+
+    # Broadcast node added to all clients
+    send(self(), {:broadcast_node_added, node})
+
     {:noreply, assign(socket, :nodes, nodes)}
   end
 
   def handle_event("node_removed", %{"id" => node_id}, socket) do
     nodes = Enum.reject(socket.assigns.nodes, fn node -> node["id"] == node_id end)
+
+    # Broadcast node removed to all clients
+    send(self(), {:broadcast_node_removed, node_id})
+
     {:noreply, assign(socket, :nodes, nodes)}
   end
 
@@ -246,6 +286,9 @@ defmodule LuxWebWeb.NodeEditorLive do
           node
         end
       end)
+
+    # Broadcast node update to all clients
+    send(self(), {:broadcast_node_updated, node_params["id"]})
 
     # Update both nodes list and selected node
     selected_node = Enum.find(nodes, &(&1["id"] == node_params["id"]))
@@ -277,6 +320,27 @@ defmodule LuxWebWeb.NodeEditorLive do
 
   def handle_event("update_property", _params, socket) do
     {:noreply, socket}
+  end
+
+  def handle_info({:broadcast_node_selected, node_id}, socket) do
+    {:noreply, socket |> push_event("node_selected", %{node_id: node_id})}
+  end
+
+  def handle_info({:broadcast_canvas_clicked}, socket) do
+    {:noreply, socket |> push_event("canvas_clicked", %{})}
+  end
+
+  def handle_info({:broadcast_node_updated, node_id}, socket) do
+    node = Enum.find(socket.assigns.nodes, &(&1["id"] == node_id))
+    {:noreply, socket |> push_event("node_updated", %{node: node})}
+  end
+
+  def handle_info({:broadcast_node_added, node}, socket) do
+    {:noreply, socket |> push_event("node_added", %{node: node})}
+  end
+
+  def handle_info({:broadcast_node_removed, node_id}, socket) do
+    {:noreply, socket |> push_event("node_removed", %{node_id: node_id})}
   end
 
   def render(assigns) do

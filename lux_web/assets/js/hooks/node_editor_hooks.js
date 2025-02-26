@@ -98,6 +98,7 @@ const NodeEditorHooks = {
       this.mousePosition = { x: 0, y: 0 };
       this.dragStartPosition = { x: 0, y: 0 };
       this.selectedNodeId = null;
+      this.edgeUpdateScheduled = false;
 
       // Get SVG element for coordinate calculations
       this.svg = this.el.querySelector('svg');
@@ -116,8 +117,11 @@ const NodeEditorHooks = {
       // Setup port event listeners
       this.setupPortListeners();
       
-      // Setup edge path calculations
-      this.updateEdgePaths();
+      // Setup edge path calculations - run after a short delay to ensure DOM is ready
+      setTimeout(() => this.updateEdgePaths(), 100);
+      
+      // Setup MutationObserver to watch for DOM changes that might affect edges
+      this.setupMutationObserver();
       
       // Listen for node selection events
       this.handleEvent("node_selected", ({ node_id }) => {
@@ -132,6 +136,9 @@ const NodeEditorHooks = {
             node.classList.remove('selected');
           }
         });
+        
+        // Update edge paths after selection changes
+        this.scheduleEdgePathUpdate();
       });
       
       // Listen for canvas click events (deselection)
@@ -143,11 +150,134 @@ const NodeEditorHooks = {
         document.querySelectorAll('.node').forEach(node => {
           node.classList.remove('selected');
         });
+        
+        // Update edge paths after deselection
+        this.scheduleEdgePathUpdate();
+      });
+      
+      // Listen for edge creation events
+      this.handleEvent("edge_completed", () => {
+        console.log("Edge completed event received");
+        // Update edge paths after a new edge is created
+        this.scheduleEdgePathUpdate(50);
+      });
+      
+      // Listen for edge created events (broadcast from server)
+      this.handleEvent("edge_created", ({ edge }) => {
+        console.log("Edge created event received:", edge);
+        
+        // Check if the edge path element already exists
+        const edgeId = edge.id;
+        let edgePath = this.el.querySelector(`path.edge-path[data-edge-id="${edgeId}"]`);
+        
+        if (!edgePath) {
+          console.log("Edge path element not found, may need to wait for DOM update");
+        }
+        
+        // Force edge paths update to ensure the new edge is rendered
+        this.scheduleEdgePathUpdate(100);
+        
+        // Highlight the new edge briefly to provide visual feedback
+        setTimeout(() => {
+          edgePath = this.el.querySelector(`path.edge-path[data-edge-id="${edgeId}"]`);
+          if (edgePath) {
+            edgePath.setAttribute('stroke', '#fff');
+            edgePath.setAttribute('stroke-width', '3');
+            
+            setTimeout(() => {
+              edgePath.setAttribute('stroke', '#666');
+              edgePath.setAttribute('stroke-width', '2');
+            }, 500);
+          }
+        }, 150);
+      });
+      
+      // Listen for node added events
+      this.handleEvent("node_added", () => {
+        console.log("Node added event received");
+        this.scheduleEdgePathUpdate(100);
+      });
+      
+      // Listen for node removed events
+      this.handleEvent("node_removed", () => {
+        console.log("Node removed event received");
+        this.scheduleEdgePathUpdate(100);
+      });
+      
+      // Listen for node updated events
+      this.handleEvent("node_updated", () => {
+        console.log("Node updated event received");
+        this.scheduleEdgePathUpdate(100);
       });
     },
 
     destroyed() {
-      // Cleanup event listeners if needed
+      // Cleanup event listeners and observers
+      if (this.mutationObserver) {
+        this.mutationObserver.disconnect();
+      }
+    },
+    
+    setupMutationObserver() {
+      // Create a MutationObserver to watch for changes to the SVG
+      this.mutationObserver = new MutationObserver((mutations) => {
+        let shouldUpdateEdges = false;
+        
+        // Check if any mutations affect nodes or edges
+        for (const mutation of mutations) {
+          if (mutation.type === 'childList') {
+            // Check if added or removed nodes affect our edges
+            const addedNodes = Array.from(mutation.addedNodes);
+            const removedNodes = Array.from(mutation.removedNodes);
+            
+            const relevantNodeAdded = addedNodes.some(node => 
+              node.classList && (node.classList.contains('node') || node.classList.contains('edge'))
+            );
+            
+            const relevantNodeRemoved = removedNodes.some(node => 
+              node.classList && (node.classList.contains('node') || node.classList.contains('edge'))
+            );
+            
+            if (relevantNodeAdded || relevantNodeRemoved) {
+              shouldUpdateEdges = true;
+              break;
+            }
+          } else if (mutation.type === 'attributes') {
+            // Check if attribute changes affect node positions
+            if (mutation.attributeName === 'transform' && 
+                mutation.target.classList && 
+                mutation.target.classList.contains('node')) {
+              shouldUpdateEdges = true;
+              break;
+            }
+          }
+        }
+        
+        if (shouldUpdateEdges) {
+          console.log("DOM mutation detected that affects edges, updating edge paths");
+          this.scheduleEdgePathUpdate(50);
+        }
+      });
+      
+      // Start observing the SVG element
+      this.mutationObserver.observe(this.svg, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['transform', 'data-node-id', 'data-edge-id']
+      });
+    },
+    
+    scheduleEdgePathUpdate(delay = 0) {
+      // Prevent multiple updates in quick succession
+      if (this.edgeUpdateScheduled) return;
+      
+      this.edgeUpdateScheduled = true;
+      
+      setTimeout(() => {
+        this.updateEdgePaths();
+        this.edgeUpdateScheduled = false;
+      }, delay);
     },
 
     handleDragOver(e) {
@@ -176,6 +306,9 @@ const NodeEditorHooks = {
           data: this.getInitialNodeData(nodeType)
         }
       });
+      
+      // Update edge paths after adding a new node
+      this.scheduleEdgePathUpdate(100);
     },
 
     handleMouseMove(e) {
@@ -238,8 +371,8 @@ const NodeEditorHooks = {
         movementY: movementY
       });
 
-      // Update edge paths during drag
-      this.updateEdgePaths();
+      // Update edge paths during drag - call immediately after position update
+      this.scheduleEdgePathUpdate(0);
 
       e.preventDefault();
     },
@@ -257,8 +390,8 @@ const NodeEditorHooks = {
       // Notify server about drag end
       this.pushEvent('mouseup', {});
 
-      // Update edge paths after drag is complete
-      this.updateEdgePaths();
+      // Update edge paths after drag is complete - ensure it runs after the server updates
+      this.scheduleEdgePathUpdate(50);
 
       e.preventDefault();
     },
@@ -269,6 +402,9 @@ const NodeEditorHooks = {
         this.isDragging = false;
         this.draggedNode = null;
         this.dragStartPosition = { x: 0, y: 0 };
+        
+        // Update edge paths after cancelling drag
+        this.scheduleEdgePathUpdate(50);
       }
     },
 
@@ -351,6 +487,9 @@ const NodeEditorHooks = {
               this.pushEvent('edge_completed', {
                 target_id: endNodeId
               });
+              
+              // Force edge paths update after a short delay to ensure server has processed the edge
+              this.scheduleEdgePathUpdate(100);
             } else {
               console.log('Edge not completed: port type mismatch');
             }
@@ -361,6 +500,9 @@ const NodeEditorHooks = {
         this.startPort = null;
         this.pushEvent('edge_cancelled', {});
         console.log('Edge drawing cancelled/completed');
+        
+        // Update edge paths after edge creation is cancelled
+        this.scheduleEdgePathUpdate(50);
       });
       
       // Add hover effects for ports
@@ -413,56 +555,100 @@ const NodeEditorHooks = {
 
     updateEdgePaths() {
       const edges = this.el.querySelectorAll('.edge-path');
+      
+      console.log(`Updating ${edges.length} edge paths`);
+      
+      if (edges.length === 0) {
+        console.log('No edges to update');
+        return;
+      }
+      
+      let updatedCount = 0;
+      let errorCount = 0;
+      
       edges.forEach(edge => {
-        const sourceId = edge.dataset.source;
-        const targetId = edge.dataset.target;
-        
-        if (!sourceId || !targetId) return;
-        
-        const path = this.calculateEdgePath(
-          { nodeId: sourceId },
-          { nodeId: targetId },
-          true
-        );
-        
-        edge.setAttribute('d', path);
+        try {
+          const sourceId = edge.dataset.source;
+          const targetId = edge.dataset.target;
+          
+          if (!sourceId || !targetId) {
+            console.warn('Edge missing source or target ID', edge);
+            errorCount++;
+            return;
+          }
+          
+          const sourceNode = this.el.querySelector(`[data-node-id="${sourceId}"]`);
+          const targetNode = this.el.querySelector(`[data-node-id="${targetId}"]`);
+          
+          if (!sourceNode || !targetNode) {
+            console.warn(`Could not find nodes for edge: ${sourceId} -> ${targetId}`);
+            errorCount++;
+            return;
+          }
+          
+          const path = this.calculateEdgePath(
+            { nodeId: sourceId },
+            { nodeId: targetId },
+            true
+          );
+          
+          edge.setAttribute('d', path);
+          updatedCount++;
+        } catch (error) {
+          console.error('Error updating edge path:', error);
+          errorCount++;
+        }
       });
+      
+      console.log(`Edge path update complete: ${updatedCount} updated, ${errorCount} errors`);
+      
+      // If we had errors but some edges were updated, schedule another update
+      if (errorCount > 0 && updatedCount > 0) {
+        console.log('Some edges failed to update, scheduling retry');
+        setTimeout(() => this.updateEdgePaths(), 200);
+      }
     },
 
     calculateEdgePath(start, end, isOutput) {
-      // Calculate port positions based on node positions
-      const sourceNode = this.el.querySelector(`[data-node-id="${start.nodeId || start.x}"]`);
-      const targetNode = this.el.querySelector(`[data-node-id="${end.nodeId || end.x}"]`);
-      
-      let startX, startY, endX, endY;
-      
-      if (sourceNode && targetNode) {
-        // For existing edges between nodes
-        const sourcePos = this.parseTransform(sourceNode.getAttribute('transform'));
-        const targetPos = this.parseTransform(targetNode.getAttribute('transform'));
+      try {
+        // Calculate port positions based on node positions
+        const sourceNode = this.el.querySelector(`[data-node-id="${start.nodeId || start.x}"]`);
+        const targetNode = this.el.querySelector(`[data-node-id="${end.nodeId || end.x}"]`);
         
-        // Add the port offset to the node position
-        startX = sourcePos.x + 200; // Output port is on the right side
-        startY = sourcePos.y + 50;  // Ports are vertically centered
-        endX = targetPos.x;         // Input port is on the left side
-        endY = targetPos.y + 50;    // Ports are vertically centered
-      } else {
-        // For drawing edges or other cases
-        startX = start.x !== undefined ? start.x : start.x + (isOutput ? 200 : 0);
-        startY = start.y !== undefined ? start.y : start.y + 50;
-        endX = end.x !== undefined ? end.x : end.x + (isOutput ? 0 : 200);
-        endY = end.y !== undefined ? end.y : end.y + 50;
+        let startX, startY, endX, endY;
+        
+        if (sourceNode && targetNode) {
+          // For existing edges between nodes
+          const sourcePos = this.parseTransform(sourceNode.getAttribute('transform'));
+          const targetPos = this.parseTransform(targetNode.getAttribute('transform'));
+          
+          // Add the port offset to the node position
+          startX = sourcePos.x + 200; // Output port is on the right side
+          startY = sourcePos.y + 50;  // Ports are vertically centered
+          endX = targetPos.x;         // Input port is on the left side
+          endY = targetPos.y + 50;    // Ports are vertically centered
+        } else {
+          // For drawing edges or other cases
+          startX = start.x !== undefined ? start.x : start.x + (isOutput ? 200 : 0);
+          startY = start.y !== undefined ? start.y : start.y + 50;
+          endX = end.x !== undefined ? end.x : end.x + (isOutput ? 0 : 200);
+          endY = end.y !== undefined ? end.y : end.y + 50;
+        }
+  
+        // Calculate control points for the curve
+        const dx = Math.abs(endX - startX);
+        const controlOffset = Math.min(dx * 0.5, 150);
+  
+        // Create a smooth curve using cubic bezier
+        return `M ${startX} ${startY} 
+                C ${startX + controlOffset} ${startY},
+                  ${endX - controlOffset} ${endY},
+                  ${endX} ${endY}`;
+      } catch (error) {
+        console.error('Error calculating edge path:', error);
+        // Return a default path in case of error
+        return 'M 0 0 L 0 0';
       }
-
-      // Calculate control points for the curve
-      const dx = Math.abs(endX - startX);
-      const controlOffset = Math.min(dx * 0.5, 150);
-
-      // Create a smooth curve using cubic bezier
-      return `M ${startX} ${startY} 
-              C ${startX + controlOffset} ${startY},
-                ${endX - controlOffset} ${endY},
-                ${endX} ${endY}`;
     },
 
     parseTransform(transform) {
