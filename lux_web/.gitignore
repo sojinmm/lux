@@ -39,3 +39,7 @@ npm-debug.log
 .env
 .env.*
 !.env.*.example
+
+# Dialyzer PLT files
+/priv/plts/*.plt
+/priv/plts/*.plt.hash

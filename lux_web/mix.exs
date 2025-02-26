@@ -9,7 +9,12 @@ defmodule LuxWeb.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        plt_add_apps: [:ex_unit, :mix],
+        plt_ignore_apps: [:jason]
+      ]
     ]
   end
 
@@ -59,7 +64,8 @@ defmodule LuxWeb.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
       {:dotenvy, "~> 0.8.0"},
-      {:flop, "~> 0.25.0"}
+      {:flop, "~> 0.25.0"},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -81,7 +87,8 @@ defmodule LuxWeb.MixProject do
         "tailwind lux_web --minify",
         "esbuild lux_web --minify",
         "phx.digest"
-      ]
+      ],
+      dialyzer: ["dialyzer --format short"]
     ]
   end
 end

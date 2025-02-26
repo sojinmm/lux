@@ -79,6 +79,49 @@ Run tests with:
 mix test
 ```
 
+### Static Analysis with Dialyzer
+
+This project uses [Dialyxir](https://github.com/jeremyjh/dialyxir), a mix tasks wrapper for Dialyzer, to perform static code analysis and type checking.
+
+#### Building the PLT files
+
+Before running Dialyzer for the first time, you need to build the Persistent Lookup Table (PLT) files:
+
+```bash
+mix dialyzer --plt
+```
+
+This process may take several minutes to complete as it analyzes all dependencies.
+
+#### Running Dialyzer
+
+To run Dialyzer and check for type inconsistencies:
+
+```bash
+mix dialyzer
+```
+
+Or use the shorter format:
+
+```bash
+mix dialyzer --format short
+```
+
+You can also use the alias:
+
+```bash
+mix dialyzer
+```
+
+#### Adding Type Specifications
+
+To get the most out of Dialyzer, add type specifications to your functions using `@spec`. For example:
+
+```elixir
+@spec add(integer(), integer()) :: integer()
+def add(a, b), do: a + b
+```
+
 ## Production
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
