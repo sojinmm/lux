@@ -6,7 +6,6 @@ on:
     paths-ignore:
       - 'lux/**'
       - 'lux_app/**'
-      - 'lux_cli/**'
       - '**.md'
       - '.vscode/**'
   pull_request:
@@ -14,7 +13,6 @@ on:
     paths-ignore:
       - 'lux/**'
       - 'lux_app/**'
-      - 'lux_cli/**'
       - '**.md'
       - '.vscode/**'
 
@@ -25,7 +23,6 @@ jobs:
     outputs:
       lux: ${{ steps.filter.outputs.lux }}
       lux_app: ${{ steps.filter.outputs.lux_app }}
-      lux_cli: ${{ steps.filter.outputs.lux_cli }}
     steps:
       - uses: actions/checkout@v4
       
@@ -37,8 +34,6 @@ jobs:
               - 'lux/**'
             lux_app:
               - 'lux_app/**'
-            lux_cli:
-              - 'lux_cli/**'
 
   lux:
     name: Build and Test Lux
@@ -150,8 +145,7 @@ jobs:
         run: poetry install --directory priv/python
 
       - name: Install Node.js dependencies
-        working-directory: priv/node
-        run: npm install
+        run: cd priv/node && npm install
 
       - name: Check Formatting
         run: mix format --check-formatted
@@ -236,8 +230,7 @@ jobs:
         run: mkdir -p priv/plts
 
       - name: Install Node.js dependencies
-        working-directory: assets
-        run: npm ci
+        run: cd assets && npm ci
 
       - name: Check Formatting
         run: mix format --check-formatted
@@ -254,57 +247,4 @@ jobs:
       - name: Build assets
         run: |
           mix assets.deploy
-          mix phx.digest
-
-  lux_cli:
-    name: Build and Test Lux CLI
-    needs: changes
-    if: ${{ needs.changes.outputs.lux_cli == 'true' }}
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: lux_cli
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          otp-version: 'OTP-27.2'
-          elixir-version: 'v1.18.1-otp-27'
-
-      - name: Cache Mix deps
-        uses: actions/cache@v3
-        with:
-          path: |
-            lux_cli/deps
-            lux_cli/_build
-          key: ${{ runner.os }}-mix-lux-cli-${{ hashFiles('lux_cli/mix.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-mix-lux-cli-
-
-      - name: Cache Dialyzer PLTs
-        uses: actions/cache@v3
-        with:
-          path: lux_cli/priv/plts
-          key: ${{ runner.os }}-dialyzer-lux-cli-${{ hashFiles('lux_cli/mix.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-dialyzer-lux-cli-
-
-      - name: Install Mix Dependencies
-        run: mix deps.get
-
-      - name: Create PLT directory
-        run: mkdir -p priv/plts
-
-      - name: Check Formatting
-        run: mix format --check-formatted
-
-      - name: Run Credo
-        run: mix credo
-
-      - name: Run Tests
-        run: mix test
-
-      - name: Build Escript
-        run: mix escript.build 
+          mix phx.digest 

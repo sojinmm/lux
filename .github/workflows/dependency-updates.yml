@@ -38,16 +38,6 @@ jobs:
           git add mix.lock
           git diff --staged --quiet || git commit -m "Update Lux App dependencies"
 
-      - name: Update Elixir Dependencies for Lux CLI
-        working-directory: lux_cli
-        run: |
-          mix deps.get
-          mix deps.update --all
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add mix.lock
-          git diff --staged --quiet || git commit -m "Update Lux CLI dependencies"
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -104,7 +94,6 @@ jobs:
             
             - Lux
             - Lux App
-            - Lux CLI
             
             This is an automated PR created by the dependency update workflow.
           branch: dependency-updates

@@ -26,10 +26,6 @@ jobs:
         working-directory: lux_app
         run: mix deps.get
 
-      - name: Install Mix Dependencies for Lux CLI
-        working-directory: lux_cli
-        run: mix deps.get
-
       - name: Run Mix Audit for Lux
         working-directory: lux
         run: |
@@ -38,12 +34,6 @@ jobs:
 
       - name: Run Mix Audit for Lux App
         working-directory: lux_app
-        run: |
-          mix deps.get
-          mix hex.audit
-
-      - name: Run Mix Audit for Lux CLI
-        working-directory: lux_cli
         run: |
           mix deps.get
           mix hex.audit
@@ -89,17 +79,17 @@ jobs:
           node-version: '22.13.0'
 
       - name: Install Node.js dependencies for Lux
-        working-directory: lux/priv/node
-        run: npm install
+        working-directory: lux
+        run: cd priv/node && npm install
 
       - name: Install Node.js dependencies for Lux App
-        working-directory: lux_app/assets
-        run: npm ci
+        working-directory: lux_app
+        run: cd assets && npm ci
 
       - name: Run npm audit for Lux
-        working-directory: lux/priv/node
-        run: npm audit
+        working-directory: lux
+        run: cd priv/node && npm audit
 
       - name: Run npm audit for Lux App
-        working-directory: lux_app/assets
-        run: npm audit 
+        working-directory: lux_app
+        run: cd assets && npm audit 

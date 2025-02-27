@@ -80,8 +80,7 @@ jobs:
         run: mkdir -p priv/plts
 
       - name: Install Node.js dependencies
-        working-directory: assets
-        run: npm ci
+        run: cd assets && npm ci
 
       - name: Check Formatting
         run: mix format --check-formatted
