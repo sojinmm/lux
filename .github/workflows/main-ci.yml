@@ -170,6 +170,7 @@ jobs:
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIX_ENV: test
 
   lux_app:
     name: Build and Test Lux App
@@ -260,7 +261,7 @@ jobs:
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          MIX_ENV: test
       - name: Build assets
         run: |
           mix assets.deploy

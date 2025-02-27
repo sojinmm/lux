@@ -154,6 +154,7 @@ jobs:
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MIX_ENV: test
 
       # - name: Generate Docs
       #   run: mix docs
@@ -245,7 +246,7 @@ jobs:
         run: mix coveralls.github
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          MIX_ENV: test
       - name: Build assets
         run: |
           mix assets.deploy
