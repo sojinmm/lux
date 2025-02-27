@@ -15,6 +15,15 @@ defmodule Lux.MixProject do
       ],
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
+      # Test coverage
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.github": :test
+      ],
       # Package
       description:
         "A framework for building and orchestrating LLM-powered agent workflows in Elixir",
@@ -67,7 +76,8 @@ defmodule Lux.MixProject do
       {:dotenvy, "~> 0.8.0", only: [:dev, :test]},
       {:mock, "~> 0.3.0", only: [:test]},
       {:stream_data, "~> 1.0", only: [:test]},
-      {:styler, "~> 1.3", only: [:dev, :test], runtime: false}
+      {:styler, "~> 1.3", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 

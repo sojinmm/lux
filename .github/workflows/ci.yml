@@ -150,6 +150,11 @@ jobs:
       - name: Run Python Tests
         run: mix python.test
 
+      - name: Generate Test Coverage
+        run: mix coveralls.github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       # - name: Generate Docs
       #   run: mix docs
 
@@ -235,6 +240,11 @@ jobs:
 
       - name: Run Tests
         run: mix test
+
+      - name: Generate Test Coverage
+        run: mix coveralls.github
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build assets
         run: |

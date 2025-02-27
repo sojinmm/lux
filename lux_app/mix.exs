@@ -15,6 +15,15 @@ defmodule LuxApp.MixProject do
         plt_add_apps: [:ex_unit, :mix],
         plt_ignore_apps: [:jason],
         plt_core_path: "priv/plts/"
+      ],
+      # Test coverage
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.github": :test
       ]
     ]
   end
@@ -67,7 +76,8 @@ defmodule LuxApp.MixProject do
       {:dotenvy, "~> 0.8.0"},
       {:flop, "~> 0.25.0"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 
