@@ -382,7 +382,7 @@ defmodule LuxAppWeb.NodeEditorLive do
           <% end %>
         </div>
       </div>
-
+      
     <!-- Node Editor Canvas -->
       <div
         class="flex-1 relative"
@@ -396,7 +396,7 @@ defmodule LuxAppWeb.NodeEditorLive do
             <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
               <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#333" stroke-width="0.5" />
             </pattern>
-
+            
     <!-- Glow filters for nodes and ports -->
             <filter id="glow-selected" x="-20%" y="-20%" width="140%" height="140%">
               <feGaussianBlur stdDeviation="5" result="blur" />
@@ -420,7 +420,7 @@ defmodule LuxAppWeb.NodeEditorLive do
             </filter>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
-
+          
     <!-- Edges -->
           <%= for edge <- @edges do %>
             <g class="edge">
@@ -436,12 +436,12 @@ defmodule LuxAppWeb.NodeEditorLive do
               />
             </g>
           <% end %>
-
+          
     <!-- Drawing Edge (if any) -->
           <%= if @drawing_edge do %>
             <path id="drawing-edge" stroke="#666" stroke-width="2" stroke-dasharray="5,5" fill="none" />
           <% end %>
-
+          
     <!-- Nodes -->
           <%= for node <- @nodes do %>
             <g
@@ -468,7 +468,7 @@ defmodule LuxAppWeb.NodeEditorLive do
                 filter="url(#glow-selected)"
                 style={"opacity: #{if @selected_node && @selected_node["id"] == node["id"], do: "1", else: "0"}"}
               />
-
+              
     <!-- Main node rectangle -->
               <rect
                 class="node-body"
@@ -482,7 +482,7 @@ defmodule LuxAppWeb.NodeEditorLive do
               />
               <text x="10" y="30" fill="white" font-weight="bold">{node["data"]["label"]}</text>
               <text x="10" y="50" fill="#999" font-size="12">{node["data"]["description"]}</text>
-
+              
     <!-- Node Ports -->
               <circle class="port input" cx="0" cy="50" r="5" fill={@node_types[node["type"]].color} />
               <circle
@@ -496,7 +496,7 @@ defmodule LuxAppWeb.NodeEditorLive do
           <% end %>
         </svg>
       </div>
-
+      
     <!-- Properties Panel -->
       <div class="w-64 border-l border-gray-700 p-4 overflow-y-auto">
         <h2 class="text-xl font-bold mb-4">Properties</h2>
