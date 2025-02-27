@@ -88,12 +88,19 @@ jobs:
       - name: Cache Mix deps
         uses: actions/cache@v3
         with:
-          path: |
-            lux/deps
-            lux/_build
-          key: ${{ runner.os }}-mix-lux-${{ hashFiles('lux/mix.lock') }}
+          path: lux/deps
+          key: ${{ runner.os }}-mix-deps-lux-${{ hashFiles('lux/mix.lock') }}
           restore-keys: |
-            ${{ runner.os }}-mix-lux-
+            ${{ runner.os }}-mix-deps-lux-
+
+      - name: Cache Mix build
+        uses: actions/cache@v3
+        with:
+          path: lux/_build
+          key: ${{ runner.os }}-mix-build-lux-${{ hashFiles('lux/mix.lock', 'lux/lib/**/*.ex', 'lux/test/**/*.ex') }}
+          restore-keys: |
+            ${{ runner.os }}-mix-build-lux-${{ hashFiles('lux/mix.lock') }}
+            ${{ runner.os }}-mix-build-lux-
 
       - name: Cache Poetry deps
         uses: actions/cache@v3
