@@ -191,6 +191,8 @@ defmodule Lux.Agent do
 
         agent = struct(@agent, Map.put(attrs, :llm_config, updated_llm_config))
 
+        agent = %{agent | name: attrs[:name] || get_name(agent)}
+
         GenServer.start_link(__MODULE__, agent, name: get_name(agent))
       end
 

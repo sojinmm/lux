@@ -14,6 +14,15 @@ defmodule Lux.AgentHubTest do
       capabilities: []
   end
 
+  # Helper function to start a TestAgent with a unique name
+  defp start_unique_agent do
+    # Generate a unique name for the agent
+    agent_name = :"test_agent_#{:erlang.unique_integer([:positive])}"
+    {:ok, agent_pid} = TestAgent.start_link(name: agent_name)
+    agent = :sys.get_state(agent_pid)
+    {agent, agent_pid}
+  end
+
   describe "starting hubs" do
     test "default hub already started" do
       assert {:error, {:already_started, pid}} = AgentHub.start_link()
@@ -21,37 +30,49 @@ defmodule Lux.AgentHubTest do
     end
 
     test "can start a named hub" do
-      assert {:ok, pid} = AgentHub.start_link(name: :test_hub_1)
+      # Generate a unique hub name for this test
+      hub_name = :"test_hub_#{:erlang.unique_integer([:positive])}"
+      assert {:ok, pid} = AgentHub.start_link(name: hub_name)
       assert is_pid(pid)
-      assert Process.whereis(:test_hub_1) == pid
+      assert Process.whereis(hub_name) == pid
     end
 
     test "can start multiple named hubs" do
-      assert {:ok, pid1} = AgentHub.start_link(name: :hub1)
-      assert {:ok, pid2} = AgentHub.start_link(name: :hub2)
+      # Generate unique hub names for this test
+      hub1_name = :"hub1_#{:erlang.unique_integer([:positive])}"
+      hub2_name = :"hub2_#{:erlang.unique_integer([:positive])}"
+
+      assert {:ok, pid1} = AgentHub.start_link(name: hub1_name)
+      assert {:ok, pid2} = AgentHub.start_link(name: hub2_name)
       assert pid1 != pid2
     end
 
     test "can be started under a supervisor" do
+      # Generate a unique hub name for this test
+      hub_name = :"test_hub_#{:erlang.unique_integer([:positive])}"
+
       child_spec = %{
-        id: {AgentHub, :test_hub_2},
-        start: {AgentHub, :start_link, [[name: :test_hub_2]]},
+        id: {AgentHub, hub_name},
+        start: {AgentHub, :start_link, [[name: hub_name]]},
         type: :worker,
         restart: :permanent,
         shutdown: 5000
       }
 
-      assert AgentHub.child_spec(name: :test_hub_2) == child_spec
+      assert AgentHub.child_spec(name: hub_name) == child_spec
     end
   end
 
   describe "agent registration and discovery" do
     setup do
-      {:ok, _hub} = start_supervised({AgentHub, name: :test_hub_3})
-      {:ok, agent_pid} = TestAgent.start_link()
-      agent = :sys.get_state(agent_pid)
+      # Generate a unique hub name for this test run
+      hub_name = :"test_hub_#{:erlang.unique_integer([:positive])}"
+      {:ok, _hub} = start_supervised({AgentHub, name: hub_name})
 
-      {:ok, hub: :test_hub_3, agent: agent, agent_pid: agent_pid}
+      # Start a unique agent
+      {agent, agent_pid} = start_unique_agent()
+
+      {:ok, hub: hub_name, agent: agent, agent_pid: agent_pid}
     end
 
     test "can register an agent", %{hub: hub, agent: agent, agent_pid: pid} do
@@ -80,13 +101,15 @@ defmodule Lux.AgentHubTest do
 
   describe "agent status management" do
     setup do
-      unique_hub_id = :"hub_#{:erlang.unique_integer([:positive])}"
-      {:ok, _hub} = start_supervised({AgentHub, name: unique_hub_id})
-      {:ok, agent_pid} = TestAgent.start_link()
-      agent = :sys.get_state(agent_pid)
-      :ok = AgentHub.register(unique_hub_id, agent, agent_pid, [:test])
+      # This is already using a unique hub name, but let's make the naming consistent
+      hub_name = :"hub_#{:erlang.unique_integer([:positive])}"
+      {:ok, _hub} = start_supervised({AgentHub, name: hub_name})
 
-      {:ok, hub: unique_hub_id, agent: agent, agent_pid: agent_pid}
+      # Start a unique agent
+      {agent, agent_pid} = start_unique_agent()
+      :ok = AgentHub.register(hub_name, agent, agent_pid, [:test])
+
+      {:ok, hub: hub_name, agent: agent, agent_pid: agent_pid}
     end
 
     test "can update agent status", %{hub: hub, agent: agent} do
@@ -110,12 +133,17 @@ defmodule Lux.AgentHubTest do
 
   describe "multiple hubs" do
     setup do
-      {:ok, _} = start_supervised({AgentHub, name: :hub1})
-      {:ok, _} = start_supervised({AgentHub, name: :hub2})
-      {:ok, agent_pid} = TestAgent.start_link()
-      agent = :sys.get_state(agent_pid)
+      # Generate unique hub names for this test run to avoid conflicts in parallel tests
+      hub1_name = :"hub1_#{:erlang.unique_integer([:positive])}"
+      hub2_name = :"hub2_#{:erlang.unique_integer([:positive])}"
 
-      {:ok, hub1: :hub1, hub2: :hub2, agent: agent, agent_pid: agent_pid}
+      {:ok, _} = start_supervised({AgentHub, name: hub1_name})
+      {:ok, _} = start_supervised({AgentHub, name: hub2_name})
+
+      # Start a unique agent
+      {agent, agent_pid} = start_unique_agent()
+
+      {:ok, hub1: hub1_name, hub2: hub2_name, agent: agent, agent_pid: agent_pid}
     end
 
     test "hubs maintain separate agent registries", %{

@@ -53,7 +53,12 @@ defmodule Lux.MixProject do
   defp aliases do
     [
       "test.unit": "test --include unit",
-      "test.integration": "test --include integration"
+      "test.integration": "test --include integration",
+      coveralls: "coveralls",
+      "coveralls.detail": "coveralls.detail",
+      "coveralls.post": "coveralls.post",
+      "coveralls.html": "coveralls.html",
+      "coveralls.github": "coveralls.github"
     ]
   end
 
