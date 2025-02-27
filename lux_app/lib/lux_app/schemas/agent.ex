@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.Agent do
+  @moduledoc """
+  A schema for an agent.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

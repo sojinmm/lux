@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.Prism do
+  @moduledoc """
+  A schema for a prism.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

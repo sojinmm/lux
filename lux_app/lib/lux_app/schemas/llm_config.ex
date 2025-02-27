@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.LlmConfig do
+  @moduledoc """
+  A schema for a LLM config.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

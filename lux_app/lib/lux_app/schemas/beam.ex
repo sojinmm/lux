@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.Beam do
+  @moduledoc """
+  A schema for a beam.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

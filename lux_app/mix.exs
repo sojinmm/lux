@@ -66,7 +66,8 @@ defmodule LuxApp.MixProject do
       {:bandit, "~> 1.5"},
       {:dotenvy, "~> 0.8.0"},
       {:flop, "~> 0.25.0"},
-      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 

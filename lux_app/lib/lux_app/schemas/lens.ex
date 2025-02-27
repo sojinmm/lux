@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.Lens do
+  @moduledoc """
+  A schema for a lens.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

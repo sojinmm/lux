@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.Edge do
+  @moduledoc """
+  A schema for an edge.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

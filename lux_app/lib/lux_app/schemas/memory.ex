@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.Memory do
+  @moduledoc """
+  A schema for a memory.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

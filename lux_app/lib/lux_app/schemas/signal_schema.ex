@@ -1,4 +1,8 @@
 defmodule LuxApp.Schemas.SignalSchema do
+  @moduledoc """
+  A schema for a signal.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 
