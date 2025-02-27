@@ -91,7 +91,7 @@ defmodule Lux.MixProject do
         "Changelog" => "https://github.com/Spectral-Finance/lux/blob/main/CHANGELOG.md"
       },
       files:
-        ~w(lib priv/python/lux/*.py priv/python/hyperliquid_utils/*.py priv/python/*.py priv/python/*.toml priv/node/*.json priv/node/*.mjs .formatter.exs mix.exs README.md LICENSE CHANGELOG.md)
+        ~w(lib priv/web3/abis/* priv/python/lux/*.py priv/python/hyperliquid_utils/*.py priv/python/*.py priv/python/*.toml priv/node/*.json priv/node/*.mjs .formatter.exs mix.exs README.md LICENSE CHANGELOG.md)
     ]
   end
 
