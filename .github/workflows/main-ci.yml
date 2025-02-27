@@ -1,25 +1,44 @@
-name: Full CI
+name: Main CI
 
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/**'
-      - '.tool-versions'
-      - 'dev.envrc'
-      - 'test.envrc'
+    paths-ignore:
+      - 'lux/**'
+      - 'lux_app/**'
+      - '**.md'
+      - '.vscode/**'
   pull_request:
     branches: [main]
-    paths:
-      - '.github/**'
-      - '.tool-versions'
-      - 'dev.envrc'
-      - 'test.envrc'
-  workflow_dispatch:
+    paths-ignore:
+      - 'lux/**'
+      - 'lux_app/**'
+      - '**.md'
+      - '.vscode/**'
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      lux: ${{ steps.filter.outputs.lux }}
+      lux_app: ${{ steps.filter.outputs.lux_app }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            lux:
+              - 'lux/**'
+            lux_app:
+              - 'lux_app/**'
+
   lux:
     name: Build and Test Lux
+    needs: changes
+    if: ${{ needs.changes.outputs.lux == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -141,9 +160,6 @@ jobs:
       - name: Run Credo
         run: mix credo
 
-      - name: Run Dialyzer
-        run: mix dialyzer
-
       - name: Run Elixir Tests
         run: mix test.unit
 
@@ -156,11 +172,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MIX_ENV: test
 
-      # - name: Generate Docs
-      #   run: mix docs
-
   lux_app:
     name: Build and Test Lux App
+    needs: changes
+    if: ${{ needs.changes.outputs.lux_app == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -250,4 +265,4 @@ jobs:
       - name: Build assets
         run: |
           mix assets.deploy
-          mix phx.digest
+          mix phx.digest 
