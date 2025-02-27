@@ -66,7 +66,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
          },
          metadata: %{
            "agent_capabilities" => role_capabilities
-         }
+         },
+         timestamp: DateTime.utc_now()
        }}
     else
       # Create failure response with capability mismatch details
@@ -85,7 +86,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
              "required_capabilities" => required_capabilities,
              "agent_capabilities" => role_capabilities
            }
-         }
+         },
+         timestamp: DateTime.utc_now()
        }}
     end
   end
@@ -102,7 +104,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
            "type" => "status_update",
            "status" => "in_progress"
          }),
-       recipient: signal.sender
+       recipient: signal.sender,
+       timestamp: DateTime.utc_now()
      }}
   end
 
@@ -123,7 +126,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
                "type" => "evaluate",
                "evaluation" => evaluation
              }),
-           recipient: signal.sender
+           recipient: signal.sender,
+           timestamp: DateTime.utc_now()
          }}
 
       {:error, :no_hub_configured} ->
@@ -142,7 +146,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
                  "reasoning" => "Cannot proceed without a configured hub"
                }
              }),
-           recipient: signal.sender
+           recipient: signal.sender,
+           timestamp: DateTime.utc_now()
          }}
 
       {:error, reason} ->
@@ -161,7 +166,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
                  "reasoning" => "Failed to evaluate next step"
                }
              }),
-           recipient: signal.sender
+           recipient: signal.sender,
+           timestamp: DateTime.utc_now()
          }}
     end
   end
@@ -180,7 +186,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
              "progress" => calculate_progress(payload)
            }
          }),
-       recipient: signal.sender
+       recipient: signal.sender,
+       timestamp: DateTime.utc_now()
      }}
   end
 
@@ -202,7 +209,8 @@ defmodule Lux.Agent.Companies.SignalHandler.DefaultImplementation do
              "reasoning" => "All steps completed successfully"
            }
          }),
-       recipient: signal.sender
+       recipient: signal.sender,
+       timestamp: DateTime.utc_now()
      }}
   end
 
