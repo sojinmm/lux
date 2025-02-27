@@ -1,25 +1,49 @@
-name: Full CI
+name: Main CI
 
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/**'
-      - '.tool-versions'
-      - 'dev.envrc'
-      - 'test.envrc'
+    paths-ignore:
+      - 'lux/**'
+      - 'lux_app/**'
+      - 'lux_cli/**'
+      - '**.md'
+      - '.vscode/**'
   pull_request:
     branches: [main]
-    paths:
-      - '.github/**'
-      - '.tool-versions'
-      - 'dev.envrc'
-      - 'test.envrc'
-  workflow_dispatch:
+    paths-ignore:
+      - 'lux/**'
+      - 'lux_app/**'
+      - 'lux_cli/**'
+      - '**.md'
+      - '.vscode/**'
 
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      lux: ${{ steps.filter.outputs.lux }}
+      lux_app: ${{ steps.filter.outputs.lux_app }}
+      lux_cli: ${{ steps.filter.outputs.lux_cli }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            lux:
+              - 'lux/**'
+            lux_app:
+              - 'lux_app/**'
+            lux_cli:
+              - 'lux_cli/**'
+
   lux:
     name: Build and Test Lux
+    needs: changes
+    if: ${{ needs.changes.outputs.lux == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -135,20 +159,16 @@ jobs:
       - name: Run Credo
         run: mix credo
 
-      - name: Run Dialyzer
-        run: mix dialyzer
-
       - name: Run Elixir Tests
         run: mix test.unit
 
       - name: Run Python Tests
         run: mix python.test
 
-      # - name: Generate Docs
-      #   run: mix docs
-
   lux_app:
     name: Build and Test Lux App
+    needs: changes
+    if: ${{ needs.changes.outputs.lux_app == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -238,6 +258,8 @@ jobs:
 
   lux_cli:
     name: Build and Test Lux CLI
+    needs: changes
+    if: ${{ needs.changes.outputs.lux_cli == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -272,6 +294,9 @@ jobs:
       - name: Install Mix Dependencies
         run: mix deps.get
 
+      - name: Create PLT directory
+        run: mkdir -p priv/plts
+
       - name: Check Formatting
         run: mix format --check-formatted
 
@@ -282,4 +307,4 @@ jobs:
         run: mix test
 
       - name: Build Escript
-        run: mix escript.build
+        run: mix escript.build 

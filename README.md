@@ -1,6 +1,9 @@
 # Lux
 
 <!-- [![Build Status](https://github.com/spectrallabs/lux/workflows/CI/badge.svg)](https://github.com/spectrallabs/lux/actions) -->
+[![Lux CI](https://github.com/spectrallabs/lux/workflows/Lux%20CI/badge.svg)](https://github.com/spectrallabs/lux/actions/workflows/lux-ci.yml)
+[![Lux App CI](https://github.com/spectrallabs/lux/workflows/Lux%20App%20CI/badge.svg)](https://github.com/spectrallabs/lux/actions/workflows/lux-app-ci.yml)
+[![Lux CLI CI](https://github.com/spectrallabs/lux/workflows/Lux%20CLI%20CI/badge.svg)](https://github.com/spectrallabs/lux/actions/workflows/lux-cli-ci.yml)
 [![Hex.pm](https://img.shields.io/hexpm/v/lux.svg)](https://hex.pm/packages/lux)
 [![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/lux)
 

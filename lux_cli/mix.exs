@@ -10,6 +10,11 @@ defmodule LuxCliMixProject do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       escript: escript(),
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        plt_add_apps: [:mix],
+        plt_core_path: "priv/plts/"
+      ],
       # Package
       description: "Command-line interface for the Lux framework",
       package: package(),

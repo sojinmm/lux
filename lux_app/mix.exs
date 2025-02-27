@@ -13,7 +13,8 @@ defmodule LuxApp.MixProject do
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         plt_add_apps: [:ex_unit, :mix],
-        plt_ignore_apps: [:jason]
+        plt_ignore_apps: [:jason],
+        plt_core_path: "priv/plts/"
       ]
     ]
   end

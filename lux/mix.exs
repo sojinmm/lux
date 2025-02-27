@@ -8,7 +8,11 @@ defmodule Lux.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      dialyzer: [plt_add_apps: [:mix]],
+      dialyzer: [
+        plt_add_apps: [:mix],
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        plt_core_path: "priv/plts/"
+      ],
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
       # Package
