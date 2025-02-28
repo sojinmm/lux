@@ -73,7 +73,7 @@ defmodule LuxApp.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      {:dotenvy, "~> 0.8.0"},
+      {:dotenvy, "~> 1.0.1"},
       {:flop, "~> 0.25.0"},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
