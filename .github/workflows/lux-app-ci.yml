@@ -79,6 +79,20 @@ jobs:
       - name: Create PLT directory
         run: mkdir -p priv/plts
 
+      - name: Cache Dialyzer PLTs
+        uses: actions/cache@v4
+        with:
+          path: lux_app/priv/plts
+          key: ${{ runner.os }}-dialyzer-lux-app-${{ hashFiles('lux_app/mix.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-dialyzer-lux-app-
+
+      - name: Compile
+        run: mix compile
+
+      - name: Build PLT
+        run: mix dialyzer --plt
+
       - name: Install Node.js dependencies
         run: cd assets && npm ci
 
