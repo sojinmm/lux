@@ -54,6 +54,53 @@ defmodule Lux.Config do
   end
 
   @doc """
+  Gets the Etherscan API key from configuration.
+  Raises if the key is not configured.
+  """
+  @spec etherscan_api_key() :: api_key()
+  def etherscan_api_key do
+    get_required_key(:api_keys, :etherscan)
+  end
+
+  @doc """
+  Checks if the configured Etherscan API key is a Pro subscription.
+  Returns false by default unless explicitly configured as true.
+  """
+  @spec etherscan_api_key_pro?() :: boolean()
+  def etherscan_api_key_pro? do
+    :lux
+    |> Application.fetch_env!(:api_keys)
+    |> Keyword.get(:etherscan_pro, false)
+  end
+
+  @doc """
+  Gets the Etherscan API URL.
+  Uses the V2 API format with chainid parameter.
+  """
+  @spec etherscan_api_url() :: String.t()
+  def etherscan_api_url do
+    "https://api.etherscan.io/v2/api"
+  end
+
+  @doc """
+  Gets the chain ID for a specific network.
+  """
+  @spec etherscan_chain_id(atom()) :: String.t()
+  def etherscan_chain_id(network \\ :ethereum) do
+    case network do
+      :ethereum -> "1"
+      :goerli -> "5"
+      :sepolia -> "11155111"
+      :polygon -> "137"
+      :arbitrum -> "42161"
+      :optimism -> "10"
+      :base -> "8453"
+      :avalanche -> "43114"
+      _ -> "1" # Default to Ethereum mainnet
+    end
+  end
+
+  @doc """
   Gets the Hyperliquid account's private key from configuration.
   Raises if the key is not configured.
   """
