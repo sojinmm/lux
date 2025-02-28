@@ -7,8 +7,9 @@ readme = "README.md"
 packages = [{include = "lux"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-web3 = "^6.15.1"
+python = "^3.12.3"
+web3 = "^6.15.11"
+eth-typing = "3.5.2"
 eth-tester = {extras = ["py-evm"], version = "^0.10.0b4"}
 nltk = "^3.9.1"
 setuptools = "^75.8.2"
