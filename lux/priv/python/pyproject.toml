@@ -7,8 +7,9 @@ readme = "README.md"
 packages = [{include = "lux"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-web3 = "^6.15.1"
+python = "^3.12.3"
+web3 = "^6.15.11"
+eth-typing = "3.5.2"
 eth-tester = {extras = ["py-evm"], version = "^0.10.0b4"}
 nltk = "^3.9.1"
 setuptools = "^75.8.2"
@@ -16,7 +17,7 @@ hyperliquid-python-sdk = "^0.10.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
-pytest-cov = "^4.1.0"
+pytest-cov = "^6.0.0"
 black = "^25.1.0"
 isort = "^6.0.1"
 mypy = "^1.5.1"
