@@ -19,9 +19,3 @@ config :venomous, :snake_manager, %{
     python_executable: "python3"
   ]
 }
-
-# Configure Etherscan API key for examples
-config :lux, :api_keys, [
-  etherscan: System.get_env("ETHERSCAN_API_KEY") || "YourApiKeyToken",
-  etherscan_pro: System.get_env("ETHERSCAN_API_KEY_PRO") == "true"
-]

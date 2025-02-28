@@ -368,7 +368,7 @@ defmodule Lux.Lenses.Etherscan.ContractLens do
     params = Map.put(params, :chainid, Lux.Config.etherscan_chain_id(network))
 
     # Make the request
-    case Req.get(build_url(), params: params) do
+    case Req.get(build_url(network), params: params) do
       {:ok, %{status: 200, body: body}} ->
         BaseLens.process_response(body)
       {:ok, response} ->
@@ -384,7 +384,7 @@ defmodule Lux.Lenses.Etherscan.ContractLens do
   end
 
   # Build URL for the Etherscan API
-  defp build_url do
-    Lux.Config.etherscan_api_url()
+  defp build_url(network \\ :ethereum) do
+    BaseLens.build_url(network)
   end
 end

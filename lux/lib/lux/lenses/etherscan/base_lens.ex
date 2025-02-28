@@ -1,14 +1,14 @@
 defmodule Lux.Lenses.Etherscan.BaseLens do
   @moduledoc """
   Base module for Etherscan API interactions.
-  
+
   This module provides common functionality for all Etherscan API lenses,
   including authentication, error handling, and response transformation.
-  
+
   It is not meant to be used directly, but rather extended by specific
   Etherscan API lenses.
   """
-  
+
   @doc """
   Adds the Etherscan API key to the lens parameters.
   """
@@ -17,7 +17,7 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
       Map.put(params, :apikey, Lux.Config.etherscan_api_key())
     end)
   end
-  
+
   @doc """
   Common after_focus implementation for Etherscan API responses.
   Handles standard Etherscan response format and error cases.
@@ -25,33 +25,37 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
   def process_response(%{"status" => "1", "message" => "OK", "result" => result}) do
     {:ok, %{result: result}}
   end
-  
+
   def process_response(%{"status" => "0", "message" => message, "result" => result}) do
     {:error, %{message: message, result: result}}
   end
-  
+
   def process_response(%{"error" => error}) do
     {:error, error}
   end
-  
+
   def process_response(response) do
     {:error, "Unexpected response format: #{inspect(response)}"}
   end
-  
+
   @doc """
   Builds the URL for the Etherscan API.
+
+  ## Parameters
+
+  * `network` - The network to use, either as an atom (e.g., :ethereum, :polygon) or as a chain ID integer
   """
-  def build_url do
-    Lux.Config.etherscan_api_url()
+  def build_url(network \\ :ethereum) do
+    Lux.Config.etherscan_api_url(network)
   end
-  
+
   @doc """
   Adds the chain ID parameter to the lens parameters based on the network.
   """
   def add_chain_id(params, network \\ :ethereum) do
     Map.put(params, :chainid, Lux.Config.etherscan_chain_id(network))
   end
-  
+
   @doc """
   Validates an Ethereum address format.
   """
@@ -62,7 +66,7 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
       {:error, "Invalid Ethereum address format: #{address}"}
     end
   end
-  
+
   @doc """
   Validates a transaction hash format.
   """
@@ -73,7 +77,7 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
       {:error, "Invalid transaction hash format: #{hash}"}
     end
   end
-  
+
   @doc """
   Validates a block number or block tag.
   """
@@ -82,7 +86,7 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
       "latest" -> {:ok, block}
       "pending" -> {:ok, block}
       "earliest" -> {:ok, block}
-      _ -> 
+      _ ->
         if Regex.match?(~r/^[0-9]+$/, block) do
           {:ok, block}
         else
@@ -90,12 +94,12 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
         end
     end
   end
-  
+
   def validate_block(block) when is_integer(block) and block >= 0 do
     {:ok, Integer.to_string(block)}
   end
-  
+
   def validate_block(block) do
     {:error, "Invalid block format: #{inspect(block)}"}
   end
-end 
+end

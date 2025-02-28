@@ -74,12 +74,19 @@ defmodule Lux.Config do
   end
 
   @doc """
-  Gets the Etherscan API URL.
-  Uses the V2 API format with chainid parameter.
+  Gets the Etherscan API URL for a specific network.
+  Uses the network-specific API URL from configuration.
   """
-  @spec etherscan_api_url() :: String.t()
-  def etherscan_api_url do
-    "https://api.etherscan.io/v2/api"
+  @spec etherscan_api_url(integer() | atom()) :: String.t()
+  def etherscan_api_url(network \\ :ethereum) do
+    # Convert atom network to chain ID if needed
+    chain_id = if is_atom(network), do: etherscan_chain_id(network) |> String.to_integer(), else: network
+
+    # Get the API URLs from configuration
+    api_urls = Application.get_env(:lux, :etherscan)[:api_urls]
+
+    # Return the URL for the specified network, or default to Ethereum mainnet
+    api_urls[chain_id] || api_urls[1]
   end
 
   @doc """
