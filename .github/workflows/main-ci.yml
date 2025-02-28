@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: filter
         with:
           filters: |
@@ -58,7 +58,7 @@ jobs:
           python-version: '3.12.3'
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '22.13.0'
 
@@ -206,7 +206,7 @@ jobs:
           elixir-version: 'v1.18.1-otp-27'
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '22.13.0'
 
