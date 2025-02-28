@@ -130,16 +130,20 @@ defmodule Lux.PrismTest do
     test "view/1" do
       prism_path = get_test_prism("simple_prism.py")
 
+      assert {:error, :nofile} = Code.ensure_loaded(Simple.Prism)
+
       prism = Prism.view(prism_path)
       assert %Prism{} = prism
-      assert prism.name == "Simple Prism"
-      assert prism.description == "A very simple prism"
+      assert prism.name == "Simple.Prism"
+      assert prism.description == "A very simple prism that greets you"
+
+      assert {:module, Simple.Prism} = Code.ensure_loaded(Simple.Prism)
     end
 
     test "run/3" do
       prism_path = get_test_prism("simple_prism.py")
 
-      assert {:ok, %{"message" => message}} = Prism.run(prism_path, %{name: "John"}, nil)
+      assert {:ok, %{"success" => true, "data" => %{"message" => message}}} = Prism.run(prism_path, %{name: "John"}, nil)
       assert message == "Hello, John!"
     end
   end

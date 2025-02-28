@@ -35,12 +35,7 @@ defmodule Lux.Prism do
   @typedoc """
   A handler is a function or a module that handles the data.
   """
-  @type handler :: function() | mfa() | binary()
-
-  @typedoc """
-  A validator is a function or a module that validates the data.
-  """
-  @type validator :: function() | mfa() | binary()
+  @type handler :: function() | mfa() | {atom(), binary()}
 
   defstruct [
     :id,
@@ -138,11 +133,12 @@ defmodule Lux.Prism do
   end
 
   def view(path, ".py") do
-    Lux.Python.eval!(path,
-      variables: %{
-        __lux_function__: :view
-      }
-    )
+    with {:ok, prism} <- Lux.Python.eval(path, variables: %{__lux_function__: :view}),
+         :ok <- define_module_if_not_exists(prism, path) do
+      prism
+    else
+      {:error, reason} -> raise "Failed to load python prism: #{reason}"
+    end
   end
 
   def view(path, _ext) do
@@ -193,4 +189,44 @@ defmodule Lux.Prism do
   end
 
   def resolve_schema(schema), do: schema
+
+  defp define_module_if_not_exists(%__MODULE__{name: name, handler: {:python, _}}, path) do
+    module_name = name |> List.wrap() |> Module.concat()
+    case Code.ensure_loaded(module_name) do
+      {:module, _} ->
+        :ok
+
+      {:error, :nofile} ->
+        Module.create(
+          module_name,
+          quote do
+            def view do
+              Lux.Python.eval!(unquote(path),
+                variables: %{
+                  __lux_function__: :view
+                }
+              )
+            end
+
+            def handler(input, context) do
+              Lux.Python.eval(unquote(path),
+                variables: %{
+                  __lux_function__: :handler,
+                  __lux_function_args__: [input, context]
+                }
+              )
+            end
+
+            def run(input, context \\ nil) do
+              Lux.Prism.run(__MODULE__, input, context)
+            end
+          end,
+          Macro.Env.location(__ENV__)
+        )
+
+        :ok
+    end
+  end
+
+  defp define_module_if_not_exists(_, _), do: :ok
 end
