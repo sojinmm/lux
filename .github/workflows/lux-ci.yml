@@ -114,13 +114,26 @@ jobs:
       - name: Create PLT directory
         run: mkdir -p priv/plts
 
+      - name: Debug before cache
+        run: |
+          echo "Contents of priv/plts before cache restoration:"
+          ls -la priv/plts || echo "Directory empty"
+
       - name: Cache Dialyzer PLTs
         uses: actions/cache@v4
         with:
-          path: lux/priv/plts
+          path: |
+            lux/priv/plts/*.plt
+            lux/priv/plts/*.hash
           key: ${{ runner.os }}-dialyzer-lux-${{ hashFiles('lux/mix.lock') }}
           restore-keys: |
             ${{ runner.os }}-dialyzer-lux-
+
+      - name: Debug after cache
+        run: |
+          echo "Contents of priv/plts after cache restoration:"
+          ls -la priv/plts || echo "Directory empty"
+          echo "Cache key used: ${{ runner.os }}-dialyzer-lux-${{ hashFiles('lux/mix.lock') }}"
 
       - name: Compile
         run: mix compile
