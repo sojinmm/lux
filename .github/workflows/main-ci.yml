@@ -134,8 +134,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-lux-
 
-      - name: Cache Dialyzer PLTs
-        uses: actions/cache@v4
+      - name: Restore PLT cache
+        uses: actions/cache/restore@v4
+        id: plt_cache
         with:
           path: |
             lux/priv/plts/*.plt
@@ -154,7 +155,20 @@ jobs:
         run: mix compile
 
       - name: Build PLT
+        if: steps.plt_cache.outputs.cache-hit != 'true'
         run: mix dialyzer --plt
+
+      - name: Save PLT cache
+        uses: actions/cache/save@v4
+        if: steps.plt_cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            lux/priv/plts/*.plt
+            lux/priv/plts/*.hash
+          key: ${{ runner.os }}-dialyzer-lux-${{ hashFiles('lux/mix.lock') }}
+
+      - name: Run Dialyzer
+        run: mix dialyzer --format github
 
       - name: Install Python dependencies
         run: poetry install --directory priv/python
@@ -236,8 +250,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-lux-app-
 
-      - name: Cache Dialyzer PLTs
-        uses: actions/cache@v4
+      - name: Restore PLT cache
+        uses: actions/cache/restore@v4
+        id: plt_cache_app
         with:
           path: |
             lux_app/priv/plts/*.plt
@@ -256,7 +271,20 @@ jobs:
         run: mix compile
 
       - name: Build PLT
+        if: steps.plt_cache_app.outputs.cache-hit != 'true'
         run: mix dialyzer --plt
+
+      - name: Save PLT cache
+        uses: actions/cache/save@v4
+        if: steps.plt_cache_app.outputs.cache-hit != 'true'
+        with:
+          path: |
+            lux_app/priv/plts/*.plt
+            lux_app/priv/plts/*.hash
+          key: ${{ runner.os }}-dialyzer-lux-app-${{ hashFiles('lux_app/mix.lock') }}
+
+      - name: Run Dialyzer
+        run: mix dialyzer --format github
 
       - name: Install Python dependencies
         run: poetry install --directory priv/python
