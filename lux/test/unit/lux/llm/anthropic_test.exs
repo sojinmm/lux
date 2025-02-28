@@ -143,17 +143,5 @@ defmodule Lux.LLM.AnthropicTest do
       assert tool_call.name == "test_tool"
       assert tool_call.params == %{"param1" => "value1", "param2" => "value2"}
     end
-
-    test "supports token caching" do
-      # Test implementation for token caching
-      # This would verify that the token cache is working correctly
-      # and improving performance
-    end
-
-    test "supports load balancing" do
-      # Test implementation for load balancing
-      # This would verify that requests are distributed across
-      # multiple API keys
-    end
   end
 end
