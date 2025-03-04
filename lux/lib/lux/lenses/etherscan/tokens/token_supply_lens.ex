@@ -1,0 +1,77 @@
+defmodule Lux.Lenses.Etherscan.TokenSupplyLens do
+  @moduledoc """
+  Lens for fetching the current amount of an ERC-20 token in circulation from the Etherscan API.
+
+  ## Examples
+
+  ```elixir
+  # Get ERC20 token total supply (default chainid: 1 for Ethereum)
+  Lux.Lenses.Etherscan.TokenSupplyLens.focus(%{
+    contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055"
+  })
+
+  # Get ERC20 token total supply on a specific chain
+  Lux.Lenses.Etherscan.TokenSupplyLens.focus(%{
+    contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
+    chainid: 1
+  })
+  ```
+  """
+
+  alias Lux.Lenses.Etherscan.BaseLens
+
+  use Lux.Lens,
+    name: "Etherscan ERC20 Token Total Supply API",
+    description: "Fetches the current amount of an ERC-20 token in circulation",
+    url: "https://api.etherscan.io/v2/api",
+    method: :get,
+    headers: [{"content-type", "application/json"}],
+    auth: %{
+      type: :custom,
+      auth_function: &BaseLens.add_api_key/1
+    },
+    schema: %{
+      type: :object,
+      properties: %{
+        chainid: %{
+          type: :integer,
+          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          default: 1
+        },
+        contractaddress: %{
+          type: :string,
+          description: "The contract address of the ERC-20 token",
+          pattern: "^0x[a-fA-F0-9]{40}$"
+        }
+      },
+      required: ["contractaddress"]
+    }
+
+  @doc """
+  Prepares parameters before making the API request.
+  """
+  def before_focus(params) do
+    # Set module and action for this endpoint
+    params
+    |> Map.put(:module, "stats")
+    |> Map.put(:action, "tokensupply")
+  end
+
+  @doc """
+  Transforms the API response into a more usable format.
+  """
+  @impl true
+  def after_focus(response) do
+    case BaseLens.process_response(response) do
+      {:ok, %{result: result}} ->
+        # Return a structured response with the token supply
+        {:ok, %{
+          result: result,
+          token_supply: result
+        }}
+      other ->
+        # Pass through other responses (like errors)
+        other
+    end
+  end
+end

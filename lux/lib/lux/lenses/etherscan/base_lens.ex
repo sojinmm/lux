@@ -1,65 +1,51 @@
 defmodule Lux.Lenses.Etherscan.BaseLens do
   @moduledoc """
-  Base module for Etherscan API interactions.
-
-  This module provides common functionality for all Etherscan API lenses,
-  including authentication, error handling, and response transformation.
-
-  It is not meant to be used directly, but rather extended by specific
-  Etherscan API lenses.
+  Base module for Etherscan API lenses with common functionality.
   """
 
   @doc """
-  Adds the Etherscan API key to the lens parameters.
+  Adds the API key to the lens parameters.
   """
   def add_api_key(lens) do
-    Map.update!(lens, :params, fn params ->
-      Map.put(params, :apikey, Lux.Config.etherscan_api_key())
-    end)
+    api_key = Lux.Config.etherscan_api_key()
+    params = Map.put(lens.params, :apikey, api_key)
+    %{lens | params: params}
   end
 
   @doc """
-  Common after_focus implementation for Etherscan API responses.
-  Handles standard Etherscan response format and error cases.
+  Processes the API response.
   """
-  def process_response(%{"status" => "1", "message" => "OK", "result" => result}) do
-    {:ok, %{result: result}}
-  end
-
-  def process_response(%{"status" => "0", "message" => message, "result" => result}) do
-    {:error, %{message: message, result: result}}
-  end
-
-  def process_response(%{"error" => error}) do
-    {:error, error}
-  end
-
   def process_response(response) do
-    {:error, "Unexpected response format: #{inspect(response)}"}
+    cond do
+      # Handle error object
+      Map.has_key?(response, "error") ->
+        {:error, response["error"]}
+
+      # Handle successful response
+      response["status"] == "1" ->
+        {:ok, %{result: response["result"]}}
+
+      # Handle error response
+      response["status"] == "0" ->
+        # Special handling for Pro API key errors
+        result = if String.contains?(response["result"] || "", "Pro subscription") do
+          "This endpoint requires an Etherscan Pro API key."
+        else
+          response["result"]
+        end
+
+        {:error, %{message: response["message"], result: result}}
+
+      # Handle unexpected response format
+      true ->
+        {:error, "Unexpected response format: #{inspect(response)}"}
+    end
   end
 
   @doc """
-  Builds the URL for the Etherscan API.
-
-  ## Parameters
-
-  * `network` - The network to use, either as an atom (e.g., :ethereum, :polygon) or as a chain ID integer
+  Validates an Ethereum address.
   """
-  def build_url(network \\ :ethereum) do
-    Lux.Config.etherscan_api_url(network)
-  end
-
-  @doc """
-  Adds the chain ID parameter to the lens parameters based on the network.
-  """
-  def add_chain_id(params, network \\ :ethereum) do
-    Map.put(params, :chainid, Lux.Config.etherscan_chain_id(network))
-  end
-
-  @doc """
-  Validates an Ethereum address format.
-  """
-  def validate_eth_address(address) when is_binary(address) do
+  def validate_eth_address(address) do
     if Regex.match?(~r/^0x[a-fA-F0-9]{40}$/, address) do
       {:ok, address}
     else
@@ -68,9 +54,9 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
   end
 
   @doc """
-  Validates a transaction hash format.
+  Validates a transaction hash.
   """
-  def validate_tx_hash(hash) when is_binary(hash) do
+  def validate_tx_hash(hash) do
     if Regex.match?(~r/^0x[a-fA-F0-9]{64}$/, hash) do
       {:ok, hash}
     else
@@ -79,27 +65,50 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
   end
 
   @doc """
-  Validates a block number or block tag.
+  Validates a block number or tag.
   """
-  def validate_block(block) when is_binary(block) do
-    case block do
-      "latest" -> {:ok, block}
-      "pending" -> {:ok, block}
-      "earliest" -> {:ok, block}
-      _ ->
-        if Regex.match?(~r/^[0-9]+$/, block) do
-          {:ok, block}
-        else
-          {:error, "Invalid block format: #{block}"}
-        end
-    end
-  end
-
   def validate_block(block) when is_integer(block) and block >= 0 do
     {:ok, Integer.to_string(block)}
   end
 
+  def validate_block(block) when is_binary(block) do
+    cond do
+      # Block tags
+      block in ["latest", "pending", "earliest"] ->
+        {:ok, block}
+
+      # Block numbers as strings
+      Regex.match?(~r/^\d+$/, block) ->
+        {:ok, block}
+
+      # Invalid format
+      true ->
+        {:error, "Invalid block format: #{block}"}
+    end
+  end
+
   def validate_block(block) do
-    {:error, "Invalid block format: #{inspect(block)}"}
+    {:error, "Invalid block format: #{block}"}
+  end
+
+  @doc """
+  Checks if an endpoint requires a Pro API key.
+  """
+  def check_pro_endpoint(module, action) do
+    pro_endpoints = [
+      {"account", "balancehistory"}
+    ]
+
+    if {module, action} in pro_endpoints do
+      has_pro_key = Lux.Config.etherscan_api_key_pro?()
+
+      if has_pro_key do
+        {:ok, true}
+      else
+        {:error, "This endpoint requires an Etherscan Pro API key."}
+      end
+    else
+      {:ok, true}
+    end
   end
 end
