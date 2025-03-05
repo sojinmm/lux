@@ -28,10 +28,11 @@ defmodule Lux.Lenses.Etherscan.BaseLens do
       # Handle error response
       response["status"] == "0" ->
         # Special handling for Pro API key errors
-        result = if String.contains?(response["result"] || "", "Pro subscription") do
-          "This endpoint requires an Etherscan Pro API key."
-        else
-          response["result"]
+        result = cond do
+          is_binary(response["result"]) && String.contains?(response["result"], "Pro subscription") ->
+            "This endpoint requires an Etherscan Pro API key."
+          true ->
+            response["result"]
         end
 
         {:error, %{message: response["message"], result: result}}
