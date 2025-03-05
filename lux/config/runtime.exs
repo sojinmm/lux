@@ -16,11 +16,13 @@ if config_env() in [:dev, :test] do
   config :lux, :api_keys,
     alchemy: env!("ALCHEMY_API_KEY", :string!),
     openai: env!("OPENAI_API_KEY", :string!),
+    anthropic: env!("ANTHROPIC_API_KEY", :string!),
     openweather: env!("OPENWEATHER_API_KEY", :string!),
     transpose: env!("TRANSPOSE_API_KEY", :string!),
     etherscan: env!("ETHERSCAN_API_KEY", :string!),
     etherscan_pro: env!("ETHERSCAN_API_KEY_PRO", :string!, required: false) == "true",
     integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!, required: false),
+    integration_anthropic: env!("INTEGRATION_ANTHROPIC_API_KEY", :string!, required: false),
     integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!, required: false),
     integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, required: false)
 
