@@ -204,7 +204,7 @@ defmodule Lux.LLM.OpenAI do
     }
   end
 
-  def tool_to_function(%Prism{name: name, description: description, input_schema: input_schema}) do
+  def tool_to_function(%Prism{module_name: name, description: description, input_schema: input_schema}) do
     %{
       type: "function",
       function: %{
