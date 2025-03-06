@@ -17,7 +17,7 @@ Before installing Lux, ensure you have:
 
 ```bash
 git clone https://github.com/Spectral-Finance/lux.git
-cd lux
+cd lux/lux
 ```
 
 ### 2. System Dependencies
