@@ -42,6 +42,7 @@ defmodule Lux.Prism do
   defstruct [
     :id,
     :name,
+    :module_name,
     :handler,
     :description,
     :examples,
@@ -52,6 +53,7 @@ defmodule Lux.Prism do
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
+          module_name: String.t(),
           handler: handler(),
           description: nullable(String.t()),
           examples: nullable([String.t()]),
@@ -67,6 +69,7 @@ defmodule Lux.Prism do
     %__MODULE__{
       id: attrs[:id] || "",
       name: attrs[:name] || "",
+      module_name: attrs[:module_name] || "",
       handler: attrs[:handler] || nil,
       description: attrs[:description] || "",
       examples: attrs[:examples] || [],
@@ -93,10 +96,13 @@ defmodule Lux.Prism do
       # Register compile-time attributes
       Module.register_attribute(__MODULE__, :prism_config, persist: false)
       Module.register_attribute(__MODULE__, :prism_struct, persist: false)
+      Module.register_attribute(__MODULE__, :prism_module_name, persist: false)
+
+      @prism_module_name __MODULE__ |> Module.split() |> Enum.join(".")
 
       # Store the configuration at compile time
       @prism_config %{
-        name: Keyword.get(unquote(opts), :name, __MODULE__ |> Module.split() |> Enum.join(".")),
+        name: Keyword.get(unquote(opts), :name, @prism_module_name),
         description: Keyword.get(unquote(opts), :description, ""),
         input_schema: Keyword.get(unquote(opts), :input_schema),
         output_schema: Keyword.get(unquote(opts), :output_schema),
@@ -108,6 +114,7 @@ defmodule Lux.Prism do
       @prism_struct Lux.Prism.new(
                       id: Lux.UUID.generate(),
                       name: @prism_config.name,
+                      module_name: @prism_module_name,
                       description: @prism_config.description,
                       input_schema: @prism_config.input_schema,
                       output_schema: @prism_config.output_schema,
