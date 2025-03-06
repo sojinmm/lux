@@ -24,9 +24,9 @@ Lux is a powerful language-agnostic framework for building intelligent, adaptive
 📚 [Read the full documentation on hexdocs.pm/lux](https://hexdocs.pm/lux)
 
 ### Getting Started
-- [Getting Started Guide](lux/guides/getting_started.md) (docs coming soon) - Start here if you're new to Lux
-- [Core Concepts](lux/guides/core_concepts.md) (docs coming soon) - Learn about Agents, Signals, Prisms, and Beams
-- [Language Support](lux/guides/language_support.md) (docs coming soon) - Language integration details
+- [Getting Started Guide](lux/guides/getting_started.md) - Start here if you're new to Lux
+- [Core Concepts](lux/guides/core_concepts.md) - Learn about Agents, Signals, Prisms, and Beams
+- [Language Support](lux/guides/language_support.md) - Language integration details
 
 ### Core Concepts
 - [Agents](lux/guides/agents.livemd) - Building intelligent autonomous agents
@@ -110,9 +110,9 @@ We welcome contributions! Whether you want to add support for a new language, im
 
 ## Community
 
-- 💬 [Discord Community](https://discord.gg/luxframework)
+- 💬 [Discord Community](https://discord.gg/dsRPcjeH)
 - 📝 [Blog](https://blog.spectrallabs.xyz)
-- 🐦 [Twitter](https://twitter.com/luxframework)
+- 🐦 [Twitter](https://twitter.com/Spectral_Labs)
 
 ## License
 
