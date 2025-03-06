@@ -26,6 +26,8 @@ defmodule Lux.Prism do
   """
   use Lux.Types
 
+  require Logger
+
   @typedoc """
   A schema is either a map of key-value pairs that describe the structure of the data,
   or a module that implements the Lux.SignalSchema behaviour.
@@ -190,10 +192,13 @@ defmodule Lux.Prism do
 
   def resolve_schema(schema), do: schema
 
-  defp define_module_if_not_exists(%__MODULE__{name: name, handler: {:python, _}}, path) do
+  defp define_module_if_not_exists(%__MODULE__{module_name: name, handler: {:python, _}}, path) do
     module_name = name |> List.wrap() |> Module.concat()
     case Code.ensure_loaded(module_name) do
-      {:module, _} ->
+      {:module, defined_module} ->
+        if not Lux.prism?(defined_module) do
+          Logger.warning("Module #{module_name} already exists but is not a prism. Skipping module creation.")
+        end
         :ok
 
       {:error, :nofile} ->

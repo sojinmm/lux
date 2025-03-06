@@ -134,7 +134,8 @@ defmodule Lux.PrismTest do
 
       prism = Prism.view(prism_path)
       assert %Prism{} = prism
-      assert prism.name == "Simple.Prism"
+      assert prism.name == "Simple Prism"
+      assert prism.module_name == "Simple.Prism"
       assert prism.description == "A very simple prism that greets you"
 
       assert {:module, Simple.Prism} = Code.ensure_loaded(Simple.Prism)
