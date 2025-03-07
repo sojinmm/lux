@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens
+  alias Lux.Lenses.Etherscan.AddressTokenNFTBalance
 
   # Example address that holds NFTs
   @nft_holder "0x6b52e83941eb10f9c613c395a834457559a80114"
@@ -55,7 +55,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = AddressTokenNFTBalanceLens.focus(%{
+    result = AddressTokenNFTBalance.focus(%{
       address: @nft_holder,
       chainid: 1
     })
@@ -70,10 +70,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   test "can fetch NFT balances for an address" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenNFTBalanceLens")
+      IO.puts("Skipping test: Pro API key required for AddressTokenNFTBalance")
       :ok
     else
-      result = AddressTokenNFTBalanceLens.focus(%{
+      result = AddressTokenNFTBalance.focus(%{
         address: @nft_holder,
         chainid: 1
       })
@@ -114,13 +114,13 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   test "can fetch NFT balances with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenNFTBalanceLens")
+      IO.puts("Skipping test: Pro API key required for AddressTokenNFTBalance")
       :ok
     else
       # Using a small offset to test pagination
       offset = 5
 
-      result = AddressTokenNFTBalanceLens.focus(%{
+      result = AddressTokenNFTBalance.focus(%{
         address: @nft_holder,
         page: 1,
         offset: offset,
@@ -148,7 +148,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
 
   test "returns error for invalid address" do
     # Using an invalid address format
-    result = AddressTokenNFTBalanceLens.focus(%{
+    result = AddressTokenNFTBalance.focus(%{
       address: "0xinvalid",
       chainid: 1
     })

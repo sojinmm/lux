@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.ContractAbiLens do
+defmodule Lux.Lenses.Etherscan.ContractAbi do
   @moduledoc """
   Lens for fetching the Contract Application Binary Interface (ABI) of a verified smart contract from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLens do
 
   ```elixir
   # Get contract ABI for a verified contract (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.ContractAbiLens.focus(%{
+  Lux.Lenses.Etherscan.ContractAbi.focus(%{
     address: "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
   })
 
   # Get contract ABI for a verified contract on a specific chain
-  Lux.Lenses.Etherscan.ContractAbiLens.focus(%{
+  Lux.Lenses.Etherscan.ContractAbi.focus(%{
     address: "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413",
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Contract ABI API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -63,7 +63,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_binary(result) ->
         # Try to parse the ABI JSON string
         case Jason.decode(result) do

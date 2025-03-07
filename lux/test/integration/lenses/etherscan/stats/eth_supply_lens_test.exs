@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.EthSupplyLens
+  alias Lux.Lenses.Etherscan.EthSupply
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -35,7 +35,7 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
 
   test "can fetch total ETH supply" do
     assert {:ok, %{result: eth_supply, eth_supply: eth_supply}} =
-             EthSupplyLens.focus(%{
+             EthSupply.focus(%{
                chainid: 1
              })
 
@@ -50,7 +50,7 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
 
   test "requires chainid parameter for v2 API" do
     # The v2 API requires the chainid parameter
-    result = EthSupplyLens.focus(%{})
+    result = EthSupply.focus(%{})
 
     case result do
       {:error, %{message: "NOTOK", result: error_message}} ->
@@ -66,7 +66,7 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
   test "can fetch ETH supply for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on the chain
-    result = EthSupplyLens.focus(%{
+    result = EthSupply.focus(%{
       chainid: 137 # Polygon
     })
 

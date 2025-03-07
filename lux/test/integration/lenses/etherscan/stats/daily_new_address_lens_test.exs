@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.DailyNewAddressLens
+  alias Lux.Lenses.Etherscan.DailyNewAddress
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyNewAddressLens.focus(%{
+    case DailyNewAddress.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -58,11 +58,11 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   test "can fetch daily new address counts with required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyNewAddressLens")
+      IO.puts("Skipping test: Pro API key required for DailyNewAddress")
       :ok
     else
       assert {:ok, %{result: new_address_data, daily_new_address: new_address_data}} =
-               DailyNewAddressLens.focus(%{
+               DailyNewAddress.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
@@ -91,11 +91,11 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyNewAddressLens")
+      IO.puts("Skipping test: Pro API key required for DailyNewAddress")
       :ok
     else
       assert {:ok, %{result: new_address_data}} =
-               DailyNewAddressLens.focus(%{
+               DailyNewAddress.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
@@ -137,7 +137,7 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyNewAddressLens.focus(%{
+    result = DailyNewAddress.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -163,11 +163,11 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyNewAddressLens")
+      IO.puts("Skipping test: Pro API key required for DailyNewAddress")
       :ok
     else
       # Missing startdate and enddate
-      result = DailyNewAddressLens.focus(%{
+      result = DailyNewAddress.focus(%{
         chainid: 1
       })
 

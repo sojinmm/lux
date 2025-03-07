@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BalanceHistoryLens
+  alias Lux.Lenses.Etherscan.BalanceHistory
 
   setup do
     # Set up test API key in the configuration
@@ -50,7 +50,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       end)
 
       # Call the lens
-      result = BalanceHistoryLens.focus(params)
+      result = BalanceHistory.focus(params)
 
       # Verify the result
       assert {:ok, %{result: "123456789012345678"}} = result
@@ -75,7 +75,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       end)
 
       # Call the lens
-      result = BalanceHistoryLens.focus(params)
+      result = BalanceHistory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -97,7 +97,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
 
       # Expect an error to be raised
       assert_raise ArgumentError, "This endpoint requires an Etherscan Pro API key.", fn ->
-        BalanceHistoryLens.focus(params)
+        BalanceHistory.focus(params)
       end
     end
   end
@@ -112,7 +112,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       }
 
       # Call the function
-      result = BalanceHistoryLens.before_focus(params)
+      result = BalanceHistory.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -138,7 +138,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
 
       # Expect an error to be raised
       assert_raise ArgumentError, "This endpoint requires an Etherscan Pro API key.", fn ->
-        BalanceHistoryLens.before_focus(params)
+        BalanceHistory.before_focus(params)
       end
     end
   end
@@ -153,7 +153,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       }
 
       # Call the function
-      result = BalanceHistoryLens.after_focus(response)
+      result = BalanceHistory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: "123456789012345678"}} = result
@@ -168,7 +168,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       }
 
       # Call the function
-      result = BalanceHistoryLens.after_focus(response)
+      result = BalanceHistory.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

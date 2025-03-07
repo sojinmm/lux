@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractVerifySourceCodeLens
+  alias Lux.Lenses.Etherscan.ContractVerifySourceCode
 
   # Example contract address for verification (this is just for testing, not a real verification)
   @contract_address "0x123456789012345678901234567890123456789"
@@ -50,7 +50,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
     # Using an invalid address format
     invalid_address = "0xinvalid"
 
-    result = ContractVerifySourceCodeLens.focus(%{
+    result = ContractVerifySourceCode.focus(%{
       chainid: 1,
       contractaddress: invalid_address,
       sourceCode: @source_code,
@@ -78,7 +78,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
 
   test "returns error for missing required parameters" do
     # Missing sourceCode parameter
-    result = ContractVerifySourceCodeLens.focus(%{
+    result = ContractVerifySourceCode.focus(%{
       chainid: 1,
       contractaddress: @contract_address,
       codeformat: "solidity-single-file",

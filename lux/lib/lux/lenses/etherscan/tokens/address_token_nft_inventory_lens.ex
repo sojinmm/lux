@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens do
+defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventory do
   @moduledoc """
   Lens for fetching the ERC-721 token inventory of an address, filtered by contract address from the Etherscan API.
 
@@ -8,13 +8,13 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens do
 
   ```elixir
   # Get address ERC721 token inventory (default chainid: 1 for Ethereum, page: 1, offset: 100)
-  Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens.focus(%{
+  Lux.Lenses.Etherscan.AddressTokenNFTInventory.focus(%{
     address: "0x123432244443b54409430979df8333f9308a6040",
     contractaddress: "0xed5af388653567af2f388e6224dc7c4b3241c544"
   })
 
   # Get address ERC721 token inventory with pagination
-  Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens.focus(%{
+  Lux.Lenses.Etherscan.AddressTokenNFTInventory.focus(%{
     address: "0x123432244443b54409430979df8333f9308a6040",
     contractaddress: "0xed5af388653567af2f388e6224dc7c4b3241c544",
     page: 1,
@@ -24,7 +24,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Address ERC721 Token Inventory API",
@@ -34,7 +34,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -88,7 +88,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of NFT tokens
         processed_results = Enum.map(result, fn nft ->

@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BalanceLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BalanceLens
+  alias Lux.Lenses.Etherscan.Balance
 
   setup do
     # Set up test API key in the configuration
@@ -50,7 +50,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLensTest do
       end)
 
       # Call the lens
-      result = BalanceLens.focus(params)
+      result = Balance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: "123456789012345678"}} = result
@@ -75,7 +75,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLensTest do
       end)
 
       # Call the lens
-      result = BalanceLens.focus(params)
+      result = Balance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -100,7 +100,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLensTest do
       end)
 
       # Call the lens
-      result = BalanceLens.focus(params)
+      result = Balance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -117,7 +117,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLensTest do
       }
 
       # Call the function
-      result = BalanceLens.before_focus(params)
+      result = Balance.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -138,7 +138,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLensTest do
       }
 
       # Call the function
-      result = BalanceLens.after_focus(response)
+      result = Balance.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: "123456789012345678"}} = result
@@ -153,7 +153,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLensTest do
       }
 
       # Call the function
-      result = BalanceLens.after_focus(response)
+      result = Balance.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

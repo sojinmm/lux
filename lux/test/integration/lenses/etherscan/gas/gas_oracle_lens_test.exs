@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.GasOracleLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.GasOracleLens
+  alias Lux.Lenses.Etherscan.GasOracle
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -37,7 +37,7 @@ defmodule Lux.Integration.Etherscan.GasOracleLensTest do
 
   test "can fetch current gas prices" do
     # Always include chainid parameter for v2 API
-    assert {:ok, %{result: gas_info}} = GasOracleLens.focus(%{chainid: 1})
+    assert {:ok, %{result: gas_info}} = GasOracle.focus(%{chainid: 1})
 
     # Verify the gas info structure
     assert is_map(gas_info)
@@ -70,7 +70,7 @@ defmodule Lux.Integration.Etherscan.GasOracleLensTest do
 
   test "can fetch gas prices for a specific chain" do
     # Using Ethereum mainnet (chainid: 1)
-    assert {:ok, %{result: gas_info}} = GasOracleLens.focus(%{chainid: 1})
+    assert {:ok, %{result: gas_info}} = GasOracle.focus(%{chainid: 1})
 
     # Verify the gas info structure
     assert is_map(gas_info)

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLens do
+defmodule Lux.Lenses.Etherscan.DailyAvgBlockSize do
   @moduledoc """
   Lens for fetching the daily average block size within a date range from the Etherscan API.
 
@@ -8,13 +8,13 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLens do
 
   ```elixir
   # Get daily average block size for a date range (default chainid: 1 for Ethereum, sort: "asc")
-  Lux.Lenses.Etherscan.DailyAvgBlockSizeLens.focus(%{
+  Lux.Lenses.Etherscan.DailyAvgBlockSize.focus(%{
     startdate: "2019-02-01",
     enddate: "2019-02-28"
   })
 
   # Get daily average block size for a date range with specific parameters
-  Lux.Lenses.Etherscan.DailyAvgBlockSizeLens.focus(%{
+  Lux.Lenses.Etherscan.DailyAvgBlockSize.focus(%{
     startdate: "2019-02-01",
     enddate: "2019-02-28",
     sort: "desc",
@@ -23,7 +23,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Daily Average Block Size API",
@@ -33,7 +33,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -82,7 +82,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of daily average block sizes
         processed_results = Enum.map(result, fn item ->

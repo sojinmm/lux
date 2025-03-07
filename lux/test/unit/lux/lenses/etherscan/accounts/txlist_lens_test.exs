@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TxListLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TxListLens
+  alias Lux.Lenses.Etherscan.TxList
 
   setup do
     # Set up test API key in the configuration
@@ -83,7 +83,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       end)
 
       # Call the lens
-      result = TxListLens.focus(params)
+      result = TxList.focus(params)
 
       # Verify the result
       assert {:ok, %{result: result_data}} = result
@@ -143,7 +143,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       end)
 
       # Call the lens
-      result = TxListLens.focus(params)
+      result = TxList.focus(params)
 
       # Verify the result
       assert {:ok, %{result: result_data}} = result
@@ -169,7 +169,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       end)
 
       # Call the lens
-      result = TxListLens.focus(params)
+      result = TxList.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -193,7 +193,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       end)
 
       # Call the lens
-      result = TxListLens.focus(params)
+      result = TxList.focus(params)
 
       # Verify the result
       assert {:ok, %{result: []}} = result
@@ -217,7 +217,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       end)
 
       # Call the lens
-      result = TxListLens.focus(params)
+      result = TxList.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -238,7 +238,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       }
 
       # Call the function
-      result = TxListLens.before_focus(params)
+      result = TxList.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -272,7 +272,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       }
 
       # Call the function
-      result = TxListLens.after_focus(response)
+      result = TxList.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: result_data}} = result
@@ -289,7 +289,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       }
 
       # Call the function
-      result = TxListLens.after_focus(response)
+      result = TxList.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

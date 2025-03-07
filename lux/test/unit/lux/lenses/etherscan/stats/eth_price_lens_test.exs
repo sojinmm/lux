@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.EthPriceLens
+  alias Lux.Lenses.Etherscan.EthPrice
 
   setup do
     # Set up test API key in the configuration
@@ -51,7 +51,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       end)
 
       # Call the lens
-      result = EthPriceLens.focus(params)
+      result = EthPrice.focus(params)
 
       # Verify the result
       assert {:ok, %{result: eth_price, eth_price: eth_price}} = result
@@ -86,7 +86,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       end)
 
       # Call the lens
-      result = EthPriceLens.focus(params)
+      result = EthPrice.focus(params)
 
       # Verify the result
       assert {:ok, %{result: eth_price}} = result
@@ -111,7 +111,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       end)
 
       # Call the lens
-      result = EthPriceLens.focus(params)
+      result = EthPrice.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result
@@ -126,7 +126,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       }
 
       # Call the function
-      result = EthPriceLens.before_focus(params)
+      result = EthPrice.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -139,7 +139,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       params = %{}
 
       # Call the function
-      result = EthPriceLens.before_focus(params)
+      result = EthPrice.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -162,7 +162,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       }
 
       # Call the function
-      result = EthPriceLens.after_focus(response)
+      result = EthPrice.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: eth_price, eth_price: eth_price}} = result
@@ -186,7 +186,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       }
 
       # Call the function
-      result = EthPriceLens.after_focus(response)
+      result = EthPrice.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: eth_price}} = result
@@ -205,7 +205,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       }
 
       # Call the function
-      result = EthPriceLens.after_focus(response)
+      result = EthPrice.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result

@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenBalanceHistoryLens
+  alias Lux.Lenses.Etherscan.TokenBalanceHistory
 
   setup do
     # Set up test API key in the configuration
@@ -53,7 +53,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       end)
 
       # Call the lens
-      result = TokenBalanceHistoryLens.focus(params)
+      result = TokenBalanceHistory.focus(params)
 
       # Verify the result
       assert {:ok, %{
@@ -83,7 +83,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       end)
 
       # Call the lens
-      result = TokenBalanceHistoryLens.focus(params)
+      result = TokenBalanceHistory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -109,7 +109,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       end)
 
       # Call the lens
-      result = TokenBalanceHistoryLens.focus(params)
+      result = TokenBalanceHistory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, please use API Key for higher rate limit"}} = result
@@ -127,7 +127,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       }
 
       # Call the function
-      result = TokenBalanceHistoryLens.before_focus(params)
+      result = TokenBalanceHistory.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -150,7 +150,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       }
 
       # Call the function
-      result = TokenBalanceHistoryLens.after_focus(response)
+      result = TokenBalanceHistory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{
@@ -169,7 +169,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       }
 
       # Call the function
-      result = TokenBalanceHistoryLens.after_focus(response)
+      result = TokenBalanceHistory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{
@@ -188,7 +188,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistoryLensTest do
       }
 
       # Call the function
-      result = TokenBalanceHistoryLens.after_focus(response)
+      result = TokenBalanceHistory.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

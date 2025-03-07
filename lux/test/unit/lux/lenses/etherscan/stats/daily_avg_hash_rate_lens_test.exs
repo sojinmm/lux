@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyAvgHashRateLens
+  alias Lux.Lenses.Etherscan.DailyAvgHashRate
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgHashRateLens.focus(params)
+      result = DailyAvgHashRate.focus(params)
 
       # Verify the result
       assert {:ok, %{result: hash_rate_data, daily_avg_hash_rate: hash_rate_data}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgHashRateLens.focus(params)
+      result = DailyAvgHashRate.focus(params)
 
       # Verify the result
       assert {:ok, %{result: hash_rate_data}} = result
@@ -152,7 +152,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgHashRateLens.focus(params)
+      result = DailyAvgHashRate.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgHashRateLens.focus(params)
+      result = DailyAvgHashRate.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -208,7 +208,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgHashRateLens.focus(params)
+      result = DailyAvgHashRate.focus(params)
 
       # Verify the result
       assert {:ok, %{result: hash_rate_data, daily_avg_hash_rate: hash_rate_data}} = result
@@ -226,7 +226,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       }
 
       # Call the function
-      result = DailyAvgHashRateLens.before_focus(params)
+      result = DailyAvgHashRate.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       }
 
       # Call the function
-      result = DailyAvgHashRateLens.before_focus(params)
+      result = DailyAvgHashRate.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       }
 
       # Call the function
-      result = DailyAvgHashRateLens.after_focus(response)
+      result = DailyAvgHashRate.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: hash_rate_data, daily_avg_hash_rate: hash_rate_data}} = result
@@ -298,7 +298,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       }
 
       # Call the function
-      result = DailyAvgHashRateLens.after_focus(response)
+      result = DailyAvgHashRate.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: hash_rate_data, daily_avg_hash_rate: hash_rate_data}} = result
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       }
 
       # Call the function
-      result = DailyAvgHashRateLens.after_focus(response)
+      result = DailyAvgHashRate.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -329,7 +329,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLensTest do
       }
 
       # Call the function
-      result = DailyAvgHashRateLens.after_focus(response)
+      result = DailyAvgHashRate.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.EthSupplyLens do
+defmodule Lux.Lenses.Etherscan.EthSupply do
   @moduledoc """
   Lens for fetching the current amount of Ether in circulation from the Etherscan API.
   This excludes ETH2 Staking rewards and EIP1559 burnt fees.
@@ -7,16 +7,16 @@ defmodule Lux.Lenses.Etherscan.EthSupplyLens do
 
   ```elixir
   # Get the current ETH supply (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.EthSupplyLens.focus(%{})
+  Lux.Lenses.Etherscan.EthSupply.focus(%{})
 
   # Get the current ETH supply for a specific chain
-  Lux.Lenses.Etherscan.EthSupplyLens.focus(%{
+  Lux.Lenses.Etherscan.EthSupply.focus(%{
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ETH Supply API",
@@ -26,7 +26,7 @@ defmodule Lux.Lenses.Etherscan.EthSupplyLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.EthSupplyLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_binary(result) ->
         # Convert the result to a number if it's a string containing a number
         eth_supply =

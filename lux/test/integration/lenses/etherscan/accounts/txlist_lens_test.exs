@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.TxListLens
+  alias Lux.Lenses.Etherscan.TxList
 
   # Address with normal transactions (Vitalik's address)
   @address "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -38,7 +38,7 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can fetch normal transactions for an address" do
     assert {:ok, %{result: transactions}} =
-             TxListLens.focus(%{
+             TxList.focus(%{
                address: @address,
                chainid: 1
              })
@@ -76,7 +76,7 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can fetch transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             TxListLens.focus(%{
+             TxList.focus(%{
                address: @address,
                chainid: 1,
                page: 1,
@@ -89,7 +89,7 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can specify a block range for transactions" do
     assert {:ok, %{result: transactions}} =
-             TxListLens.focus(%{
+             TxList.focus(%{
                address: @address,
                chainid: 1,
                startblock: 10000000,
@@ -111,7 +111,7 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can sort transactions in descending order" do
     assert {:ok, %{result: transactions}} =
-             TxListLens.focus(%{
+             TxList.focus(%{
                address: @address,
                chainid: 1,
                sort: "desc"

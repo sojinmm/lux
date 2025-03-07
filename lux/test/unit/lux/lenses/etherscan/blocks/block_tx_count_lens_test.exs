@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockTxCountLens
+  alias Lux.Lenses.Etherscan.BlockTxCount
 
   setup do
     # Set up test API key in the configuration
@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       end)
 
       # Call the lens
-      result = BlockTxCountLens.focus(params)
+      result = BlockTxCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -85,7 +85,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       end)
 
       # Call the lens
-      result = BlockTxCountLens.focus(params)
+      result = BlockTxCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -110,7 +110,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       end)
 
       # Call the lens
-      result = BlockTxCountLens.focus(params)
+      result = BlockTxCount.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid block number"}} = result
@@ -125,7 +125,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
 
       # Verify that it raises an error
       assert_raise RuntimeError, "This endpoint is only available on Etherscan (chainId 1)", fn ->
-        BlockTxCountLens.focus(params)
+        BlockTxCount.focus(params)
       end
     end
   end
@@ -139,7 +139,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       }
 
       # Call the function
-      result = BlockTxCountLens.before_focus(params)
+      result = BlockTxCount.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -156,7 +156,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       }
 
       # Call the function
-      result = BlockTxCountLens.before_focus(params)
+      result = BlockTxCount.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -174,7 +174,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
 
       # Verify that it raises an error
       assert_raise RuntimeError, "This endpoint is only available on Etherscan (chainId 1)", fn ->
-        BlockTxCountLens.before_focus(params)
+        BlockTxCount.before_focus(params)
       end
     end
   end
@@ -196,7 +196,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       }
 
       # Call the function
-      result = BlockTxCountLens.after_focus(response)
+      result = BlockTxCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -217,7 +217,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       }
 
       # Call the function
-      result = BlockTxCountLens.after_focus(response)
+      result = BlockTxCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -233,7 +233,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
       }
 
       # Call the function
-      result = BlockTxCountLens.after_focus(response)
+      result = BlockTxCount.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid block number"}} = result

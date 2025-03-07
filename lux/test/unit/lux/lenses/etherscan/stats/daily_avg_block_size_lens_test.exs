@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyAvgBlockSizeLens
+  alias Lux.Lenses.Etherscan.DailyAvgBlockSize
 
   setup do
     # Set up test API key in the configuration
@@ -60,7 +60,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgBlockSizeLens.focus(params)
+      result = DailyAvgBlockSize.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_sizes}} = result
@@ -110,7 +110,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgBlockSizeLens.focus(params)
+      result = DailyAvgBlockSize.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_sizes}} = result
@@ -141,7 +141,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgBlockSizeLens.focus(params)
+      result = DailyAvgBlockSize.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -172,7 +172,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgBlockSizeLens.focus(params)
+      result = DailyAvgBlockSize.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -189,7 +189,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       }
 
       # Call the function
-      result = DailyAvgBlockSizeLens.before_focus(params)
+      result = DailyAvgBlockSize.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -210,7 +210,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       }
 
       # Call the function
-      result = DailyAvgBlockSizeLens.before_focus(params)
+      result = DailyAvgBlockSize.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -241,7 +241,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       }
 
       # Call the function
-      result = DailyAvgBlockSizeLens.after_focus(response)
+      result = DailyAvgBlockSize.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_sizes}} = result
@@ -267,7 +267,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       }
 
       # Call the function
-      result = DailyAvgBlockSizeLens.after_focus(response)
+      result = DailyAvgBlockSize.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_sizes}} = result
@@ -283,7 +283,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       }
 
       # Call the function
-      result = DailyAvgBlockSizeLens.after_focus(response)
+      result = DailyAvgBlockSize.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -298,7 +298,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSizeLensTest do
       }
 
       # Call the function
-      result = DailyAvgBlockSizeLens.after_focus(response)
+      result = DailyAvgBlockSize.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

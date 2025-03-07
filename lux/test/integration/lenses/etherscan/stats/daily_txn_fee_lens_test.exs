@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.DailyTxnFeeLens
+  alias Lux.Lenses.Etherscan.DailyTxnFee
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyTxnFeeLens.focus(%{
+    case DailyTxnFee.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -58,11 +58,11 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "can fetch daily transaction fees with required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxnFeeLens")
+      IO.puts("Skipping test: Pro API key required for DailyTxnFee")
       :ok
     else
       assert {:ok, %{result: txn_fee_data, daily_txn_fee: txn_fee_data}} =
-               DailyTxnFeeLens.focus(%{
+               DailyTxnFee.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
@@ -91,11 +91,11 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxnFeeLens")
+      IO.puts("Skipping test: Pro API key required for DailyTxnFee")
       :ok
     else
       assert {:ok, %{result: txn_fee_data}} =
-               DailyTxnFeeLens.focus(%{
+               DailyTxnFee.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
@@ -137,7 +137,7 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyTxnFeeLens.focus(%{
+    result = DailyTxnFee.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -163,11 +163,11 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxnFeeLens")
+      IO.puts("Skipping test: Pro API key required for DailyTxnFee")
       :ok
     else
       # Missing startdate and enddate
-      result = DailyTxnFeeLens.focus(%{
+      result = DailyTxnFee.focus(%{
         chainid: 1
       })
 

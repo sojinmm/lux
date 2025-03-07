@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.EthSupply2Lens
+  alias Lux.Lenses.Etherscan.EthSupply2
 
   setup do
     # Set up test API key in the configuration
@@ -51,7 +51,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       end)
 
       # Call the lens
-      result = EthSupply2Lens.focus(params)
+      result = EthSupply2.focus(params)
 
       # Verify the result
       assert {:ok, %{result: eth_supply_details, eth_supply_details: eth_supply_details}} = result
@@ -88,7 +88,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       end)
 
       # Call the lens
-      result = EthSupply2Lens.focus(params)
+      result = EthSupply2.focus(params)
 
       # Verify the result
       assert {:ok, %{result: eth_supply_details}} = result
@@ -112,7 +112,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       end)
 
       # Call the lens
-      result = EthSupply2Lens.focus(params)
+      result = EthSupply2.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result
@@ -127,7 +127,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       }
 
       # Call the function
-      result = EthSupply2Lens.before_focus(params)
+      result = EthSupply2.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -140,7 +140,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       params = %{}
 
       # Call the function
-      result = EthSupply2Lens.before_focus(params)
+      result = EthSupply2.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -163,7 +163,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       }
 
       # Call the function
-      result = EthSupply2Lens.after_focus(response)
+      result = EthSupply2.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: eth_supply_details, eth_supply_details: eth_supply_details}} = result
@@ -189,7 +189,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       }
 
       # Call the function
-      result = EthSupply2Lens.after_focus(response)
+      result = EthSupply2.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: eth_supply_details}} = result
@@ -213,7 +213,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       }
 
       # Call the function
-      result = EthSupply2Lens.after_focus(response)
+      result = EthSupply2.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: eth_supply_details}} = result
@@ -232,7 +232,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       }
 
       # Call the function
-      result = EthSupply2Lens.after_focus(response)
+      result = EthSupply2.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result

@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractAbiLens
+  alias Lux.Lenses.Etherscan.ContractAbi
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
@@ -42,7 +42,7 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   test "can fetch ABI for a verified contract" do
     assert {:ok, %{result: abi}} =
-             ContractAbiLens.focus(%{
+             ContractAbi.focus(%{
                address: @contract_address,
                chainid: 1
              })
@@ -70,7 +70,7 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   test "can fetch ABI for another verified contract" do
     assert {:ok, %{result: abi}} =
-             ContractAbiLens.focus(%{
+             ContractAbi.focus(%{
                address: @uniswap_router,
                chainid: 1
              })
@@ -96,7 +96,7 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
     # Using a random EOA address which won't have verified contract code
     random_address = "0x000000000000000000000000000000000000dEaD"
 
-    result = ContractAbiLens.focus(%{
+    result = ContractAbi.focus(%{
       address: random_address,
       chainid: 1
     })

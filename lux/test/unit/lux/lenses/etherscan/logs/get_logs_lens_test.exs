@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.GetLogsLens
+  alias Lux.Lenses.Etherscan.GetLogs
 
   setup do
     # Set up test API key in the configuration
@@ -69,7 +69,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       end)
 
       # Call the lens
-      result = GetLogsLens.focus(params)
+      result = GetLogs.focus(params)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       end)
 
       # Call the lens
-      result = GetLogsLens.focus(params)
+      result = GetLogs.focus(params)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -175,7 +175,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       end)
 
       # Call the lens
-      result = GetLogsLens.focus(params)
+      result = GetLogs.focus(params)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -228,7 +228,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       end)
 
       # Call the lens
-      result = GetLogsLens.focus(params)
+      result = GetLogs.focus(params)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -262,7 +262,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       end)
 
       # Call the lens
-      result = GetLogsLens.focus(params)
+      result = GetLogs.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -288,7 +288,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       end)
 
       # Call the lens
-      result = GetLogsLens.focus(params)
+      result = GetLogs.focus(params)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -307,7 +307,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       }
 
       # Call the function
-      result = GetLogsLens.before_focus(params)
+      result = GetLogs.before_focus(params)
 
       # Verify the result
       assert result.module == "logs"
@@ -330,7 +330,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       }
 
       # Call the function
-      result = GetLogsLens.before_focus(params)
+      result = GetLogs.before_focus(params)
 
       # Verify the result
       assert result.module == "logs"
@@ -371,7 +371,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       }
 
       # Call the function
-      result = GetLogsLens.after_focus(response)
+      result = GetLogs.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -395,7 +395,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       }
 
       # Call the function
-      result = GetLogsLens.after_focus(response)
+      result = GetLogs.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: logs}} = result
@@ -411,7 +411,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       }
 
       # Call the function
-      result = GetLogsLens.after_focus(response)
+      result = GetLogs.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

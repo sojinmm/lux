@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TxListLens do
+defmodule Lux.Lenses.Etherscan.TxList do
   @moduledoc """
   Lens for fetching normal transactions for an Ethereum address from the Etherscan API.
 
@@ -6,12 +6,12 @@ defmodule Lux.Lenses.Etherscan.TxListLens do
 
   ```elixir
   # Get transactions for an address (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.TxListLens.focus(%{
+  Lux.Lenses.Etherscan.TxList.focus(%{
     address: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC"
   })
 
   # Get transactions with pagination and block range
-  Lux.Lenses.Etherscan.TxListLens.focus(%{
+  Lux.Lenses.Etherscan.TxList.focus(%{
     address: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
     chainid: 1,
     startblock: 0,
@@ -23,7 +23,7 @@ defmodule Lux.Lenses.Etherscan.TxListLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Transaction List API",
@@ -33,7 +33,7 @@ defmodule Lux.Lenses.Etherscan.TxListLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -93,6 +93,6 @@ defmodule Lux.Lenses.Etherscan.TxListLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

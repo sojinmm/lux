@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.EthPriceLens do
+defmodule Lux.Lenses.Etherscan.EthPrice do
   @moduledoc """
   Lens for fetching the latest price of 1 ETH from the Etherscan API.
 
@@ -6,16 +6,16 @@ defmodule Lux.Lenses.Etherscan.EthPriceLens do
 
   ```elixir
   # Get the latest ETH price (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.EthPriceLens.focus(%{})
+  Lux.Lenses.Etherscan.EthPrice.focus(%{})
 
   # Get the latest ETH price for a specific chain
-  Lux.Lenses.Etherscan.EthPriceLens.focus(%{
+  Lux.Lenses.Etherscan.EthPrice.focus(%{
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ETH Price API",
@@ -25,7 +25,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -54,7 +54,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Process the result map and convert string values to numbers
         processed_result = %{

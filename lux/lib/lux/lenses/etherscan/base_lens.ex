@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BaseLens do
+defmodule Lux.Lenses.Etherscan.Base do
   @moduledoc """
   Base module for Etherscan API lenses with common functionality.
   """

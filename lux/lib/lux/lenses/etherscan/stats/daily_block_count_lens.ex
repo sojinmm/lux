@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.DailyBlockCountLens do
+defmodule Lux.Lenses.Etherscan.DailyBlockCount do
   @moduledoc """
   Lens for fetching the number of blocks mined daily and the amount of block rewards within a date range from the Etherscan API.
 
@@ -8,13 +8,13 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLens do
 
   ```elixir
   # Get daily block count and rewards for a date range (default chainid: 1 for Ethereum, sort: "asc")
-  Lux.Lenses.Etherscan.DailyBlockCountLens.focus(%{
+  Lux.Lenses.Etherscan.DailyBlockCount.focus(%{
     startdate: "2019-02-01",
     enddate: "2019-02-28"
   })
 
   # Get daily block count and rewards for a date range with specific parameters
-  Lux.Lenses.Etherscan.DailyBlockCountLens.focus(%{
+  Lux.Lenses.Etherscan.DailyBlockCount.focus(%{
     startdate: "2019-02-01",
     enddate: "2019-02-28",
     sort: "desc",
@@ -23,7 +23,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Daily Block Count and Rewards API",
@@ -33,7 +33,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -82,7 +82,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of daily block counts and rewards
         processed_results = Enum.map(result, fn item ->

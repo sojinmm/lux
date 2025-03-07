@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BlockCountdownLens do
+defmodule Lux.Lenses.Etherscan.BlockCountdown do
   @moduledoc """
   Lens for fetching the estimated time remaining, in seconds, until a certain block is mined from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLens do
 
   ```elixir
   # Get estimated time remaining for a future block (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.BlockCountdownLens.focus(%{
+  Lux.Lenses.Etherscan.BlockCountdown.focus(%{
     blockno: 16701588
   })
 
   # Get estimated time remaining for a future block on a specific chain
-  Lux.Lenses.Etherscan.BlockCountdownLens.focus(%{
+  Lux.Lenses.Etherscan.BlockCountdown.focus(%{
     blockno: 16701588,
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Block Countdown API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -67,7 +67,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Extract the relevant information
         current_block = Map.get(result, "CurrentBlock")

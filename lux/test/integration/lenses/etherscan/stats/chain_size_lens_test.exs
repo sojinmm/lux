@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.ChainSizeLens
+  alias Lux.Lenses.Etherscan.ChainSize
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -39,7 +39,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   end
 
   test "can fetch chain size data with required parameters" do
-    result = ChainSizeLens.focus(%{
+    result = ChainSize.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -79,7 +79,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   end
 
   test "can fetch chain size data with all parameters" do
-    result = ChainSizeLens.focus(%{
+    result = ChainSize.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       clienttype: "geth",
@@ -105,7 +105,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   end
 
   test "can specify different sort order" do
-    result = ChainSizeLens.focus(%{
+    result = ChainSize.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       sort: "desc",
@@ -148,7 +148,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   test "returns error for missing required parameters" do
     # Missing startdate and enddate
-    result = ChainSizeLens.focus(%{
+    result = ChainSize.focus(%{
       chainid: 1
     })
 

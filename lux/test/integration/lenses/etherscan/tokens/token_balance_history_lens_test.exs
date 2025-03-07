@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TokenBalanceHistoryLens
+  alias Lux.Lenses.Etherscan.TokenBalanceHistory
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -54,7 +54,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = TokenBalanceHistoryLens.focus(%{
+    result = TokenBalanceHistory.focus(%{
       contractaddress: @token_contract,
       address: @token_holder,
       blockno: @block_number,
@@ -71,10 +71,10 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
   test "can fetch historical token balance for an address at a specific block" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenBalanceHistoryLens")
+      IO.puts("Skipping test: Pro API key required for TokenBalanceHistory")
       :ok
     else
-      result = TokenBalanceHistoryLens.focus(%{
+      result = TokenBalanceHistory.focus(%{
         contractaddress: @token_contract,
         address: @token_holder,
         blockno: @block_number,
@@ -101,7 +101,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = TokenBalanceHistoryLens.focus(%{
+    result = TokenBalanceHistory.focus(%{
       contractaddress: "0xinvalid",
       address: @token_holder,
       blockno: @block_number,

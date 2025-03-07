@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TxStatusLens
+  alias Lux.Lenses.Etherscan.TxStatus
 
   # Example successful transaction hash
   @successful_tx "0x15f8e5ea1079d9a0bb04a4c58ae5fe7654b5b2b4463375ff7ffb490aa0032f3a"
@@ -39,7 +39,7 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
 
   test "can check execution status for a successful transaction" do
     assert {:ok, %{result: %{status: status, is_error: is_error, error_message: error_message}}} =
-             TxStatusLens.focus(%{
+             TxStatus.focus(%{
                txhash: @successful_tx,
                chainid: 1
              })
@@ -58,7 +58,7 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
   test "can check execution status for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on whether the transaction exists on that chain
-    result = TxStatusLens.focus(%{
+    result = TxStatus.focus(%{
       txhash: @successful_tx,
       chainid: 137 # Polygon
     })
@@ -78,7 +78,7 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
 
   test "returns appropriate status for invalid transaction hash" do
     # Using an invalid transaction hash format
-    result = TxStatusLens.focus(%{
+    result = TxStatus.focus(%{
       txhash: "0xinvalid",
       chainid: 1
     })

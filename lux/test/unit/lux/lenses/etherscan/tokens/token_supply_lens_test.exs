@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenSupplyLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenSupplyLens
+  alias Lux.Lenses.Etherscan.TokenSupply
 
   setup do
     # Set up test API key in the configuration
@@ -48,7 +48,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyLensTest do
       end)
 
       # Call the lens
-      result = TokenSupplyLens.focus(params)
+      result = TokenSupply.focus(params)
 
       # Verify the result
       assert {:ok, %{result: "21000000000000000000000000", token_supply: "21000000000000000000000000"}} = result
@@ -72,7 +72,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyLensTest do
       end)
 
       # Call the lens
-      result = TokenSupplyLens.focus(params)
+      result = TokenSupply.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result
@@ -88,7 +88,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyLensTest do
       }
 
       # Call the function
-      result = TokenSupplyLens.before_focus(params)
+      result = TokenSupply.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -108,7 +108,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyLensTest do
       }
 
       # Call the function
-      result = TokenSupplyLens.after_focus(response)
+      result = TokenSupply.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: "21000000000000000000000000", token_supply: "21000000000000000000000000"}} = result
@@ -123,7 +123,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyLensTest do
       }
 
       # Call the function
-      result = TokenSupplyLens.after_focus(response)
+      result = TokenSupply.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result

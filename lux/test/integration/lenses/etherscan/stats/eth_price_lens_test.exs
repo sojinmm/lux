@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.EthPriceLens
+  alias Lux.Lenses.Etherscan.EthPrice
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -35,7 +35,7 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
 
   test "can fetch ETH price information" do
     assert {:ok, %{result: eth_price, eth_price: eth_price}} =
-             EthPriceLens.focus(%{
+             EthPrice.focus(%{
                chainid: 1
              })
 
@@ -67,7 +67,7 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
 
   test "requires chainid parameter for v2 API" do
     # The v2 API requires the chainid parameter
-    result = EthPriceLens.focus(%{})
+    result = EthPrice.focus(%{})
 
     case result do
       {:error, %{message: "NOTOK", result: error_message}} ->
@@ -83,7 +83,7 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
   test "can fetch ETH price for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on the chain
-    result = EthPriceLens.focus(%{
+    result = EthPrice.focus(%{
       chainid: 137 # Polygon
     })
 

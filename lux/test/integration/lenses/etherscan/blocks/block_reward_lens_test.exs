@@ -2,8 +2,8 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockRewardLens
-  alias Lux.Lenses.Etherscan.BlockByTimestampLens
+  alias Lux.Lenses.Etherscan.BlockReward
+  alias Lux.Lenses.Etherscan.BlockByTimestamp
 
   # Block number with uncle rewards (from the example in the documentation)
   @block_number 2165403
@@ -39,7 +39,7 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
 
   test "can fetch block and uncle rewards for a specific block" do
     assert {:ok, %{result: result}} =
-             BlockRewardLens.focus(%{
+             BlockReward.focus(%{
                blockno: @block_number,
                chainid: 1
              })
@@ -91,7 +91,7 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
     timestamp = DateTime.utc_now() |> DateTime.add(-5 * 60, :second) |> DateTime.to_unix()
 
     {:ok, %{result: recent_block_result}} =
-      BlockByTimestampLens.focus(%{
+      BlockByTimestamp.focus(%{
         timestamp: timestamp,
         closest: "before",
         chainid: 1
@@ -101,7 +101,7 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
     recent_block = String.to_integer(recent_block_result.block_number)
 
     assert {:ok, %{result: result}} =
-             BlockRewardLens.focus(%{
+             BlockReward.focus(%{
                blockno: recent_block,
                chainid: 1
              })

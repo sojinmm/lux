@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BeaconWithdrawalLens
+  alias Lux.Lenses.Etherscan.BeaconWithdrawal
 
   # Address with beacon withdrawals
   @withdrawal_address "0xB9D7934878B5FB9610B3fE8A5e441e8fad7E293f"
@@ -38,7 +38,7 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
 
   test "can fetch beacon withdrawals for an address" do
     assert {:ok, %{result: withdrawals}} =
-             BeaconWithdrawalLens.focus(%{
+             BeaconWithdrawal.focus(%{
                address: @withdrawal_address,
                chainid: 1
              })
@@ -65,7 +65,7 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
 
   test "can fetch beacon withdrawals with pagination" do
     assert {:ok, %{result: withdrawals}} =
-             BeaconWithdrawalLens.focus(%{
+             BeaconWithdrawal.focus(%{
                address: @withdrawal_address,
                chainid: 1,
                page: 1,
@@ -78,7 +78,7 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
 
   test "can specify a block range for withdrawals" do
     assert {:ok, %{result: withdrawals}} =
-             BeaconWithdrawalLens.focus(%{
+             BeaconWithdrawal.focus(%{
                address: @withdrawal_address,
                chainid: 1,
                startblock: 17000000,

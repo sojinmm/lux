@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockByTimestampLens
+  alias Lux.Lenses.Etherscan.BlockByTimestamp
 
   setup do
     # Set up test API key in the configuration
@@ -49,7 +49,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       end)
 
       # Call the lens
-      result = BlockByTimestampLens.focus(params)
+      result = BlockByTimestamp.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -79,7 +79,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       end)
 
       # Call the lens
-      result = BlockByTimestampLens.focus(params)
+      result = BlockByTimestamp.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -104,7 +104,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       end)
 
       # Call the lens
-      result = BlockByTimestampLens.focus(params)
+      result = BlockByTimestamp.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid timestamp"}} = result
@@ -120,7 +120,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       }
 
       # Call the function
-      result = BlockByTimestampLens.before_focus(params)
+      result = BlockByTimestamp.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -137,7 +137,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       }
 
       # Call the function
-      result = BlockByTimestampLens.before_focus(params)
+      result = BlockByTimestamp.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -155,7 +155,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       }
 
       # Call the function
-      result = BlockByTimestampLens.before_focus(params)
+      result = BlockByTimestamp.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -176,7 +176,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       }
 
       # Call the function
-      result = BlockByTimestampLens.after_focus(response)
+      result = BlockByTimestamp.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -192,7 +192,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       }
 
       # Call the function
-      result = BlockByTimestampLens.after_focus(response)
+      result = BlockByTimestamp.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid timestamp"}} = result

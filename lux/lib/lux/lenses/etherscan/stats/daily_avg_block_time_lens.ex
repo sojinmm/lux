@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.DailyAvgBlockTimeLens do
+defmodule Lux.Lenses.Etherscan.DailyAvgBlockTime do
   @moduledoc """
   Lens for fetching the daily average time needed for a block to be successfully mined within a date range from the Etherscan API.
 
@@ -8,13 +8,13 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockTimeLens do
 
   ```elixir
   # Get daily average block time for a date range (default chainid: 1 for Ethereum, sort: "asc")
-  Lux.Lenses.Etherscan.DailyAvgBlockTimeLens.focus(%{
+  Lux.Lenses.Etherscan.DailyAvgBlockTime.focus(%{
     startdate: "2019-02-01",
     enddate: "2019-02-28"
   })
 
   # Get daily average block time for a date range with specific parameters
-  Lux.Lenses.Etherscan.DailyAvgBlockTimeLens.focus(%{
+  Lux.Lenses.Etherscan.DailyAvgBlockTime.focus(%{
     startdate: "2019-02-01",
     enddate: "2019-02-28",
     sort: "desc",
@@ -23,7 +23,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockTimeLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Daily Average Block Time API",
@@ -33,7 +33,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockTimeLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -82,7 +82,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockTimeLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of daily average block times
         processed_results = Enum.map(result, fn item ->

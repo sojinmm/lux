@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyNewAddressLens
+  alias Lux.Lenses.Etherscan.DailyNewAddress
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       end)
 
       # Call the lens
-      result = DailyNewAddressLens.focus(params)
+      result = DailyNewAddress.focus(params)
 
       # Verify the result
       assert {:ok, %{result: new_address_data, daily_new_address: new_address_data}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       end)
 
       # Call the lens
-      result = DailyNewAddressLens.focus(params)
+      result = DailyNewAddress.focus(params)
 
       # Verify the result
       assert {:ok, %{result: new_address_data}} = result
@@ -152,7 +152,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       end)
 
       # Call the lens
-      result = DailyNewAddressLens.focus(params)
+      result = DailyNewAddress.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       end)
 
       # Call the lens
-      result = DailyNewAddressLens.focus(params)
+      result = DailyNewAddress.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -208,7 +208,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       end)
 
       # Call the lens
-      result = DailyNewAddressLens.focus(params)
+      result = DailyNewAddress.focus(params)
 
       # Verify the result
       assert {:ok, %{result: new_address_data, daily_new_address: new_address_data}} = result
@@ -226,7 +226,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       }
 
       # Call the function
-      result = DailyNewAddressLens.before_focus(params)
+      result = DailyNewAddress.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       }
 
       # Call the function
-      result = DailyNewAddressLens.before_focus(params)
+      result = DailyNewAddress.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       }
 
       # Call the function
-      result = DailyNewAddressLens.after_focus(response)
+      result = DailyNewAddress.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: new_address_data, daily_new_address: new_address_data}} = result
@@ -298,7 +298,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       }
 
       # Call the function
-      result = DailyNewAddressLens.after_focus(response)
+      result = DailyNewAddress.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: new_address_data, daily_new_address: new_address_data}} = result
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       }
 
       # Call the function
-      result = DailyNewAddressLens.after_focus(response)
+      result = DailyNewAddress.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -329,7 +329,7 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       }
 
       # Call the function
-      result = DailyNewAddressLens.after_focus(response)
+      result = DailyNewAddress.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

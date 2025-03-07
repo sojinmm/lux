@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenErc1155TxLens do
+defmodule Lux.Lenses.Etherscan.TokenErc1155Tx do
   @moduledoc """
   Lens for fetching ERC-1155 (Multi Token Standard) token transfer events from the Etherscan API.
 
@@ -11,23 +11,23 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLens do
 
   ```elixir
   # Get ERC-1155 transfers for an address
-  Lux.Lenses.Etherscan.TokenErc1155TxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenErc1155Tx.focus(%{
     address: "0x83f564d180b58ad9a02a449105568189ee7de8cb"
   })
 
   # Get ERC-1155 transfers for a token contract
-  Lux.Lenses.Etherscan.TokenErc1155TxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenErc1155Tx.focus(%{
     contractaddress: "0x76be3b62873462d2142405439777e971754e8e77"
   })
 
   # Get ERC-1155 transfers for an address filtered by a token contract
-  Lux.Lenses.Etherscan.TokenErc1155TxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenErc1155Tx.focus(%{
     address: "0x83f564d180b58ad9a02a449105568189ee7de8cb",
     contractaddress: "0x76be3b62873462d2142405439777e971754e8e77"
   })
 
   # With additional parameters
-  Lux.Lenses.Etherscan.TokenErc1155TxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenErc1155Tx.focus(%{
     address: "0x83f564d180b58ad9a02a449105568189ee7de8cb",
     contractaddress: "0x76be3b62873462d2142405439777e971754e8e77",
     chainid: 1,
@@ -40,7 +40,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ERC-1155 Token Transfer Events API",
@@ -50,7 +50,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -131,6 +131,6 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

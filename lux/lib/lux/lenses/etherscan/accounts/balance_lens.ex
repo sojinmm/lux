@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BalanceLens do
+defmodule Lux.Lenses.Etherscan.Balance do
   @moduledoc """
   Lens for fetching ETH balance for an Ethereum address from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.BalanceLens do
 
   ```elixir
   # Get ETH balance for an address (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.BalanceLens.focus(%{
+  Lux.Lenses.Etherscan.Balance.focus(%{
     address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
   })
 
   # Get ETH balance for an address on a specific chain (e.g., 137 for Polygon)
-  Lux.Lenses.Etherscan.BalanceLens.focus(%{
+  Lux.Lenses.Etherscan.Balance.focus(%{
     address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
     chainid: 137
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ETH Balance API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.BalanceLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -68,6 +68,6 @@ defmodule Lux.Lenses.Etherscan.BalanceLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

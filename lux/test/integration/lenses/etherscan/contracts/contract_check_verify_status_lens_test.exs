@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens
+  alias Lux.Lenses.Etherscan.ContractCheckVerifyStatus
 
   # Example GUID from the documentation
   @example_guid "x3ryqcqr1zdknhfhkimqmizlcqpxncqc6nrvp3pgrcpfsqedqi"
@@ -43,7 +43,7 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   test "can check verification status with example GUID" do
     # Note: This test might fail if the example GUID is no longer valid
     # In that case, we'll need to update the test with a new GUID
-    result = ContractCheckVerifyStatusLens.focus(%{
+    result = ContractCheckVerifyStatus.focus(%{
       guid: @example_guid,
       chainid: 1
     })
@@ -75,7 +75,7 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   end
 
   test "returns error for invalid GUID" do
-    result = ContractCheckVerifyStatusLens.focus(%{
+    result = ContractCheckVerifyStatus.focus(%{
       guid: @invalid_guid,
       chainid: 1
     })

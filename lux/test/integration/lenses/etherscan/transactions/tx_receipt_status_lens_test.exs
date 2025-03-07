@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TxReceiptStatusLens
+  alias Lux.Lenses.Etherscan.TxReceiptStatus
 
   # Example successful transaction hash
   @successful_tx "0x513c1ba0bebf66436b5fed86ab668452b7805593c05073eb2d51d3a52f480a76"
@@ -39,7 +39,7 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
 
   test "can check receipt status for a successful transaction" do
     assert {:ok, %{result: %{status: status, is_success: is_success}}} =
-             TxReceiptStatusLens.focus(%{
+             TxReceiptStatus.focus(%{
                txhash: @successful_tx,
                chainid: 1
              })
@@ -55,7 +55,7 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
   test "can check receipt status for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on whether the transaction exists on that chain
-    result = TxReceiptStatusLens.focus(%{
+    result = TxReceiptStatus.focus(%{
       txhash: @successful_tx,
       chainid: 137 # Polygon
     })
@@ -74,7 +74,7 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
 
   test "returns appropriate status for invalid transaction hash" do
     # Using an invalid transaction hash format
-    result = TxReceiptStatusLens.focus(%{
+    result = TxReceiptStatus.focus(%{
       txhash: "0xinvalid",
       chainid: 1
     })

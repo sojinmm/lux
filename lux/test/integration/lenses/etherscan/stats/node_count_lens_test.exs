@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.NodeCountLens
+  alias Lux.Lenses.Etherscan.NodeCount
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -34,7 +34,7 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
   end
 
   test "can fetch node count information" do
-    result = NodeCountLens.focus(%{
+    result = NodeCount.focus(%{
       chainid: 1
     })
 
@@ -96,7 +96,7 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
 
   test "requires chainid parameter for v2 API" do
     # The v2 API requires the chainid parameter
-    result = NodeCountLens.focus(%{})
+    result = NodeCount.focus(%{})
 
     case result do
       {:error, %{message: "NOTOK", result: error_message}} ->
@@ -112,7 +112,7 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
   test "can fetch node count for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on the chain
-    result = NodeCountLens.focus(%{
+    result = NodeCount.focus(%{
       chainid: 137 # Polygon
     })
 

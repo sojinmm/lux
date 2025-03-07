@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.NodeCountLens do
+defmodule Lux.Lenses.Etherscan.NodeCount do
   @moduledoc """
   Lens for fetching the total number of discoverable Ethereum nodes from the Etherscan API.
 
@@ -6,16 +6,16 @@ defmodule Lux.Lenses.Etherscan.NodeCountLens do
 
   ```elixir
   # Get the total number of Ethereum nodes (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.NodeCountLens.focus(%{})
+  Lux.Lenses.Etherscan.NodeCount.focus(%{})
 
   # Get the total number of Ethereum nodes for a specific chain
-  Lux.Lenses.Etherscan.NodeCountLens.focus(%{
+  Lux.Lenses.Etherscan.NodeCount.focus(%{
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Node Count API",
@@ -25,7 +25,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -54,7 +54,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Process the result map and convert string values to integers
         processed_result = %{

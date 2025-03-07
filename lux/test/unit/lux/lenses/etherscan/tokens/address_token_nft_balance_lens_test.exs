@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens
+  alias Lux.Lenses.Etherscan.AddressTokenNFTBalance
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTBalanceLens.focus(params)
+      result = AddressTokenNFTBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: nft_balances, nft_balances: nft_balances}} = result
@@ -119,7 +119,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTBalanceLens.focus(params)
+      result = AddressTokenNFTBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: nft_balances}} = result
@@ -144,7 +144,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTBalanceLens.focus(params)
+      result = AddressTokenNFTBalance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -168,7 +168,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTBalanceLens.focus(params)
+      result = AddressTokenNFTBalance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -192,7 +192,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTBalanceLens.focus(params)
+      result = AddressTokenNFTBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: nft_balances, nft_balances: nft_balances}} = result
@@ -209,7 +209,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTBalanceLens.before_focus(params)
+      result = AddressTokenNFTBalance.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -230,7 +230,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTBalanceLens.before_focus(params)
+      result = AddressTokenNFTBalance.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -267,7 +267,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTBalanceLens.after_focus(response)
+      result = AddressTokenNFTBalance.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: nft_balances, nft_balances: nft_balances}} = result
@@ -297,7 +297,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTBalanceLens.after_focus(response)
+      result = AddressTokenNFTBalance.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: nft_balances, nft_balances: nft_balances}} = result
@@ -313,7 +313,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTBalanceLens.after_focus(response)
+      result = AddressTokenNFTBalance.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -328,7 +328,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTBalanceLens.after_focus(response)
+      result = AddressTokenNFTBalance.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

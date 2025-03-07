@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyNetworkUtilizationLens
+  alias Lux.Lenses.Etherscan.DailyNetworkUtilization
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       end)
 
       # Call the lens
-      result = DailyNetworkUtilizationLens.focus(params)
+      result = DailyNetworkUtilization.focus(params)
 
       # Verify the result
       assert {:ok, %{result: utilization_data, daily_network_utilization: utilization_data}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       end)
 
       # Call the lens
-      result = DailyNetworkUtilizationLens.focus(params)
+      result = DailyNetworkUtilization.focus(params)
 
       # Verify the result
       assert {:ok, %{result: utilization_data}} = result
@@ -152,7 +152,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       end)
 
       # Call the lens
-      result = DailyNetworkUtilizationLens.focus(params)
+      result = DailyNetworkUtilization.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       end)
 
       # Call the lens
-      result = DailyNetworkUtilizationLens.focus(params)
+      result = DailyNetworkUtilization.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -208,7 +208,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       end)
 
       # Call the lens
-      result = DailyNetworkUtilizationLens.focus(params)
+      result = DailyNetworkUtilization.focus(params)
 
       # Verify the result
       assert {:ok, %{result: utilization_data, daily_network_utilization: utilization_data}} = result
@@ -226,7 +226,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       }
 
       # Call the function
-      result = DailyNetworkUtilizationLens.before_focus(params)
+      result = DailyNetworkUtilization.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       }
 
       # Call the function
-      result = DailyNetworkUtilizationLens.before_focus(params)
+      result = DailyNetworkUtilization.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       }
 
       # Call the function
-      result = DailyNetworkUtilizationLens.after_focus(response)
+      result = DailyNetworkUtilization.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: utilization_data, daily_network_utilization: utilization_data}} = result
@@ -298,7 +298,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       }
 
       # Call the function
-      result = DailyNetworkUtilizationLens.after_focus(response)
+      result = DailyNetworkUtilization.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: utilization_data, daily_network_utilization: utilization_data}} = result
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       }
 
       # Call the function
-      result = DailyNetworkUtilizationLens.after_focus(response)
+      result = DailyNetworkUtilization.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -329,7 +329,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLensTest do
       }
 
       # Call the function
-      result = DailyNetworkUtilizationLens.after_focus(response)
+      result = DailyNetworkUtilization.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

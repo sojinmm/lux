@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenErc1155TxLens
+  alias Lux.Lenses.Etherscan.TokenErc1155Tx
 
   setup do
     # Set up test API key in the configuration
@@ -81,7 +81,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       end)
 
       # Call the lens
-      result = TokenErc1155TxLens.focus(params)
+      result = TokenErc1155Tx.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -111,7 +111,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       end)
 
       # Call the lens
-      result = TokenErc1155TxLens.focus(params)
+      result = TokenErc1155Tx.focus(params)
 
       # Verify the result
       assert {:error, %{message: "No transactions found", result: "No ERC-1155 transfers found"}} = result
@@ -175,7 +175,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       end)
 
       # Call the lens
-      result = TokenErc1155TxLens.focus(params)
+      result = TokenErc1155Tx.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -240,7 +240,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       end)
 
       # Call the lens
-      result = TokenErc1155TxLens.focus(params)
+      result = TokenErc1155Tx.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -269,7 +269,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       end)
 
       # Call the lens
-      result = TokenErc1155TxLens.focus(params)
+      result = TokenErc1155Tx.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -293,7 +293,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       end)
 
       # Call the lens
-      result = TokenErc1155TxLens.focus(params)
+      result = TokenErc1155Tx.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       }
 
       # Call the function
-      result = TokenErc1155TxLens.before_focus(params)
+      result = TokenErc1155Tx.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -336,7 +336,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       }
 
       # Call the function
-      result = TokenErc1155TxLens.before_focus(params)
+      result = TokenErc1155Tx.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -354,7 +354,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       }
 
       # Call the function
-      result = TokenErc1155TxLens.before_focus(params)
+      result = TokenErc1155Tx.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -375,7 +375,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
 
       # Expect an error to be raised
       assert_raise ArgumentError, fn ->
-        TokenErc1155TxLens.before_focus(params)
+        TokenErc1155Tx.before_focus(params)
       end
     end
   end
@@ -404,7 +404,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       }
 
       # Call the function
-      result = TokenErc1155TxLens.after_focus(response)
+      result = TokenErc1155Tx.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -423,7 +423,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155TxLensTest do
       }
 
       # Call the function
-      result = TokenErc1155TxLens.after_focus(response)
+      result = TokenErc1155Tx.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

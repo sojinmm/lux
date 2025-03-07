@@ -2,8 +2,8 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockTxCountLens
-  alias Lux.Lenses.Etherscan.BlockByTimestampLens
+  alias Lux.Lenses.Etherscan.BlockTxCount
+  alias Lux.Lenses.Etherscan.BlockByTimestamp
 
   # Block number to check transaction count (from the example in the documentation)
   @block_number 2165403
@@ -39,7 +39,7 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
   test "can fetch transaction count for a specific block" do
     assert {:ok, %{result: result}} =
-             BlockTxCountLens.focus(%{
+             BlockTxCount.focus(%{
                blockno: @block_number,
                chainid: 1
              })
@@ -107,7 +107,7 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
     timestamp = DateTime.utc_now() |> DateTime.add(-5 * 60, :second) |> DateTime.to_unix()
 
     {:ok, %{result: recent_block_result}} =
-      BlockByTimestampLens.focus(%{
+      BlockByTimestamp.focus(%{
         timestamp: timestamp,
         closest: "before",
         chainid: 1
@@ -117,7 +117,7 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
     recent_block = String.to_integer(recent_block_result.block_number)
 
     assert {:ok, %{result: result}} =
-             BlockTxCountLens.focus(%{
+             BlockTxCount.focus(%{
                blockno: recent_block,
                chainid: 1
              })
@@ -137,7 +137,7 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
   test "raises error when trying to use with non-Ethereum chain" do
     # This endpoint is only available on Ethereum mainnet (chainid 1)
     assert_raise RuntimeError, "This endpoint is only available on Etherscan (chainId 1)", fn ->
-      BlockTxCountLens.focus(%{
+      BlockTxCount.focus(%{
         blockno: @block_number,
         chainid: 137  # Polygon
       })

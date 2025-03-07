@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155TxLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenErc1155TxLens
+  alias Lux.Lenses.Etherscan.TokenErc1155Tx
 
   # Address with ERC-1155 token transfers
   @address "0x83f564d180b58ad9a02a449105568189ee7de8cb"
@@ -40,7 +40,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155TxLensTest do
 
   test "can fetch ERC-1155 transfers for an address" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155TxLens.focus(%{
+             TokenErc1155Tx.focus(%{
                address: @address,
                chainid: 1
              })
@@ -70,7 +70,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155TxLensTest do
 
   test "can fetch ERC-1155 transfers for a contract address" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155TxLens.focus(%{
+             TokenErc1155Tx.focus(%{
                contractaddress: @contract_address,
                chainid: 1
              })
@@ -89,7 +89,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155TxLensTest do
 
   test "can fetch ERC-1155 transfers for an address filtered by contract" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155TxLens.focus(%{
+             TokenErc1155Tx.focus(%{
                address: @address,
                contractaddress: @contract_address,
                chainid: 1
@@ -112,7 +112,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155TxLensTest do
 
   test "can fetch ERC-1155 transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155TxLens.focus(%{
+             TokenErc1155Tx.focus(%{
                address: @address,
                chainid: 1,
                page: 1,

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TxStatusLens do
+defmodule Lux.Lenses.Etherscan.TxStatus do
   @moduledoc """
   Lens for checking the execution status of a contract from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.TxStatusLens do
 
   ```elixir
   # Check contract execution status (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.TxStatusLens.focus(%{
+  Lux.Lenses.Etherscan.TxStatus.focus(%{
     txhash: "0x15f8e5ea1079d9a0bb04a4c58ae5fe7654b5b2b4463375ff7ffb490aa0032f3a"
   })
 
   # Check contract execution status on a specific chain
-  Lux.Lenses.Etherscan.TxStatusLens.focus(%{
+  Lux.Lenses.Etherscan.TxStatus.focus(%{
     txhash: "0x15f8e5ea1079d9a0bb04a4c58ae5fe7654b5b2b4463375ff7ffb490aa0032f3a",
     chainid: 137
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Contract Execution Status API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -63,7 +63,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Extract the status and error message if any
         status = Map.get(result, "isError", "0")

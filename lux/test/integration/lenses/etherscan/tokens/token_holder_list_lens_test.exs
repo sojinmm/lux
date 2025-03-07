@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TokenHolderListLens
+  alias Lux.Lenses.Etherscan.TokenHolderList
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -45,7 +45,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = TokenHolderListLens.focus(%{
+    result = TokenHolderList.focus(%{
       contractaddress: @token_contract,
       chainid: 1
     })
@@ -60,11 +60,11 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
   test "can fetch token holder list" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenHolderListLens")
+      IO.puts("Skipping test: Pro API key required for TokenHolderList")
       :ok
     else
       assert {:ok, %{result: holders, token_holders: holders}} =
-               TokenHolderListLens.focus(%{
+               TokenHolderList.focus(%{
                  contractaddress: @token_contract,
                  chainid: 1
                })
@@ -90,14 +90,14 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
   test "can fetch token holder list with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenHolderListLens")
+      IO.puts("Skipping test: Pro API key required for TokenHolderList")
       :ok
     else
       # Using a small offset to test pagination
       offset = 5
 
       assert {:ok, %{result: holders}} =
-               TokenHolderListLens.focus(%{
+               TokenHolderList.focus(%{
                  contractaddress: @token_contract,
                  page: 1,
                  offset: offset,
@@ -115,7 +115,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = TokenHolderListLens.focus(%{
+    result = TokenHolderList.focus(%{
       contractaddress: "0xinvalid",
       chainid: 1
     })

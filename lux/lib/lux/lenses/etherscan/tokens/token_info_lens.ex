@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenInfoLens do
+defmodule Lux.Lenses.Etherscan.TokenInfo do
   @moduledoc """
   Lens for fetching project information and social media links of an ERC20/ERC721/ERC1155 token from the Etherscan API.
 
@@ -8,19 +8,19 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLens do
 
   ```elixir
   # Get token info (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.TokenInfoLens.focus(%{
+  Lux.Lenses.Etherscan.TokenInfo.focus(%{
     contractaddress: "0x0e3a2a1f2146d86a604adc220b4967a898d7fe07"
   })
 
   # Get token info on a specific chain
-  Lux.Lenses.Etherscan.TokenInfoLens.focus(%{
+  Lux.Lenses.Etherscan.TokenInfo.focus(%{
     contractaddress: "0x0e3a2a1f2146d86a604adc220b4967a898d7fe07",
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Token Info API",
@@ -30,7 +30,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -64,7 +64,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the token info
         processed_results = Enum.map(result, fn token ->

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens do
+defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatus do
   @moduledoc """
   Lens for checking the status of a contract verification request from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens do
 
   ```elixir
   # Check the status of a contract verification request
-  Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens.focus(%{
+  Lux.Lenses.Etherscan.ContractCheckVerifyStatus.focus(%{
     guid: "x3ryqcqr1zdknhfhkimqmizlcqpxncqc6nrvp3pgrcpfsqedqi"
   })
 
   # Check the status of a contract verification request on a specific chain
-  Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens.focus(%{
+  Lux.Lenses.Etherscan.ContractCheckVerifyStatus.focus(%{
     guid: "x3ryqcqr1zdknhfhkimqmizlcqpxncqc6nrvp3pgrcpfsqedqi",
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Contract Verification Status API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -62,7 +62,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_binary(result) ->
         # Determine the status based on the result string
         status = cond do

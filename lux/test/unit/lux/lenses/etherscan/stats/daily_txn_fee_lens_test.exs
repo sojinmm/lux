@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyTxnFeeLens
+  alias Lux.Lenses.Etherscan.DailyTxnFee
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       end)
 
       # Call the lens
-      result = DailyTxnFeeLens.focus(params)
+      result = DailyTxnFee.focus(params)
 
       # Verify the result
       assert {:ok, %{result: txn_fee_data, daily_txn_fee: txn_fee_data}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       end)
 
       # Call the lens
-      result = DailyTxnFeeLens.focus(params)
+      result = DailyTxnFee.focus(params)
 
       # Verify the result
       assert {:ok, %{result: txn_fee_data}} = result
@@ -152,7 +152,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       end)
 
       # Call the lens
-      result = DailyTxnFeeLens.focus(params)
+      result = DailyTxnFee.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       end)
 
       # Call the lens
-      result = DailyTxnFeeLens.focus(params)
+      result = DailyTxnFee.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -208,7 +208,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       end)
 
       # Call the lens
-      result = DailyTxnFeeLens.focus(params)
+      result = DailyTxnFee.focus(params)
 
       # Verify the result
       assert {:ok, %{result: txn_fee_data, daily_txn_fee: txn_fee_data}} = result
@@ -226,7 +226,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       }
 
       # Call the function
-      result = DailyTxnFeeLens.before_focus(params)
+      result = DailyTxnFee.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       }
 
       # Call the function
-      result = DailyTxnFeeLens.before_focus(params)
+      result = DailyTxnFee.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       }
 
       # Call the function
-      result = DailyTxnFeeLens.after_focus(response)
+      result = DailyTxnFee.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: txn_fee_data, daily_txn_fee: txn_fee_data}} = result
@@ -298,7 +298,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       }
 
       # Call the function
-      result = DailyTxnFeeLens.after_focus(response)
+      result = DailyTxnFee.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: txn_fee_data, daily_txn_fee: txn_fee_data}} = result
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       }
 
       # Call the function
-      result = DailyTxnFeeLens.after_focus(response)
+      result = DailyTxnFee.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -329,7 +329,7 @@ defmodule Lux.Lenses.Etherscan.DailyTxnFeeLensTest do
       }
 
       # Call the function
-      result = DailyTxnFeeLens.after_focus(response)
+      result = DailyTxnFee.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

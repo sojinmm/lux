@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenNftTxLens
+  alias Lux.Lenses.Etherscan.TokenNftTx
 
   # Address with NFT transfers
   @address "0x6975be450864c02b4613023c2152ee0743572325"
@@ -40,7 +40,7 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
 
   test "can fetch NFT transfers for an address" do
     assert {:ok, %{result: transfers}} =
-             TokenNftTxLens.focus(%{
+             TokenNftTx.focus(%{
                address: @address,
                chainid: 1
              })
@@ -71,7 +71,7 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
 
   test "can fetch NFT transfers for a contract address" do
     assert {:ok, %{result: transfers}} =
-             TokenNftTxLens.focus(%{
+             TokenNftTx.focus(%{
                contractaddress: @contract_address,
                chainid: 1
              })
@@ -90,7 +90,7 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
 
   test "can fetch NFT transfers for an address filtered by contract" do
     assert {:ok, %{result: transfers}} =
-             TokenNftTxLens.focus(%{
+             TokenNftTx.focus(%{
                address: @address,
                contractaddress: @contract_address,
                chainid: 1
@@ -113,7 +113,7 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
 
   test "can fetch NFT transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenNftTxLens.focus(%{
+             TokenNftTx.focus(%{
                address: @address,
                chainid: 1,
                page: 1,

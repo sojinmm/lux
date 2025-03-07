@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLens do
+defmodule Lux.Lenses.Etherscan.TokenSupplyHistory do
   @moduledoc """
   Lens for fetching the amount of an ERC-20 token in circulation at a certain block height from the Etherscan API.
 
@@ -8,13 +8,13 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLens do
 
   ```elixir
   # Get historical ERC20 token total supply (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.TokenSupplyHistoryLens.focus(%{
+  Lux.Lenses.Etherscan.TokenSupplyHistory.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
     blockno: 8000000
   })
 
   # Get historical ERC20 token total supply on a specific chain
-  Lux.Lenses.Etherscan.TokenSupplyHistoryLens.focus(%{
+  Lux.Lenses.Etherscan.TokenSupplyHistory.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
     blockno: 8000000,
     chainid: 1
@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Historical ERC20 Token Total Supply API",
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -70,7 +70,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} ->
         # Return a structured response with the historical token supply
         {:ok, %{

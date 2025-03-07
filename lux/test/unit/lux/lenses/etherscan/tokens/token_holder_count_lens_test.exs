@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenHolderCountLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenHolderCountLens
+  alias Lux.Lenses.Etherscan.TokenHolderCount
 
   setup do
     # Set up test API key in the configuration
@@ -48,7 +48,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLensTest do
       end)
 
       # Call the lens
-      result = TokenHolderCountLens.focus(params)
+      result = TokenHolderCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: "12345", holder_count: "12345"}} = result
@@ -72,7 +72,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLensTest do
       end)
 
       # Call the lens
-      result = TokenHolderCountLens.focus(params)
+      result = TokenHolderCount.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result
@@ -88,7 +88,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLensTest do
       }
 
       # Call the function
-      result = TokenHolderCountLens.before_focus(params)
+      result = TokenHolderCount.before_focus(params)
 
       # Verify the result
       assert result.module == "token"
@@ -108,7 +108,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLensTest do
       }
 
       # Call the function
-      result = TokenHolderCountLens.after_focus(response)
+      result = TokenHolderCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: "12345", holder_count: "12345"}} = result
@@ -123,7 +123,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLensTest do
       }
 
       # Call the function
-      result = TokenHolderCountLens.after_focus(response)
+      result = TokenHolderCount.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result

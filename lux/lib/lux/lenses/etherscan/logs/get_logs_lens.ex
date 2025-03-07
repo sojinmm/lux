@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.GetLogsLens do
+defmodule Lux.Lenses.Etherscan.GetLogs do
   @moduledoc """
   Lens for fetching event logs from an address with optional filtering by block range from the Etherscan API.
 
@@ -6,14 +6,14 @@ defmodule Lux.Lenses.Etherscan.GetLogsLens do
 
   ```elixir
   # Get event logs for an address with block range (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.GetLogsLens.focus(%{
+  Lux.Lenses.Etherscan.GetLogs.focus(%{
     address: "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
     fromBlock: 12878196,
     toBlock: 12878196
   })
 
   # Get event logs for an address with block range and pagination
-  Lux.Lenses.Etherscan.GetLogsLens.focus(%{
+  Lux.Lenses.Etherscan.GetLogs.focus(%{
     address: "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
     fromBlock: 12878196,
     toBlock: 12878196,
@@ -23,7 +23,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLens do
   })
 
   # Get event logs filtered by topics
-  Lux.Lenses.Etherscan.GetLogsLens.focus(%{
+  Lux.Lenses.Etherscan.GetLogs.focus(%{
     fromBlock: 12878196,
     toBlock: 12879196,
     topic0: "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLens do
   })
 
   # Get event logs by address filtered by topics
-  Lux.Lenses.Etherscan.GetLogsLens.focus(%{
+  Lux.Lenses.Etherscan.GetLogs.focus(%{
     address: "0x59728544b08ab483533076417fbbb2fd0b17ce3a",
     fromBlock: 15073139,
     toBlock: 15074139,
@@ -43,7 +43,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Event Logs API",
@@ -53,7 +53,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -151,7 +151,7 @@ defmodule Lux.Lenses.Etherscan.GetLogsLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of event logs
         processed_results = Enum.map(result, fn log ->

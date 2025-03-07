@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockRewardLens
+  alias Lux.Lenses.Etherscan.BlockReward
 
   setup do
     # Set up test API key in the configuration
@@ -60,7 +60,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       end)
 
       # Call the lens
-      result = BlockRewardLens.focus(params)
+      result = BlockReward.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -101,7 +101,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       end)
 
       # Call the lens
-      result = BlockRewardLens.focus(params)
+      result = BlockReward.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -130,7 +130,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       end)
 
       # Call the lens
-      result = BlockRewardLens.focus(params)
+      result = BlockReward.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid block number"}} = result
@@ -146,7 +146,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       }
 
       # Call the function
-      result = BlockRewardLens.before_focus(params)
+      result = BlockReward.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -163,7 +163,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       }
 
       # Call the function
-      result = BlockRewardLens.before_focus(params)
+      result = BlockReward.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -195,7 +195,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       }
 
       # Call the function
-      result = BlockRewardLens.after_focus(response)
+      result = BlockReward.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -227,7 +227,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       }
 
       # Call the function
-      result = BlockRewardLens.after_focus(response)
+      result = BlockReward.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
       }
 
       # Call the function
-      result = BlockRewardLens.after_focus(response)
+      result = BlockReward.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid block number"}} = result

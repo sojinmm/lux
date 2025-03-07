@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BlockTxCountLens do
+defmodule Lux.Lenses.Etherscan.BlockTxCount do
   @moduledoc """
   Lens for fetching the number of transactions in a specified block from the Etherscan API.
 
@@ -8,13 +8,13 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLens do
 
   ```elixir
   # Get transaction count for a specific block
-  Lux.Lenses.Etherscan.BlockTxCountLens.focus(%{
+  Lux.Lenses.Etherscan.BlockTxCount.focus(%{
     blockno: 2165403
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Block Transactions Count API",
@@ -24,7 +24,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -69,7 +69,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Return a structured response with the transaction counts
         {:ok, %{

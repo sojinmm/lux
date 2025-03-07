@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyAvgNetDifficultyLens
+  alias Lux.Lenses.Etherscan.DailyAvgNetDifficulty
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgNetDifficultyLens.focus(params)
+      result = DailyAvgNetDifficulty.focus(params)
 
       # Verify the result
       assert {:ok, %{result: difficulty_data, daily_avg_net_difficulty: difficulty_data}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgNetDifficultyLens.focus(params)
+      result = DailyAvgNetDifficulty.focus(params)
 
       # Verify the result
       assert {:ok, %{result: difficulty_data}} = result
@@ -152,7 +152,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgNetDifficultyLens.focus(params)
+      result = DailyAvgNetDifficulty.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgNetDifficultyLens.focus(params)
+      result = DailyAvgNetDifficulty.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -208,7 +208,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgNetDifficultyLens.focus(params)
+      result = DailyAvgNetDifficulty.focus(params)
 
       # Verify the result
       assert {:ok, %{result: difficulty_data, daily_avg_net_difficulty: difficulty_data}} = result
@@ -226,7 +226,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       }
 
       # Call the function
-      result = DailyAvgNetDifficultyLens.before_focus(params)
+      result = DailyAvgNetDifficulty.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       }
 
       # Call the function
-      result = DailyAvgNetDifficultyLens.before_focus(params)
+      result = DailyAvgNetDifficulty.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       }
 
       # Call the function
-      result = DailyAvgNetDifficultyLens.after_focus(response)
+      result = DailyAvgNetDifficulty.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: difficulty_data, daily_avg_net_difficulty: difficulty_data}} = result
@@ -298,7 +298,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       }
 
       # Call the function
-      result = DailyAvgNetDifficultyLens.after_focus(response)
+      result = DailyAvgNetDifficulty.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: difficulty_data, daily_avg_net_difficulty: difficulty_data}} = result
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       }
 
       # Call the function
-      result = DailyAvgNetDifficultyLens.after_focus(response)
+      result = DailyAvgNetDifficulty.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -329,7 +329,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       }
 
       # Call the function
-      result = DailyAvgNetDifficultyLens.after_focus(response)
+      result = DailyAvgNetDifficulty.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.GasOracleLens
+  alias Lux.Lenses.Etherscan.GasOracle
 
   setup do
     # Set up test API key in the configuration
@@ -53,7 +53,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       end)
 
       # Call the lens
-      result = GasOracleLens.focus(params)
+      result = GasOracle.focus(params)
 
       # Verify the result
       assert {:ok, %{result: gas_oracle, gas_oracle: gas_oracle}} = result
@@ -92,7 +92,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       end)
 
       # Call the lens
-      result = GasOracleLens.focus(params)
+      result = GasOracle.focus(params)
 
       # Verify the result
       assert {:ok, %{result: gas_oracle}} = result
@@ -116,7 +116,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       end)
 
       # Call the lens
-      result = GasOracleLens.focus(params)
+      result = GasOracle.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result
@@ -139,7 +139,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       end)
 
       # Call the lens
-      result = GasOracleLens.focus(params)
+      result = GasOracle.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -154,7 +154,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       }
 
       # Call the function
-      result = GasOracleLens.before_focus(params)
+      result = GasOracle.before_focus(params)
 
       # Verify the result
       assert result.module == "gastracker"
@@ -167,7 +167,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       params = %{}
 
       # Call the function
-      result = GasOracleLens.before_focus(params)
+      result = GasOracle.before_focus(params)
 
       # Verify the result
       assert result.module == "gastracker"
@@ -192,7 +192,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       }
 
       # Call the function
-      result = GasOracleLens.after_focus(response)
+      result = GasOracle.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: gas_oracle, gas_oracle: gas_oracle}} = result
@@ -220,7 +220,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       }
 
       # Call the function
-      result = GasOracleLens.after_focus(response)
+      result = GasOracle.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: gas_oracle}} = result
@@ -241,7 +241,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       }
 
       # Call the function
-      result = GasOracleLens.after_focus(response)
+      result = GasOracle.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result

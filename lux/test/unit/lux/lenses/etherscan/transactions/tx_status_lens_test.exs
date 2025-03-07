@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TxStatusLens
+  alias Lux.Lenses.Etherscan.TxStatus
 
   setup do
     # Set up test API key in the configuration
@@ -51,7 +51,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       end)
 
       # Call the lens
-      result = TxStatusLens.focus(params)
+      result = TxStatus.focus(params)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -81,7 +81,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       end)
 
       # Call the lens
-      result = TxStatusLens.focus(params)
+      result = TxStatus.focus(params)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -108,7 +108,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       end)
 
       # Call the lens
-      result = TxStatusLens.focus(params)
+      result = TxStatus.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid transaction hash format"}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       }
 
       # Call the function
-      result = TxStatusLens.before_focus(params)
+      result = TxStatus.before_focus(params)
 
       # Verify the result
       assert result.module == "transaction"
@@ -147,7 +147,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       }
 
       # Call the function
-      result = TxStatusLens.after_focus(response)
+      result = TxStatus.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -168,7 +168,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       }
 
       # Call the function
-      result = TxStatusLens.after_focus(response)
+      result = TxStatus.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -186,7 +186,7 @@ defmodule Lux.Lenses.Etherscan.TxStatusLensTest do
       }
 
       # Call the function
-      result = TxStatusLens.after_focus(response)
+      result = TxStatus.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid transaction hash format"}} = result

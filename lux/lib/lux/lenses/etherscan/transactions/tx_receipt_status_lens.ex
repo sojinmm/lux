@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TxReceiptStatusLens do
+defmodule Lux.Lenses.Etherscan.TxReceiptStatus do
   @moduledoc """
   Lens for checking the receipt status of a transaction from the Etherscan API.
 
@@ -8,19 +8,19 @@ defmodule Lux.Lenses.Etherscan.TxReceiptStatusLens do
 
   ```elixir
   # Check transaction receipt status (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.TxReceiptStatusLens.focus(%{
+  Lux.Lenses.Etherscan.TxReceiptStatus.focus(%{
     txhash: "0x513c1ba0bebf66436b5fed86ab668452b7805593c05073eb2d51d3a52f480a76"
   })
 
   # Check transaction receipt status on a specific chain
-  Lux.Lenses.Etherscan.TxReceiptStatusLens.focus(%{
+  Lux.Lenses.Etherscan.TxReceiptStatus.focus(%{
     txhash: "0x513c1ba0bebf66436b5fed86ab668452b7805593c05073eb2d51d3a52f480a76",
     chainid: 137
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Transaction Receipt Status API",
@@ -30,7 +30,7 @@ defmodule Lux.Lenses.Etherscan.TxReceiptStatusLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.TxReceiptStatusLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Extract the status
         status = Map.get(result, "status", "0")

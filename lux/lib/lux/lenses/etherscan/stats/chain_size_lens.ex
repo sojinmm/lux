@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.ChainSizeLens do
+defmodule Lux.Lenses.Etherscan.ChainSize do
   @moduledoc """
   Lens for fetching the size of the Ethereum blockchain, in bytes, over a date range from the Etherscan API.
 
@@ -6,13 +6,13 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLens do
 
   ```elixir
   # Get the Ethereum blockchain size for a specific date range with default parameters
-  Lux.Lenses.Etherscan.ChainSizeLens.focus(%{
+  Lux.Lenses.Etherscan.ChainSize.focus(%{
     startdate: "2023-01-01",
     enddate: "2023-01-31"
   })
 
   # Get the Ethereum blockchain size with all parameters specified
-  Lux.Lenses.Etherscan.ChainSizeLens.focus(%{
+  Lux.Lenses.Etherscan.ChainSize.focus(%{
     startdate: "2023-01-01",
     enddate: "2023-01-31",
     clienttype: "geth",
@@ -23,7 +23,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Chain Size API",
@@ -33,7 +33,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -94,7 +94,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of chain size data
         processed_results = Enum.map(result, fn data ->

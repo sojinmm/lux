@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.MinedBlocksLens do
+defmodule Lux.Lenses.Etherscan.MinedBlocks do
   @moduledoc """
   Lens for fetching blocks validated (mined) by an Ethereum address from the Etherscan API.
 
@@ -6,12 +6,12 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLens do
 
   ```elixir
   # Get blocks validated by an address (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.MinedBlocksLens.focus(%{
+  Lux.Lenses.Etherscan.MinedBlocks.focus(%{
     address: "0x9dd134d14d1e65f84b706d6f205cd5b1cd03a46b"
   })
 
   # Get blocks validated by an address with pagination
-  Lux.Lenses.Etherscan.MinedBlocksLens.focus(%{
+  Lux.Lenses.Etherscan.MinedBlocks.focus(%{
     address: "0x9dd134d14d1e65f84b706d6f205cd5b1cd03a46b",
     blocktype: "blocks",
     page: 1,
@@ -19,14 +19,14 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLens do
   })
 
   # Get uncle blocks validated by an address
-  Lux.Lenses.Etherscan.MinedBlocksLens.focus(%{
+  Lux.Lenses.Etherscan.MinedBlocks.focus(%{
     address: "0x9dd134d14d1e65f84b706d6f205cd5b1cd03a46b",
     blocktype: "uncles"
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Mined Blocks API",
@@ -36,7 +36,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -86,6 +86,6 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

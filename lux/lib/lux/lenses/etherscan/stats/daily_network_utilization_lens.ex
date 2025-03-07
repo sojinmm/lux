@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLens do
+defmodule Lux.Lenses.Etherscan.DailyNetworkUtilization do
   @moduledoc """
   Lens for fetching the daily network utilization (gas used / gas limit) from the Etherscan API.
 
@@ -6,7 +6,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLens do
 
   Fetch daily network utilization for a specific date range in ascending order:
 
-      iex> Lux.Lenses.Etherscan.DailyNetworkUtilizationLens.focus(%{
+      iex> Lux.Lenses.Etherscan.DailyNetworkUtilization.focus(%{
       ...>   startdate: "2023-01-01",
       ...>   enddate: "2023-01-05",
       ...>   sort: "asc",
@@ -27,7 +27,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLens do
 
   Fetch daily network utilization for a specific date range in descending order:
 
-      iex> Lux.Lenses.Etherscan.DailyNetworkUtilizationLens.focus(%{
+      iex> Lux.Lenses.Etherscan.DailyNetworkUtilization.focus(%{
       ...>   startdate: "2023-01-01",
       ...>   enddate: "2023-01-05",
       ...>   sort: "desc",
@@ -47,7 +47,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLens do
       }}
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     url: "https://api.etherscan.io/v2/api",
@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLens do
     headers: [{"Content-Type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: [
       chainid: [type: :integer, required: true],
@@ -79,7 +79,7 @@ defmodule Lux.Lenses.Etherscan.DailyNetworkUtilizationLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         network_utilization_data =
           Enum.map(result, fn item ->

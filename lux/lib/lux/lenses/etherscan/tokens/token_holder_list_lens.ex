@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenHolderListLens do
+defmodule Lux.Lenses.Etherscan.TokenHolderList do
   @moduledoc """
   Lens for fetching the current ERC20 token holders and number of tokens held from the Etherscan API.
 
@@ -6,12 +6,12 @@ defmodule Lux.Lenses.Etherscan.TokenHolderListLens do
 
   ```elixir
   # Get token holder list (default chainid: 1 for Ethereum, page: 1, offset: 10)
-  Lux.Lenses.Etherscan.TokenHolderListLens.focus(%{
+  Lux.Lenses.Etherscan.TokenHolderList.focus(%{
     contractaddress: "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d"
   })
 
   # Get token holder list with pagination
-  Lux.Lenses.Etherscan.TokenHolderListLens.focus(%{
+  Lux.Lenses.Etherscan.TokenHolderList.focus(%{
     contractaddress: "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d",
     page: 1,
     offset: 10,
@@ -20,7 +20,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderListLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Token Holder List API",
@@ -30,7 +30,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderListLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -79,7 +79,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderListLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of token holders
         processed_results = Enum.map(result, fn holder ->

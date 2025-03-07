@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.DailyTxCountLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.DailyTxCountLens
+  alias Lux.Lenses.Etherscan.DailyTxCount
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.DailyTxCountLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyTxCountLens.focus(%{
+    case DailyTxCount.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -58,11 +58,11 @@ defmodule Lux.Integration.Etherscan.DailyTxCountLensTest do
   test "can fetch daily transaction count with required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxCountLens")
+      IO.puts("Skipping test: Pro API key required for DailyTxCount")
       :ok
     else
       assert {:ok, %{result: tx_count_data, daily_tx_count: tx_count_data}} =
-               DailyTxCountLens.focus(%{
+               DailyTxCount.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
@@ -91,11 +91,11 @@ defmodule Lux.Integration.Etherscan.DailyTxCountLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxCountLens")
+      IO.puts("Skipping test: Pro API key required for DailyTxCount")
       :ok
     else
       assert {:ok, %{result: tx_count_data}} =
-               DailyTxCountLens.focus(%{
+               DailyTxCount.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
@@ -137,7 +137,7 @@ defmodule Lux.Integration.Etherscan.DailyTxCountLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyTxCountLens.focus(%{
+    result = DailyTxCount.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -163,11 +163,11 @@ defmodule Lux.Integration.Etherscan.DailyTxCountLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxCountLens")
+      IO.puts("Skipping test: Pro API key required for DailyTxCount")
       :ok
     else
       # Missing startdate and enddate
-      result = DailyTxCountLens.focus(%{
+      result = DailyTxCount.focus(%{
         chainid: 1
       })
 

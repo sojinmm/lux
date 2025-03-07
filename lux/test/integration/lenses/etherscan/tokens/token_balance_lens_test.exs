@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TokenBalanceLens
+  alias Lux.Lenses.Etherscan.TokenBalance
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -48,7 +48,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
   @tag timeout: 120_000
   test "can fetch token balance for an address" do
     assert {:ok, %{result: balance, token_balance: balance}} =
-             TokenBalanceLens.focus(%{
+             TokenBalance.focus(%{
                contractaddress: @token_contract,
                address: @token_holder,
                chainid: 1
@@ -65,7 +65,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
   @tag timeout: 120_000
   test "can specify a different tag (block parameter)" do
     assert {:ok, %{result: _balance}} =
-             TokenBalanceLens.focus(%{
+             TokenBalance.focus(%{
                contractaddress: @token_contract,
                address: @token_holder,
                tag: "latest",
@@ -79,7 +79,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
     random_address = "0x1111111111111111111111111111111111111111"
 
     assert {:ok, %{result: balance}} =
-             TokenBalanceLens.focus(%{
+             TokenBalance.focus(%{
                contractaddress: @token_contract,
                address: random_address,
                chainid: 1
@@ -92,7 +92,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
   @tag timeout: 120_000
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = TokenBalanceLens.focus(%{
+    result = TokenBalance.focus(%{
       contractaddress: "0xinvalid",
       address: @token_holder,
       chainid: 1

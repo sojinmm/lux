@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.GasEstimateLens
+  alias Lux.Lenses.Etherscan.GasEstimate
 
   setup do
     # Set up test API key in the configuration
@@ -48,7 +48,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       end)
 
       # Call the lens
-      result = GasEstimateLens.focus(params)
+      result = GasEstimate.focus(params)
 
       # Verify the result
       assert {:ok, %{result: 15, estimated_seconds: 15}} = result
@@ -72,7 +72,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       end)
 
       # Call the lens
-      result = GasEstimateLens.focus(params)
+      result = GasEstimate.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid gas price"}} = result
@@ -96,7 +96,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       end)
 
       # Call the lens
-      result = GasEstimateLens.focus(params)
+      result = GasEstimate.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -112,7 +112,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       }
 
       # Call the function
-      result = GasEstimateLens.before_focus(params)
+      result = GasEstimate.before_focus(params)
 
       # Verify the result
       assert result.module == "gastracker"
@@ -132,7 +132,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       }
 
       # Call the function
-      result = GasEstimateLens.after_focus(response)
+      result = GasEstimate.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: 15, estimated_seconds: 15}} = result
@@ -147,7 +147,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       }
 
       # Call the function
-      result = GasEstimateLens.after_focus(response)
+      result = GasEstimate.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: "unavailable", estimated_seconds: "unavailable"}} = result
@@ -162,7 +162,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       }
 
       # Call the function
-      result = GasEstimateLens.after_focus(response)
+      result = GasEstimate.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid gas price"}} = result

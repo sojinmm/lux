@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
+defmodule Lux.Lenses.Etherscan.ContractVerifySourceCode do
   @moduledoc """
   Lens for submitting a contract source code to Etherscan for verification.
 
@@ -9,7 +9,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
 
   ```elixir
   # Verify a contract with single file source code
-  Lux.Lenses.Etherscan.ContractVerifySourceCodeLens.focus(%{
+  Lux.Lenses.Etherscan.ContractVerifySourceCode.focus(%{
     chainid: 1,
     contractaddress: "0x123456789012345678901234567890123456789",
     sourceCode: "pragma solidity ^0.8.0; contract MyContract { ... }",
@@ -21,7 +21,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
   })
 
   # Verify a contract with standard JSON input
-  Lux.Lenses.Etherscan.ContractVerifySourceCodeLens.focus(%{
+  Lux.Lenses.Etherscan.ContractVerifySourceCode.focus(%{
     chainid: 1,
     contractaddress: "0x123456789012345678901234567890123456789",
     sourceCode: "{\\"language\\":\\"Solidity\\",\\"sources\\":{\\"contracts/MyContract.sol\\":{\\"content\\":\\"pragma solidity ^0.8.0; contract MyContract { ... }\\"}},\\"settings\\":{\\"optimizer\\":{\\"enabled\\":true,\\"runs\\":200}}}",
@@ -31,7 +31,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
   })
 
   # Verify a contract with constructor arguments
-  Lux.Lenses.Etherscan.ContractVerifySourceCodeLens.focus(%{
+  Lux.Lenses.Etherscan.ContractVerifySourceCode.focus(%{
     chainid: 1,
     contractaddress: "0x123456789012345678901234567890123456789",
     sourceCode: "pragma solidity ^0.8.0; contract MyContract { constructor(string memory name) { ... } }",
@@ -45,7 +45,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Contract Verification API",
@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
     headers: [{"content-type", "application/x-www-form-urlencoded"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -162,7 +162,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: guid}} when is_binary(guid) ->
         # Return a structured response with the GUID
         {:ok, %{result: %{guid: guid, status: "Pending"}}}

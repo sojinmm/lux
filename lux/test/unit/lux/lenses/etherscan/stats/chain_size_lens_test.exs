@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.ChainSizeLens
+  alias Lux.Lenses.Etherscan.ChainSize
 
   setup do
     # Set up test API key in the configuration
@@ -69,7 +69,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       end)
 
       # Call the lens
-      result = ChainSizeLens.focus(params)
+      result = ChainSize.focus(params)
 
       # Verify the result
       assert {:ok, %{result: chain_size_data, chain_size: chain_size_data}} = result
@@ -138,7 +138,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       end)
 
       # Call the lens
-      result = ChainSizeLens.focus(params)
+      result = ChainSize.focus(params)
 
       # Verify the result
       assert {:ok, %{result: chain_size_data}} = result
@@ -166,7 +166,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       end)
 
       # Call the lens
-      result = ChainSizeLens.focus(params)
+      result = ChainSize.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -197,7 +197,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       end)
 
       # Call the lens
-      result = ChainSizeLens.focus(params)
+      result = ChainSize.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -222,7 +222,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       end)
 
       # Call the lens
-      result = ChainSizeLens.focus(params)
+      result = ChainSize.focus(params)
 
       # Verify the result
       assert {:ok, %{result: chain_size_data, chain_size: chain_size_data}} = result
@@ -240,7 +240,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       }
 
       # Call the function
-      result = ChainSizeLens.before_focus(params)
+      result = ChainSize.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -265,7 +265,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       }
 
       # Call the function
-      result = ChainSizeLens.before_focus(params)
+      result = ChainSize.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -300,7 +300,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       }
 
       # Call the function
-      result = ChainSizeLens.after_focus(response)
+      result = ChainSize.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: chain_size_data, chain_size: chain_size_data}} = result
@@ -322,7 +322,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       }
 
       # Call the function
-      result = ChainSizeLens.after_focus(response)
+      result = ChainSize.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: chain_size_data, chain_size: chain_size_data}} = result
@@ -338,7 +338,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       }
 
       # Call the function
-      result = ChainSizeLens.after_focus(response)
+      result = ChainSize.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -353,7 +353,7 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
       }
 
       # Call the function
-      result = ChainSizeLens.after_focus(response)
+      result = ChainSize.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

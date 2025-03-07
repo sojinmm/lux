@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.NodeCountLens
+  alias Lux.Lenses.Etherscan.NodeCount
 
   setup do
     # Set up test API key in the configuration
@@ -52,7 +52,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       end)
 
       # Call the lens
-      result = NodeCountLens.focus(params)
+      result = NodeCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: node_count, node_count: node_count}} = result
@@ -89,7 +89,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       end)
 
       # Call the lens
-      result = NodeCountLens.focus(params)
+      result = NodeCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: node_count}} = result
@@ -113,7 +113,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       end)
 
       # Call the lens
-      result = NodeCountLens.focus(params)
+      result = NodeCount.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result
@@ -128,7 +128,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       }
 
       # Call the function
-      result = NodeCountLens.before_focus(params)
+      result = NodeCount.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -141,7 +141,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       params = %{}
 
       # Call the function
-      result = NodeCountLens.before_focus(params)
+      result = NodeCount.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -165,7 +165,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       }
 
       # Call the function
-      result = NodeCountLens.after_focus(response)
+      result = NodeCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: node_count, node_count: node_count}} = result
@@ -191,7 +191,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       }
 
       # Call the function
-      result = NodeCountLens.after_focus(response)
+      result = NodeCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: node_count}} = result
@@ -211,7 +211,7 @@ defmodule Lux.Lenses.Etherscan.NodeCountLensTest do
       }
 
       # Call the function
-      result = NodeCountLens.after_focus(response)
+      result = NodeCount.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid chain ID"}} = result

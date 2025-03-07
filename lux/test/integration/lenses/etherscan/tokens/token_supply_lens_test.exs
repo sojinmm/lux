@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TokenSupplyLens
+  alias Lux.Lenses.Etherscan.TokenSupply
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -40,7 +40,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = TokenSupplyLens.focus(%{
+    result = TokenSupply.focus(%{
       contractaddress: @token_contract,
       chainid: 1
     })
@@ -55,11 +55,11 @@ defmodule Lux.Integration.Etherscan.TokenSupplyLensTest do
   test "can fetch total supply for an ERC-20 token" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenSupplyLens")
+      IO.puts("Skipping test: Pro API key required for TokenSupply")
       :ok
     else
       assert {:ok, %{result: supply, token_supply: supply}} =
-               TokenSupplyLens.focus(%{
+               TokenSupply.focus(%{
                  contractaddress: @token_contract,
                  chainid: 1
                })
@@ -76,7 +76,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = TokenSupplyLens.focus(%{
+    result = TokenSupply.focus(%{
       contractaddress: "0xinvalid",
       chainid: 1
     })

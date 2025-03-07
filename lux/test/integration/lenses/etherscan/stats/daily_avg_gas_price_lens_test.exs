@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.DailyAvgGasPriceLens
+  alias Lux.Lenses.Etherscan.DailyAvgGasPrice
 
   # Example date range (one month)
   @start_date "2019-02-01"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyAvgGasPriceLens.focus(%{
+    case DailyAvgGasPrice.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -59,11 +59,11 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   test "can fetch daily average gas price with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgGasPriceLens or invalid action name")
+      IO.puts("Skipping test: Pro API key required for DailyAvgGasPrice or invalid action name")
       :ok
     else
       assert {:ok, %{result: gas_price_data}} =
-               DailyAvgGasPriceLens.focus(%{
+               DailyAvgGasPrice.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
@@ -91,11 +91,11 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgGasPriceLens or invalid action name")
+      IO.puts("Skipping test: Pro API key required for DailyAvgGasPrice or invalid action name")
       :ok
     else
       assert {:ok, %{result: gas_price_data}} =
-               DailyAvgGasPriceLens.focus(%{
+               DailyAvgGasPrice.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
@@ -138,7 +138,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyAvgGasPriceLens.focus(%{
+    result = DailyAvgGasPrice.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -165,11 +165,11 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgGasPriceLens or invalid action name")
+      IO.puts("Skipping test: Pro API key required for DailyAvgGasPrice or invalid action name")
       :ok
     else
       # Missing startdate and enddate
-      result = DailyAvgGasPriceLens.focus(%{
+      result = DailyAvgGasPrice.focus(%{
         chainid: 1
       })
 

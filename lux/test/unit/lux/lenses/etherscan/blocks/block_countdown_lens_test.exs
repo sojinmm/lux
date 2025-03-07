@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockCountdownLens
+  alias Lux.Lenses.Etherscan.BlockCountdown
 
   setup do
     # Set up test API key in the configuration
@@ -53,7 +53,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       end)
 
       # Call the lens
-      result = BlockCountdownLens.focus(params)
+      result = BlockCountdown.focus(params)
 
       # Verify the result
       assert {:ok, %{result: countdown_info}} = result
@@ -86,7 +86,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       end)
 
       # Call the lens
-      result = BlockCountdownLens.focus(params)
+      result = BlockCountdown.focus(params)
 
       # Verify the result
       assert {:ok, %{result: countdown_info}} = result
@@ -114,7 +114,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       end)
 
       # Call the lens
-      result = BlockCountdownLens.focus(params)
+      result = BlockCountdown.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid block number"}} = result
@@ -130,7 +130,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       }
 
       # Call the function
-      result = BlockCountdownLens.before_focus(params)
+      result = BlockCountdown.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -147,7 +147,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       }
 
       # Call the function
-      result = BlockCountdownLens.before_focus(params)
+      result = BlockCountdown.before_focus(params)
 
       # Verify the result
       assert result.module == "block"
@@ -172,7 +172,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       }
 
       # Call the function
-      result = BlockCountdownLens.after_focus(response)
+      result = BlockCountdown.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: countdown_info}} = result
@@ -196,7 +196,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       }
 
       # Call the function
-      result = BlockCountdownLens.after_focus(response)
+      result = BlockCountdown.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: countdown_info}} = result
@@ -215,7 +215,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
       }
 
       # Call the function
-      result = BlockCountdownLens.after_focus(response)
+      result = BlockCountdown.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid block number"}} = result

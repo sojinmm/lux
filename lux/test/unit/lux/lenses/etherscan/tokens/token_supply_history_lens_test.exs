@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenSupplyHistoryLens
+  alias Lux.Lenses.Etherscan.TokenSupplyHistory
 
   setup do
     # Set up test API key in the configuration
@@ -51,7 +51,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       end)
 
       # Call the lens
-      result = TokenSupplyHistoryLens.focus(params)
+      result = TokenSupplyHistory.focus(params)
 
       # Verify the result
       assert {:ok, %{
@@ -80,7 +80,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       end)
 
       # Call the lens
-      result = TokenSupplyHistoryLens.focus(params)
+      result = TokenSupplyHistory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result
@@ -105,7 +105,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       end)
 
       # Call the lens
-      result = TokenSupplyHistoryLens.focus(params)
+      result = TokenSupplyHistory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, please use API Key for higher rate limit"}} = result
@@ -122,7 +122,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       }
 
       # Call the function
-      result = TokenSupplyHistoryLens.before_focus(params)
+      result = TokenSupplyHistory.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -144,7 +144,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       }
 
       # Call the function
-      result = TokenSupplyHistoryLens.after_focus(response)
+      result = TokenSupplyHistory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{
@@ -163,7 +163,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       }
 
       # Call the function
-      result = TokenSupplyHistoryLens.after_focus(response)
+      result = TokenSupplyHistory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{
@@ -182,7 +182,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       }
 
       # Call the function
-      result = TokenSupplyHistoryLens.after_focus(response)
+      result = TokenSupplyHistory.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result

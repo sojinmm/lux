@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.MinedBlocksLens
+  alias Lux.Lenses.Etherscan.MinedBlocks
 
   # Address of a known miner/validator (Ethermine pool)
   @miner_address "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
@@ -38,7 +38,7 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
 
   test "can fetch mined blocks for an address" do
     assert {:ok, %{result: blocks}} =
-             MinedBlocksLens.focus(%{
+             MinedBlocks.focus(%{
                address: @miner_address,
                chainid: 1
              })
@@ -64,7 +64,7 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
 
   test "can fetch mined blocks with pagination" do
     assert {:ok, %{result: blocks}} =
-             MinedBlocksLens.focus(%{
+             MinedBlocks.focus(%{
                address: @miner_address,
                chainid: 1,
                page: 1,
@@ -77,7 +77,7 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
 
   test "can fetch uncle blocks" do
     assert {:ok, %{result: blocks}} =
-             MinedBlocksLens.focus(%{
+             MinedBlocks.focus(%{
                address: @miner_address,
                chainid: 1,
                blocktype: "uncles"

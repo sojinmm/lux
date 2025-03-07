@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyBlockCountLens
+  alias Lux.Lenses.Etherscan.DailyBlockCount
 
   setup do
     # Set up test API key in the configuration
@@ -62,7 +62,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockCountLens.focus(params)
+      result = DailyBlockCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_data}} = result
@@ -116,7 +116,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockCountLens.focus(params)
+      result = DailyBlockCount.focus(params)
 
       # Verify the result
       assert {:ok, %{result: block_data}} = result
@@ -148,7 +148,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockCountLens.focus(params)
+      result = DailyBlockCount.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -179,7 +179,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockCountLens.focus(params)
+      result = DailyBlockCount.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -196,7 +196,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       }
 
       # Call the function
-      result = DailyBlockCountLens.before_focus(params)
+      result = DailyBlockCount.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -217,7 +217,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       }
 
       # Call the function
-      result = DailyBlockCountLens.before_focus(params)
+      result = DailyBlockCount.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -250,7 +250,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       }
 
       # Call the function
-      result = DailyBlockCountLens.after_focus(response)
+      result = DailyBlockCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_data}} = result
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       }
 
       # Call the function
-      result = DailyBlockCountLens.after_focus(response)
+      result = DailyBlockCount.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: block_data}} = result
@@ -294,7 +294,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       }
 
       # Call the function
-      result = DailyBlockCountLens.after_focus(response)
+      result = DailyBlockCount.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -309,7 +309,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockCountLensTest do
       }
 
       # Call the function
-      result = DailyBlockCountLens.after_focus(response)
+      result = DailyBlockCount.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

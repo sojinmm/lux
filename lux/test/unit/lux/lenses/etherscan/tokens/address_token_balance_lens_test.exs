@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.AddressTokenBalanceLens
+  alias Lux.Lenses.Etherscan.AddressTokenBalance
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenBalanceLens.focus(params)
+      result = AddressTokenBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: token_balances, token_balances: token_balances}} = result
@@ -121,7 +121,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenBalanceLens.focus(params)
+      result = AddressTokenBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: token_balances}} = result
@@ -146,7 +146,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenBalanceLens.focus(params)
+      result = AddressTokenBalance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -170,7 +170,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenBalanceLens.focus(params)
+      result = AddressTokenBalance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -194,7 +194,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenBalanceLens.focus(params)
+      result = AddressTokenBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: token_balances, token_balances: token_balances}} = result
@@ -211,7 +211,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenBalanceLens.before_focus(params)
+      result = AddressTokenBalance.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -232,7 +232,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenBalanceLens.before_focus(params)
+      result = AddressTokenBalance.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -269,7 +269,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenBalanceLens.after_focus(response)
+      result = AddressTokenBalance.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: token_balances, token_balances: token_balances}} = result
@@ -301,7 +301,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenBalanceLens.after_focus(response)
+      result = AddressTokenBalance.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: token_balances, token_balances: token_balances}} = result
@@ -317,7 +317,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenBalanceLens.after_focus(response)
+      result = AddressTokenBalance.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -332,7 +332,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalanceLensTest do
       }
 
       # Call the function
-      result = AddressTokenBalanceLens.after_focus(response)
+      result = AddressTokenBalance.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

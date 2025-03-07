@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.DailyBlockRewardsLens
+  alias Lux.Lenses.Etherscan.DailyBlockRewards
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyBlockRewardsLens.focus(%{
+    case DailyBlockRewards.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -59,11 +59,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   test "can fetch daily block rewards with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyBlockRewardsLens or invalid action name")
+      IO.puts("Skipping test: Pro API key required for DailyBlockRewards or invalid action name")
       :ok
     else
       assert {:ok, %{result: block_rewards_data}} =
-               DailyBlockRewardsLens.focus(%{
+               DailyBlockRewards.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
@@ -98,11 +98,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyBlockRewardsLens or invalid action name")
+      IO.puts("Skipping test: Pro API key required for DailyBlockRewards or invalid action name")
       :ok
     else
       assert {:ok, %{result: block_rewards_data}} =
-               DailyBlockRewardsLens.focus(%{
+               DailyBlockRewards.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
@@ -145,7 +145,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyBlockRewardsLens.focus(%{
+    result = DailyBlockRewards.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -172,11 +172,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyBlockRewardsLens or invalid action name")
+      IO.puts("Skipping test: Pro API key required for DailyBlockRewards or invalid action name")
       :ok
     else
       # Missing startdate and enddate
-      result = DailyBlockRewardsLens.focus(%{
+      result = DailyBlockRewards.focus(%{
         chainid: 1
       })
 

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BalanceMultiLens do
+defmodule Lux.Lenses.Etherscan.BalanceMulti do
   @moduledoc """
   Lens for fetching ETH balances for multiple Ethereum addresses from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLens do
 
   ```elixir
   # Get ETH balances for multiple addresses (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.BalanceMultiLens.focus(%{
+  Lux.Lenses.Etherscan.BalanceMulti.focus(%{
     addresses: ["0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"]
   })
 
   # Get ETH balances for multiple addresses on a specific chain (e.g., 137 for Polygon)
-  Lux.Lenses.Etherscan.BalanceMultiLens.focus(%{
+  Lux.Lenses.Etherscan.BalanceMulti.focus(%{
     addresses: ["0x742d35Cc6634C0532925a3b844Bc454e4438f44e", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"],
     chainid: 137
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ETH Balance Multi API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -77,6 +77,6 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

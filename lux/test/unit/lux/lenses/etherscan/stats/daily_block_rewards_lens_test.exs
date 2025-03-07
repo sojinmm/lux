@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyBlockRewardsLens
+  alias Lux.Lenses.Etherscan.DailyBlockRewards
 
   setup do
     # Set up test API key in the configuration
@@ -70,7 +70,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockRewardsLens.focus(params)
+      result = DailyBlockRewards.focus(params)
 
       # Verify the result
       assert {:ok, %{result: rewards_data}} = result
@@ -140,7 +140,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockRewardsLens.focus(params)
+      result = DailyBlockRewards.focus(params)
 
       # Verify the result
       assert {:ok, %{result: rewards_data}} = result
@@ -172,7 +172,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockRewardsLens.focus(params)
+      result = DailyBlockRewards.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -203,7 +203,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       end)
 
       # Call the lens
-      result = DailyBlockRewardsLens.focus(params)
+      result = DailyBlockRewards.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -220,7 +220,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       }
 
       # Call the function
-      result = DailyBlockRewardsLens.before_focus(params)
+      result = DailyBlockRewards.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -241,7 +241,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       }
 
       # Call the function
-      result = DailyBlockRewardsLens.before_focus(params)
+      result = DailyBlockRewards.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -282,7 +282,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       }
 
       # Call the function
-      result = DailyBlockRewardsLens.after_focus(response)
+      result = DailyBlockRewards.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: rewards_data}} = result
@@ -318,7 +318,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       }
 
       # Call the function
-      result = DailyBlockRewardsLens.after_focus(response)
+      result = DailyBlockRewards.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: rewards_data}} = result
@@ -334,7 +334,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       }
 
       # Call the function
-      result = DailyBlockRewardsLens.after_focus(response)
+      result = DailyBlockRewards.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -349,7 +349,7 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewardsLensTest do
       }
 
       # Call the function
-      result = DailyBlockRewardsLens.after_focus(response)
+      result = DailyBlockRewards.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TxListInternalLens do
+defmodule Lux.Lenses.Etherscan.TxListInternal do
   @moduledoc """
   Lens for fetching internal transactions from the Etherscan API.
 
@@ -11,23 +11,23 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLens do
 
   ```elixir
   # Get internal transactions by address
-  Lux.Lenses.Etherscan.TxListInternalLens.focus(%{
+  Lux.Lenses.Etherscan.TxListInternal.focus(%{
     address: "0x2c1ba59d6f58433fb1eaee7d20b26ed83bda51a3"
   })
 
   # Get internal transactions by transaction hash
-  Lux.Lenses.Etherscan.TxListInternalLens.focus(%{
+  Lux.Lenses.Etherscan.TxListInternal.focus(%{
     txhash: "0x40eb908387324f2b575b4879cd9d7188f69c8fc9d87c901b9e2daaea4b442170"
   })
 
   # Get internal transactions by block range
-  Lux.Lenses.Etherscan.TxListInternalLens.focus(%{
+  Lux.Lenses.Etherscan.TxListInternal.focus(%{
     startblock: 13481773,
     endblock: 13491773
   })
 
   # With additional parameters
-  Lux.Lenses.Etherscan.TxListInternalLens.focus(%{
+  Lux.Lenses.Etherscan.TxListInternal.focus(%{
     address: "0x2c1ba59d6f58433fb1eaee7d20b26ed83bda51a3",
     chainid: 1,
     startblock: 0,
@@ -39,7 +39,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Internal Transaction List API",
@@ -49,7 +49,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -138,6 +138,6 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

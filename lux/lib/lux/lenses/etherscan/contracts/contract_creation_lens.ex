@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.ContractCreationLens do
+defmodule Lux.Lenses.Etherscan.ContractCreation do
   @moduledoc """
   Lens for fetching a contract's deployer address and transaction hash it was created from the Etherscan API.
 
@@ -8,24 +8,24 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLens do
 
   ```elixir
   # Get contract creator info for a single contract (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.ContractCreationLens.focus(%{
+  Lux.Lenses.Etherscan.ContractCreation.focus(%{
     contractaddresses: "0xB83c27805aAcA5C7082eB45C868d955Cf04C337F"
   })
 
   # Get contract creator info for multiple contracts (up to 5)
-  Lux.Lenses.Etherscan.ContractCreationLens.focus(%{
+  Lux.Lenses.Etherscan.ContractCreation.focus(%{
     contractaddresses: "0xB83c27805aAcA5C7082eB45C868d955Cf04C337F,0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45,0xe4462eb568E2DFbb5b0cA2D3DbB1A35C9Aa98aad"
   })
 
   # Get contract creator info for contracts on a specific chain
-  Lux.Lenses.Etherscan.ContractCreationLens.focus(%{
+  Lux.Lenses.Etherscan.ContractCreation.focus(%{
     contractaddresses: "0xB83c27805aAcA5C7082eB45C868d955Cf04C337F",
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Contract Creator API",
@@ -35,7 +35,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -70,7 +70,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Transform the result into a more structured format
         structured_result = Enum.map(result, fn contract ->

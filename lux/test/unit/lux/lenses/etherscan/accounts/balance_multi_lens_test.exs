@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BalanceMultiLens
+  alias Lux.Lenses.Etherscan.BalanceMulti
 
   setup do
     # Set up test API key in the configuration
@@ -62,7 +62,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       end)
 
       # Call the lens
-      result = BalanceMultiLens.focus(params)
+      result = BalanceMulti.focus(params)
 
       # Verify the result
       assert {:ok, %{result: result_data}} = result
@@ -102,7 +102,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       end)
 
       # Call the lens
-      result = BalanceMultiLens.focus(params)
+      result = BalanceMulti.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -130,7 +130,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       end)
 
       # Call the lens
-      result = BalanceMultiLens.focus(params)
+      result = BalanceMulti.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -158,7 +158,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       end)
 
       # Call the lens
-      result = BalanceMultiLens.focus(params)
+      result = BalanceMulti.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max addresses limit exceeded"}} = result
@@ -178,7 +178,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       }
 
       # Call the function
-      result = BalanceMultiLens.before_focus(params)
+      result = BalanceMulti.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -201,7 +201,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       }
 
       # Call the function
-      result = BalanceMultiLens.before_focus(params)
+      result = BalanceMulti.before_focus(params)
 
       # Verify the result
       expected_address_string = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045,0x742d35Cc6634C0532925a3b844Bc454e4438f44e,0x1234567890123456789012345678901234567890"
@@ -228,7 +228,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       }
 
       # Call the function
-      result = BalanceMultiLens.after_focus(response)
+      result = BalanceMulti.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: result_data}} = result
@@ -245,7 +245,7 @@ defmodule Lux.Lenses.Etherscan.BalanceMultiLensTest do
       }
 
       # Call the function
-      result = BalanceMultiLens.after_focus(response)
+      result = BalanceMulti.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractAbiLens
+  alias Lux.Lenses.Etherscan.ContractAbi
 
   setup do
     # Set up test API key in the configuration
@@ -53,7 +53,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       end)
 
       # Call the lens
-      result = ContractAbiLens.focus(params)
+      result = ContractAbi.focus(params)
 
       # Verify the result
       assert {:ok, %{result: parsed_abi}} = result
@@ -84,7 +84,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       end)
 
       # Call the lens
-      result = ContractAbiLens.focus(params)
+      result = ContractAbi.focus(params)
 
       # Verify the result
       assert {:ok, %{result: ^non_json_abi}} = result
@@ -108,7 +108,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       end)
 
       # Call the lens
-      result = ContractAbiLens.focus(params)
+      result = ContractAbi.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       }
 
       # Call the function
-      result = ContractAbiLens.before_focus(params)
+      result = ContractAbi.before_focus(params)
 
       # Verify the result
       assert result.module == "contract"
@@ -149,7 +149,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       }
 
       # Call the function
-      result = ContractAbiLens.after_focus(response)
+      result = ContractAbi.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: parsed_abi}} = result
@@ -170,7 +170,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       }
 
       # Call the function
-      result = ContractAbiLens.after_focus(response)
+      result = ContractAbi.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: ^non_json_abi}} = result
@@ -185,7 +185,7 @@ defmodule Lux.Lenses.Etherscan.ContractAbiLensTest do
       }
 
       # Call the function
-      result = ContractAbiLens.after_focus(response)
+      result = ContractAbi.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

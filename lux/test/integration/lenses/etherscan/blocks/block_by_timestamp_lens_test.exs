@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockByTimestampLens
+  alias Lux.Lenses.Etherscan.BlockByTimestamp
 
   # Unix timestamp (January 10, 2020)
   @timestamp 1578638524
@@ -38,7 +38,7 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with 'before' closest parameter" do
     assert {:ok, %{result: result}} =
-             BlockByTimestampLens.focus(%{
+             BlockByTimestamp.focus(%{
                timestamp: @timestamp,
                closest: "before",
                chainid: 1
@@ -64,7 +64,7 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with 'after' closest parameter" do
     assert {:ok, %{result: result}} =
-             BlockByTimestampLens.focus(%{
+             BlockByTimestamp.focus(%{
                timestamp: @timestamp,
                closest: "after",
                chainid: 1
@@ -90,7 +90,7 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with default parameters" do
     assert {:ok, %{result: result}} =
-             BlockByTimestampLens.focus(%{
+             BlockByTimestamp.focus(%{
                timestamp: @timestamp,
                chainid: 1
              })

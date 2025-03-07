@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractSourceCodeLens
+  alias Lux.Lenses.Etherscan.ContractSourceCode
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
@@ -42,7 +42,7 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   test "can fetch source code for a verified contract" do
     assert {:ok, %{result: source_info}} =
-             ContractSourceCodeLens.focus(%{
+             ContractSourceCode.focus(%{
                address: @contract_address,
                chainid: 1
              })
@@ -79,7 +79,7 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   test "can fetch source code for another verified contract" do
     assert {:ok, %{result: source_info}} =
-             ContractSourceCodeLens.focus(%{
+             ContractSourceCode.focus(%{
                address: @uniswap_router,
                chainid: 1
              })
@@ -105,7 +105,7 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
     random_address = "0x000000000000000000000000000000000000dEaD"
 
     assert {:ok, %{result: source_info}} =
-             ContractSourceCodeLens.focus(%{
+             ContractSourceCode.focus(%{
                address: random_address,
                chainid: 1
              })

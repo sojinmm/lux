@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractSourceCodeLens
+  alias Lux.Lenses.Etherscan.ContractSourceCode
 
   setup do
     # Set up test API key in the configuration
@@ -78,7 +78,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
       end)
 
       # Call the lens
-      result = ContractSourceCodeLens.focus(params)
+      result = ContractSourceCode.focus(params)
 
       # Verify the result
       assert {:ok, %{result: contract_info}} = result
@@ -130,7 +130,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
       end)
 
       # Call the lens
-      result = ContractSourceCodeLens.focus(params)
+      result = ContractSourceCode.focus(params)
 
       # Verify the result
       assert {:ok, %{result: contract_info}} = result
@@ -157,7 +157,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
       end)
 
       # Call the lens
-      result = ContractSourceCodeLens.focus(params)
+      result = ContractSourceCode.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -173,7 +173,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractSourceCodeLens.before_focus(params)
+      result = ContractSourceCode.before_focus(params)
 
       # Verify the result
       assert result.module == "contract"
@@ -213,7 +213,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractSourceCodeLens.after_focus(response)
+      result = ContractSourceCode.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: contract_info}} = result
@@ -233,7 +233,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractSourceCodeLens.after_focus(response)
+      result = ContractSourceCode.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

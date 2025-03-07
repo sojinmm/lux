@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenInfoLens
+  alias Lux.Lenses.Etherscan.TokenInfo
 
   setup do
     # Set up test API key in the configuration
@@ -73,7 +73,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       end)
 
       # Call the lens
-      result = TokenInfoLens.focus(params)
+      result = TokenInfo.focus(params)
 
       # Verify the result
       assert {:ok, %{result: token_info, token_info: token_info}} = result
@@ -108,7 +108,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       end)
 
       # Call the lens
-      result = TokenInfoLens.focus(params)
+      result = TokenInfo.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result
@@ -132,7 +132,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       end)
 
       # Call the lens
-      result = TokenInfoLens.focus(params)
+      result = TokenInfo.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -148,7 +148,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       }
 
       # Call the function
-      result = TokenInfoLens.before_focus(params)
+      result = TokenInfo.before_focus(params)
 
       # Verify the result
       assert result.module == "token"
@@ -193,7 +193,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       }
 
       # Call the function
-      result = TokenInfoLens.after_focus(response)
+      result = TokenInfo.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: token_info, token_info: token_info}} = result
@@ -219,7 +219,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       }
 
       # Call the function
-      result = TokenInfoLens.after_focus(response)
+      result = TokenInfo.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: token_info, token_info: token_info}} = result
@@ -235,7 +235,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       }
 
       # Call the function
-      result = TokenInfoLens.after_focus(response)
+      result = TokenInfo.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -250,7 +250,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfoLensTest do
       }
 
       # Call the function
-      result = TokenInfoLens.after_focus(response)
+      result = TokenInfo.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid contract address format"}} = result

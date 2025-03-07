@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.MinedBlocksLens
+  alias Lux.Lenses.Etherscan.MinedBlocks
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       end)
 
       # Call the lens
-      result = MinedBlocksLens.focus(params)
+      result = MinedBlocks.focus(params)
 
       # Verify the result
       assert {:ok, %{result: blocks}} = result
@@ -115,7 +115,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       end)
 
       # Call the lens
-      result = MinedBlocksLens.focus(params)
+      result = MinedBlocks.focus(params)
 
       # Verify the result
       assert {:ok, %{result: blocks}} = result
@@ -142,7 +142,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       end)
 
       # Call the lens
-      result = MinedBlocksLens.focus(params)
+      result = MinedBlocks.focus(params)
 
       # Verify the result
       assert {:error, %{message: "No transactions found", result: "No blocks found"}} = result
@@ -166,7 +166,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       end)
 
       # Call the lens
-      result = MinedBlocksLens.focus(params)
+      result = MinedBlocks.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -185,7 +185,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       }
 
       # Call the function
-      result = MinedBlocksLens.before_focus(params)
+      result = MinedBlocks.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -214,7 +214,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       }
 
       # Call the function
-      result = MinedBlocksLens.after_focus(response)
+      result = MinedBlocks.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: [block]}} = result
@@ -231,7 +231,7 @@ defmodule Lux.Lenses.Etherscan.MinedBlocksLensTest do
       }
 
       # Call the function
-      result = MinedBlocksLens.after_focus(response)
+      result = MinedBlocks.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

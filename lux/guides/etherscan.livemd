@@ -41,13 +41,6 @@ ETHERSCAN_API_KEY="your_development_api_key"
 ETHERSCAN_API_KEY="your_testing_api_key"
 ```
 
-Make sure to add these files to your `.gitignore` to prevent committing sensitive keys to your repository:
-
-```
-# In .gitignore
-*.override.envrc
-```
-
 That's it! Lux will automatically use these keys when making requests to the Etherscan API.
 
 ### Basic Usage
@@ -55,10 +48,10 @@ That's it! Lux will automatically use these keys when making requests to the Eth
 Here's a simple example of using an Etherscan lens:
 
 ```elixir
-alias Lux.Lenses.Etherscan.EthSupplyLens
+alias Lux.Lenses.Etherscan.EthSupply
 
 # Get the current ETH supply
-{:ok, result} = EthSupplyLens.focus(%{chainid: 1})
+{:ok, result} = EthSupply.focus(%{chainid: 1})
 IO.inspect(result)
 ```
 
@@ -71,18 +64,18 @@ Etherscan lenses are organized into several categories:
 Lenses for querying account information:
 
 ```elixir
-alias Lux.Lenses.Etherscan.BalanceLens
+alias Lux.Lenses.Etherscan.Balance
 
 # Get ETH balance for an address
-{:ok, result} = BalanceLens.focus(%{
+{:ok, result} = Balance.focus(%{
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
   chainid: 1
 })
 
 # Get balance history at a specific block
-alias Lux.Lenses.Etherscan.BalanceHistoryLens
+alias Lux.Lenses.Etherscan.BalanceHistory
 
-{:ok, result} = BalanceHistoryLens.focus(%{
+{:ok, result} = BalanceHistory.focus(%{
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
   blockno: 8000000,
   chainid: 1
@@ -108,10 +101,10 @@ alias Lux.Lenses.Etherscan.BlockInfoLens
 Lenses for interacting with smart contracts:
 
 ```elixir
-alias Lux.Lenses.Etherscan.ContractABILens
+alias Lux.Lenses.Etherscan.ContractAbi
 
 # Get the ABI for a verified contract
-{:ok, result} = ContractABILens.focus(%{
+{:ok, result} = ContractAbi.focus(%{
   address: "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d", # CryptoKitties
   chainid: 1
 })
@@ -149,18 +142,18 @@ alias Lux.Lenses.Etherscan.LogsLens
 Lenses for network statistics:
 
 ```elixir
-alias Lux.Lenses.Etherscan.EthSupplyLens
-alias Lux.Lenses.Etherscan.EthPriceLens
-alias Lux.Lenses.Etherscan.NodeCountLens
+alias Lux.Lenses.Etherscan.EthSupply
+alias Lux.Lenses.Etherscan.EthPrice
+alias Lux.Lenses.Etherscan.NodeCount
 
 # Get current ETH supply
-{:ok, supply} = EthSupplyLens.focus(%{chainid: 1})
+{:ok, supply} = EthSupply.focus(%{chainid: 1})
 
 # Get current ETH price
-{:ok, price} = EthPriceLens.focus(%{chainid: 1})
+{:ok, price} = EthPrice.focus(%{chainid: 1})
 
 # Get node count
-{:ok, nodes} = NodeCountLens.focus(%{chainid: 1})
+{:ok, nodes} = NodeCount.focus(%{chainid: 1})
 ```
 
 ### Tokens
@@ -168,17 +161,17 @@ alias Lux.Lenses.Etherscan.NodeCountLens
 Lenses for token-related information:
 
 ```elixir
-alias Lux.Lenses.Etherscan.TokenInfoLens
-alias Lux.Lenses.Etherscan.TokenBalanceLens
+alias Lux.Lenses.Etherscan.TokenInfo
+alias Lux.Lenses.Etherscan.TokenBalance
 
 # Get information about a token
-{:ok, info} = TokenInfoLens.focus(%{
+{:ok, info} = TokenInfo.focus(%{
   contractaddress: "0x6b175474e89094c44da98b954eedeac495271d0f", # DAI
   chainid: 1
 })
 
 # Get token balance for an address
-{:ok, balance} = TokenBalanceLens.focus(%{
+{:ok, balance} = TokenBalance.focus(%{
   contractaddress: "0x6b175474e89094c44da98b954eedeac495271d0f", # DAI
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
   chainid: 1
@@ -191,7 +184,7 @@ Lenses for transaction information:
 
 ```elixir
 alias Lux.Lenses.Etherscan.TxInfoLens
-alias Lux.Lenses.Etherscan.TxReceiptStatusLens
+alias Lux.Lenses.Etherscan.TxReceiptStatus
 
 # Get transaction details
 {:ok, tx} = TxInfoLens.focus(%{
@@ -200,7 +193,7 @@ alias Lux.Lenses.Etherscan.TxReceiptStatusLens
 })
 
 # Get transaction receipt status
-{:ok, status} = TxReceiptStatusLens.focus(%{
+{:ok, status} = TxReceiptStatus.focus(%{
   txhash: "0x1e2910a262b1008d0616a0beb24c1a491d78771baa54a33e66065e03b1f46bc1",
   chainid: 1
 })
@@ -211,10 +204,10 @@ alias Lux.Lenses.Etherscan.TxReceiptStatusLens
 Some Etherscan endpoints require a Pro API key. Lux handles these gracefully:
 
 ```elixir
-alias Lux.Lenses.Etherscan.DailyAvgGasLimitLens
+alias Lux.Lenses.Etherscan.DailyAvgGasLimit
 
 # This requires a Pro API key
-result = DailyAvgGasLimitLens.focus(%{
+result = DailyAvgGasLimit.focus(%{
   startdate: "2023-01-01",
   enddate: "2023-01-31",
   chainid: 1
@@ -241,19 +234,19 @@ Etherscan lenses support multiple EVM-compatible networks through the `chainid` 
 
 ```elixir
 # Ethereum Mainnet (default)
-{:ok, eth_result} = BalanceLens.focus(%{
+{:ok, eth_result} = Balance.focus(%{
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
   chainid: 1
 })
 
 # Polygon (Matic)
-{:ok, polygon_result} = BalanceLens.focus(%{
+{:ok, polygon_result} = Balance.focus(%{
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
   chainid: 137
 })
 
 # Binance Smart Chain
-{:ok, bsc_result} = BalanceLens.focus(%{
+{:ok, bsc_result} = Balance.focus(%{
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
   chainid: 56
 })
@@ -264,7 +257,7 @@ Etherscan lenses support multiple EVM-compatible networks through the `chainid` 
 Etherscan lenses provide detailed error information:
 
 ```elixir
-case BalanceLens.focus(%{address: "invalid_address", chainid: 1}) do
+case Balance.focus(%{address: "invalid_address", chainid: 1}) do
   {:ok, result} ->
     # Process successful result
     IO.inspect(result)
@@ -303,7 +296,7 @@ results = Enum.map(addresses, fn address ->
   # Add delay to avoid rate limiting
   Process.sleep(300)
   
-  BalanceLens.focus(%{
+  Balance.focus(%{
     address: address,
     chainid: 1
   })
@@ -322,10 +315,10 @@ defmodule MyApp.Lenses.EnhancedBalanceLens do
   Enhanced balance lens with additional transformations
   """
   
-  alias Lux.Lenses.Etherscan.BalanceLens
+  alias Lux.Lenses.Etherscan.Balance
   
   def focus(params) do
-    with {:ok, result} <- BalanceLens.focus(params) do
+    with {:ok, result} <- Balance.focus(params) do
       # Convert wei to ether and add additional data
       balance_in_eth = String.to_integer(result.result) / 1.0e18
       
@@ -350,20 +343,20 @@ defmodule MyApp.Beams.TokenAnalysisBeam do
     name: "Token Analysis",
     description: "Analyzes token information and holder data"
   
-  alias Lux.Lenses.Etherscan.TokenInfoLens
-  alias Lux.Lenses.Etherscan.TokenSupplyLens
-  alias Lux.Lenses.Etherscan.TokenHolderListLens
+  alias Lux.Lenses.Etherscan.TokenInfo
+  alias Lux.Lenses.Etherscan.TokenSupply
+  alias Lux.Lenses.Etherscan.TokenHolderList
   
   def steps do
     sequence do
       # Get token info
-      step(:info, TokenInfoLens, %{
+      step(:info, TokenInfo, %{
         contractaddress: [:input, "contractaddress"],
         chainid: [:input, "chainid"]
       })
       
       # Get token supply
-      step(:supply, TokenSupplyLens, %{
+      step(:supply, TokenSupply, %{
         contractaddress: [:input, "contractaddress"],
         chainid: [:input, "chainid"]
       })
@@ -371,7 +364,7 @@ defmodule MyApp.Beams.TokenAnalysisBeam do
       # Get top token holders (Pro API feature)
       branch {__MODULE__, :has_pro_api?} do
         true ->
-          step(:holders, TokenHolderListLens, %{
+          step(:holders, TokenHolderList, %{
             contractaddress: [:input, "contractaddress"],
             chainid: [:input, "chainid"]
           })
@@ -386,7 +379,7 @@ defmodule MyApp.Beams.TokenAnalysisBeam do
   
   def has_pro_api?(ctx) do
     # Check if we have a Pro API key by making a test call
-    case TokenHolderListLens.focus(%{
+    case TokenHolderList.focus(%{
       contractaddress: ctx.input["contractaddress"],
       chainid: ctx.input["chainid"]
     }) do
@@ -413,7 +406,7 @@ When testing applications that use Etherscan lenses, consider:
 defmodule MyApp.Integration.EtherscanTest do
   use ExUnit.Case, async: false
   
-  alias Lux.Lenses.Etherscan.BalanceLens
+  alias Lux.Lenses.Etherscan.Balance
   
   # Skip tests if no API key is available
   setup do
@@ -436,7 +429,7 @@ defmodule MyApp.Integration.EtherscanTest do
     # Ethereum Foundation address
     address = "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
     
-    {:ok, result} = BalanceLens.focus(%{
+    {:ok, result} = Balance.focus(%{
       address: address,
       chainid: 1
     })
@@ -447,7 +440,7 @@ defmodule MyApp.Integration.EtherscanTest do
   end
   
   test "handles invalid address" do
-    {:error, error} = BalanceLens.focus(%{
+    {:error, error} = Balance.focus(%{
       address: "invalid",
       chainid: 1
     })
@@ -457,9 +450,9 @@ defmodule MyApp.Integration.EtherscanTest do
   
   # Test for Pro API endpoints
   test "handles Pro API requirements gracefully" do
-    alias Lux.Lenses.Etherscan.DailyAvgGasLimitLens
+    alias Lux.Lenses.Etherscan.DailyAvgGasLimit
     
-    result = DailyAvgGasLimitLens.focus(%{
+    result = DailyAvgGasLimit.focus(%{
       startdate: "2023-01-01",
       enddate: "2023-01-31",
       chainid: 1

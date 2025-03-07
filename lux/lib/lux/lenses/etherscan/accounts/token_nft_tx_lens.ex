@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenNftTxLens do
+defmodule Lux.Lenses.Etherscan.TokenNftTx do
   @moduledoc """
   Lens for fetching ERC-721 (NFT) token transfer events from the Etherscan API.
 
@@ -11,23 +11,23 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLens do
 
   ```elixir
   # Get ERC-721 transfers for an address
-  Lux.Lenses.Etherscan.TokenNftTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenNftTx.focus(%{
     address: "0x6975be450864c02b4613023c2152ee0743572325"
   })
 
   # Get ERC-721 transfers for a token contract
-  Lux.Lenses.Etherscan.TokenNftTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenNftTx.focus(%{
     contractaddress: "0x06012c8cf97bead5deae237070f9587f8e7a266d"
   })
 
   # Get ERC-721 transfers for an address filtered by a token contract
-  Lux.Lenses.Etherscan.TokenNftTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenNftTx.focus(%{
     address: "0x6975be450864c02b4613023c2152ee0743572325",
     contractaddress: "0x06012c8cf97bead5deae237070f9587f8e7a266d"
   })
 
   # With additional parameters
-  Lux.Lenses.Etherscan.TokenNftTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenNftTx.focus(%{
     address: "0x6975be450864c02b4613023c2152ee0743572325",
     contractaddress: "0x06012c8cf97bead5deae237070f9587f8e7a266d",
     chainid: 1,
@@ -40,7 +40,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ERC-721 NFT Token Transfer Events API",
@@ -50,7 +50,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -131,6 +131,6 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

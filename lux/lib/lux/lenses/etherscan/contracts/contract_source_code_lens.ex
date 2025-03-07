@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.ContractSourceCodeLens do
+defmodule Lux.Lenses.Etherscan.ContractSourceCode do
   @moduledoc """
   Lens for fetching the Solidity source code of a verified smart contract from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLens do
 
   ```elixir
   # Get contract source code for a verified contract (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.ContractSourceCodeLens.focus(%{
+  Lux.Lenses.Etherscan.ContractSourceCode.focus(%{
     address: "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
   })
 
   # Get contract source code for a verified contract on a specific chain
-  Lux.Lenses.Etherscan.ContractSourceCodeLens.focus(%{
+  Lux.Lenses.Etherscan.ContractSourceCode.focus(%{
     address: "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413",
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Contract Source Code API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -63,7 +63,7 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCodeLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) and length(result) > 0 ->
         # Extract the first item from the result array
         contract_info = List.first(result)

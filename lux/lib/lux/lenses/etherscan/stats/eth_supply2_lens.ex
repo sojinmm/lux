@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.EthSupply2Lens do
+defmodule Lux.Lenses.Etherscan.EthSupply2 do
   @moduledoc """
   Lens for fetching the current amount of Ether in circulation from the Etherscan API.
   This includes ETH2 Staking rewards, EIP1559 burnt fees, and total withdrawn ETH from the beacon chain.
@@ -7,16 +7,16 @@ defmodule Lux.Lenses.Etherscan.EthSupply2Lens do
 
   ```elixir
   # Get the current ETH supply with additional details (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.EthSupply2Lens.focus(%{})
+  Lux.Lenses.Etherscan.EthSupply2.focus(%{})
 
   # Get the current ETH supply with additional details for a specific chain
-  Lux.Lenses.Etherscan.EthSupply2Lens.focus(%{
+  Lux.Lenses.Etherscan.EthSupply2.focus(%{
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ETH Supply 2 API",
@@ -26,7 +26,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2Lens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2Lens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Process the result map and convert string values to numbers
         processed_result = %{

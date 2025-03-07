@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BlockByTimestampLens do
+defmodule Lux.Lenses.Etherscan.BlockByTimestamp do
   @moduledoc """
   Lens for fetching the block number that was mined at a certain timestamp from the Etherscan API.
 
@@ -6,12 +6,12 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLens do
 
   ```elixir
   # Get block number by timestamp (default chainid: 1 for Ethereum, closest: "before")
-  Lux.Lenses.Etherscan.BlockByTimestampLens.focus(%{
+  Lux.Lenses.Etherscan.BlockByTimestamp.focus(%{
     timestamp: 1578638524
   })
 
   # Get block number by timestamp with specific parameters
-  Lux.Lenses.Etherscan.BlockByTimestampLens.focus(%{
+  Lux.Lenses.Etherscan.BlockByTimestamp.focus(%{
     timestamp: 1578638524,
     closest: "after",
     chainid: 1
@@ -19,7 +19,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Block Number by Timestamp API",
@@ -29,7 +29,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -80,7 +80,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_binary(result) ->
         # Return a structured response with the block number
         {:ok, %{

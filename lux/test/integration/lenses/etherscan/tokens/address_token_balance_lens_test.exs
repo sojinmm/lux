@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.AddressTokenBalanceLens
+  alias Lux.Lenses.Etherscan.AddressTokenBalance
 
   # Example address that holds multiple tokens (Binance)
   @token_holder "0x28c6c06298d514db089934071355e5743bf21d60"
@@ -55,7 +55,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = AddressTokenBalanceLens.focus(%{
+    result = AddressTokenBalance.focus(%{
       address: @token_holder,
       chainid: 1
     })
@@ -70,10 +70,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   test "can fetch token balances for an address" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenBalanceLens")
+      IO.puts("Skipping test: Pro API key required for AddressTokenBalance")
       :ok
     else
-      result = AddressTokenBalanceLens.focus(%{
+      result = AddressTokenBalance.focus(%{
         address: @token_holder,
         chainid: 1
       })
@@ -114,13 +114,13 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   test "can fetch token balances with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenBalanceLens")
+      IO.puts("Skipping test: Pro API key required for AddressTokenBalance")
       :ok
     else
       # Using a small offset to test pagination
       offset = 5
 
-      result = AddressTokenBalanceLens.focus(%{
+      result = AddressTokenBalance.focus(%{
         address: @token_holder,
         page: 1,
         offset: offset,
@@ -148,7 +148,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
 
   test "returns error for invalid address" do
     # Using an invalid address format
-    result = AddressTokenBalanceLens.focus(%{
+    result = AddressTokenBalance.focus(%{
       address: "0xinvalid",
       chainid: 1
     })

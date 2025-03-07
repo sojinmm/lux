@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.DailyAvgGasPriceLens
+  alias Lux.Lenses.Etherscan.DailyAvgGasPrice
 
   setup do
     # Set up test API key in the configuration
@@ -65,7 +65,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgGasPriceLens.focus(params)
+      result = DailyAvgGasPrice.focus(params)
 
       # Verify the result
       assert {:ok, %{result: gas_price_data, daily_avg_gas_price: gas_price_data}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgGasPriceLens.focus(params)
+      result = DailyAvgGasPrice.focus(params)
 
       # Verify the result
       assert {:ok, %{result: gas_price_data}} = result
@@ -152,7 +152,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgGasPriceLens.focus(params)
+      result = DailyAvgGasPrice.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgGasPriceLens.focus(params)
+      result = DailyAvgGasPrice.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -208,7 +208,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       end)
 
       # Call the lens
-      result = DailyAvgGasPriceLens.focus(params)
+      result = DailyAvgGasPrice.focus(params)
 
       # Verify the result
       assert {:ok, %{result: gas_price_data, daily_avg_gas_price: gas_price_data}} = result
@@ -227,7 +227,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       }
 
       # Call the function
-      result = DailyAvgGasPriceLens.before_focus(params)
+      result = DailyAvgGasPrice.before_focus(params)
 
       # Verify the result
       assert result.module == "stats"
@@ -258,7 +258,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       }
 
       # Call the function
-      result = DailyAvgGasPriceLens.after_focus(response)
+      result = DailyAvgGasPrice.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: gas_price_data, daily_avg_gas_price: gas_price_data}} = result
@@ -278,7 +278,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       }
 
       # Call the function
-      result = DailyAvgGasPriceLens.after_focus(response)
+      result = DailyAvgGasPrice.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: gas_price_data, daily_avg_gas_price: gas_price_data}} = result
@@ -294,7 +294,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       }
 
       # Call the function
-      result = DailyAvgGasPriceLens.after_focus(response)
+      result = DailyAvgGasPrice.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -309,7 +309,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLensTest do
       }
 
       # Call the function
-      result = DailyAvgGasPriceLens.after_focus(response)
+      result = DailyAvgGasPrice.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid date format"}} = result

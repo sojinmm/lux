@@ -2,8 +2,8 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BalanceHistoryLens
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.BalanceHistory
+  alias Lux.Lenses.Etherscan.Base
 
   # Ethereum Foundation address
   @eth_foundation "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    case BaseLens.check_pro_endpoint("account", "balancehistory") do
+    case Base.check_pro_endpoint("account", "balancehistory") do
       {:ok, _} -> true
       {:error, _} -> false
     end
@@ -50,11 +50,11 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   test "can fetch historical ETH balance for an address at a specific block" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for BalanceHistoryLens")
+      IO.puts("Skipping test: Pro API key required for BalanceHistory")
       :ok
     else
       assert {:ok, %{result: balance}} =
-               BalanceHistoryLens.focus(%{
+               BalanceHistory.focus(%{
                  address: @eth_foundation,
                  blockno: @block_number,
                  chainid: 1
@@ -98,7 +98,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
     else
       # This should raise an ArgumentError because we don't have a Pro API key
       assert_raise ArgumentError, fn ->
-        BalanceHistoryLens.focus(%{
+        BalanceHistory.focus(%{
           address: @eth_foundation,
           blockno: @block_number,
           chainid: 1

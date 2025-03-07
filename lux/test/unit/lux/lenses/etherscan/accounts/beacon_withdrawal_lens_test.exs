@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.BeaconWithdrawalLens
+  alias Lux.Lenses.Etherscan.BeaconWithdrawal
 
   setup do
     # Set up test API key in the configuration
@@ -77,7 +77,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
       end)
 
       # Call the lens
-      result = BeaconWithdrawalLens.focus(params)
+      result = BeaconWithdrawal.focus(params)
 
       # Verify the result
       assert {:ok, %{result: withdrawals}} = result
@@ -106,7 +106,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
       end)
 
       # Call the lens
-      result = BeaconWithdrawalLens.focus(params)
+      result = BeaconWithdrawal.focus(params)
 
       # Verify the result
       assert {:error, %{message: "No transactions found", result: "No withdrawals found"}} = result
@@ -130,7 +130,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
       end)
 
       # Call the lens
-      result = BeaconWithdrawalLens.focus(params)
+      result = BeaconWithdrawal.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -151,7 +151,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
       }
 
       # Call the function
-      result = BeaconWithdrawalLens.before_focus(params)
+      result = BeaconWithdrawal.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -186,7 +186,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
       }
 
       # Call the function
-      result = BeaconWithdrawalLens.after_focus(response)
+      result = BeaconWithdrawal.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: [withdrawal]}} = result
@@ -203,7 +203,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLensTest do
       }
 
       # Call the function
-      result = BeaconWithdrawalLens.after_focus(response)
+      result = BeaconWithdrawal.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

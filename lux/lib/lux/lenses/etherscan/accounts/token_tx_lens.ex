@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenTxLens do
+defmodule Lux.Lenses.Etherscan.TokenTx do
   @moduledoc """
   Lens for fetching ERC-20 token transfer events from the Etherscan API.
 
@@ -11,23 +11,23 @@ defmodule Lux.Lenses.Etherscan.TokenTxLens do
 
   ```elixir
   # Get ERC-20 transfers for an address
-  Lux.Lenses.Etherscan.TokenTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenTx.focus(%{
     address: "0x4e83362442b8d1bec281594cea3050c8eb01311c"
   })
 
   # Get ERC-20 transfers for a token contract
-  Lux.Lenses.Etherscan.TokenTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenTx.focus(%{
     contractaddress: "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
   })
 
   # Get ERC-20 transfers for an address filtered by a token contract
-  Lux.Lenses.Etherscan.TokenTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenTx.focus(%{
     address: "0x4e83362442b8d1bec281594cea3050c8eb01311c",
     contractaddress: "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
   })
 
   # With additional parameters
-  Lux.Lenses.Etherscan.TokenTxLens.focus(%{
+  Lux.Lenses.Etherscan.TokenTx.focus(%{
     address: "0x4e83362442b8d1bec281594cea3050c8eb01311c",
     contractaddress: "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
     chainid: 1,
@@ -40,7 +40,7 @@ defmodule Lux.Lenses.Etherscan.TokenTxLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ERC-20 Token Transfer Events API",
@@ -50,7 +50,7 @@ defmodule Lux.Lenses.Etherscan.TokenTxLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -131,6 +131,6 @@ defmodule Lux.Lenses.Etherscan.TokenTxLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end

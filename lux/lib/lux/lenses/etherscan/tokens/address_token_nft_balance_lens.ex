@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens do
+defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalance do
   @moduledoc """
   Lens for fetching the ERC-721 tokens and amount held by an address from the Etherscan API.
 
@@ -8,12 +8,12 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens do
 
   ```elixir
   # Get address ERC721 token balances (default chainid: 1 for Ethereum, page: 1, offset: 100)
-  Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens.focus(%{
+  Lux.Lenses.Etherscan.AddressTokenNFTBalance.focus(%{
     address: "0x6b52e83941eb10f9c613c395a834457559a80114"
   })
 
   # Get address ERC721 token balances with pagination
-  Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens.focus(%{
+  Lux.Lenses.Etherscan.AddressTokenNFTBalance.focus(%{
     address: "0x6b52e83941eb10f9c613c395a834457559a80114",
     page: 1,
     offset: 100,
@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Address ERC721 Token Balance API",
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -81,7 +81,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalanceLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of NFT balances
         processed_results = Enum.map(result, fn nft ->

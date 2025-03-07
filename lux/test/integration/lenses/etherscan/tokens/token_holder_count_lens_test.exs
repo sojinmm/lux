@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.TokenHolderCountLens
+  alias Lux.Lenses.Etherscan.TokenHolderCount
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -40,7 +40,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = TokenHolderCountLens.focus(%{
+    result = TokenHolderCount.focus(%{
       contractaddress: @token_contract,
       chainid: 1
     })
@@ -55,11 +55,11 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
   test "can fetch token holder count" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenHolderCountLens")
+      IO.puts("Skipping test: Pro API key required for TokenHolderCount")
       :ok
     else
       assert {:ok, %{result: count, holder_count: count}} =
-               TokenHolderCountLens.focus(%{
+               TokenHolderCount.focus(%{
                  contractaddress: @token_contract,
                  chainid: 1
                })
@@ -76,7 +76,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = TokenHolderCountLens.focus(%{
+    result = TokenHolderCount.focus(%{
       contractaddress: "0xinvalid",
       chainid: 1
     })

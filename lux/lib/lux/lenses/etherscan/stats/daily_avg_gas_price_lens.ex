@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLens do
+defmodule Lux.Lenses.Etherscan.DailyAvgGasPrice do
   @moduledoc """
   Lens for fetching the daily average gas price used on the Ethereum network from the Etherscan API.
 
@@ -6,14 +6,14 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLens do
 
   ```elixir
   # Get daily average gas price for a specific date range with ascending sort (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.DailyAvgGasPriceLens.focus(%{
+  Lux.Lenses.Etherscan.DailyAvgGasPrice.focus(%{
     startdate: "2023-01-01",
     enddate: "2023-01-31",
     sort: "asc"
   })
 
   # Get daily average gas price for a specific date range with descending sort on a specific chain
-  Lux.Lenses.Etherscan.DailyAvgGasPriceLens.focus(%{
+  Lux.Lenses.Etherscan.DailyAvgGasPrice.focus(%{
     startdate: "2023-01-01",
     enddate: "2023-01-31",
     sort: "desc",
@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Daily Average Gas Price API",
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -75,7 +75,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPriceLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         # Process the list of daily gas price data
         processed_results = Enum.map(result, fn data ->

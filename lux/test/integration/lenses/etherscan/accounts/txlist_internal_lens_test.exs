@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.TxListInternalLens
+  alias Lux.Lenses.Etherscan.TxListInternal
 
   # Address with internal transactions (Uniswap V2 Router)
   @address "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
@@ -40,7 +40,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalLensTest do
 
   test "can fetch internal transactions for an address" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalLens.focus(%{
+             TxListInternal.focus(%{
                address: @address,
                chainid: 1
              })
@@ -79,7 +79,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalLensTest do
 
   test "can fetch internal transactions for a transaction hash" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalLens.focus(%{
+             TxListInternal.focus(%{
                txhash: @txhash,
                chainid: 1
              })
@@ -100,7 +100,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalLensTest do
 
   test "can fetch internal transactions by block range" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalLens.focus(%{
+             TxListInternal.focus(%{
                startblock: 13481773,
                endblock: 13491773,
                chainid: 1
@@ -122,7 +122,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalLensTest do
 
   test "can fetch internal transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalLens.focus(%{
+             TxListInternal.focus(%{
                address: @address,
                chainid: 1,
                page: 1,

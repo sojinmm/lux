@@ -2,7 +2,7 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BalanceMultiLens
+  alias Lux.Lenses.Etherscan.BalanceMulti
 
   # Vitalik's address
   @vitalik "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -45,7 +45,7 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   test "can fetch ETH balances for multiple addresses" do
     assert {:ok, %{result: balances}} =
-             BalanceMultiLens.focus(%{
+             BalanceMulti.focus(%{
                addresses: [@vitalik, @eth_foundation],
                chainid: 1
              })
@@ -76,7 +76,7 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   test "can specify a different tag (block parameter)" do
     assert {:ok, %{result: balances}} =
-             BalanceMultiLens.focus(%{
+             BalanceMulti.focus(%{
                addresses: [@vitalik, @eth_foundation],
                chainid: 1,
                tag: "latest"
@@ -88,7 +88,7 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
   test "returns zero balance for invalid address format" do
     # Etherscan API should handle invalid addresses
     assert {:ok, %{result: balances}} =
-             BalanceMultiLens.focus(%{
+             BalanceMulti.focus(%{
                addresses: [@vitalik, "0xinvalid"],
                chainid: 1
              })

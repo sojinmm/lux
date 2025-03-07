@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenBalanceLens
+  alias Lux.Lenses.Etherscan.TokenBalance
 
   setup do
     # Set up test API key in the configuration
@@ -52,7 +52,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = TokenBalanceLens.focus(params)
+      result = TokenBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: "135499", token_balance: "135499"}} = result
@@ -81,7 +81,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = TokenBalanceLens.focus(params)
+      result = TokenBalance.focus(params)
 
       # Verify the result
       assert {:ok, %{result: "135499", token_balance: "135499"}} = result
@@ -106,7 +106,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
       end)
 
       # Call the lens
-      result = TokenBalanceLens.focus(params)
+      result = TokenBalance.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
       }
 
       # Call the function
-      result = TokenBalanceLens.before_focus(params)
+      result = TokenBalance.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -146,7 +146,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
       }
 
       # Call the function
-      result = TokenBalanceLens.after_focus(response)
+      result = TokenBalance.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: "135499", token_balance: "135499"}} = result
@@ -161,7 +161,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLensTest do
       }
 
       # Call the function
-      result = TokenBalanceLens.after_focus(response)
+      result = TokenBalance.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

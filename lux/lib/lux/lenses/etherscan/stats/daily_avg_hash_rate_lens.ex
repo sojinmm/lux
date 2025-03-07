@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLens do
+defmodule Lux.Lenses.Etherscan.DailyAvgHashRate do
   @moduledoc """
   Lens for fetching the daily average network hash rate from the Etherscan API.
 
@@ -6,7 +6,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLens do
 
   Fetch daily average hash rate for a specific date range in ascending order:
 
-      iex> Lux.Lenses.Etherscan.DailyAvgHashRateLens.focus(%{
+      iex> Lux.Lenses.Etherscan.DailyAvgHashRate.focus(%{
       ...>   startdate: "2023-01-01",
       ...>   enddate: "2023-01-05",
       ...>   sort: "asc",
@@ -27,7 +27,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLens do
 
   Fetch daily average hash rate for a specific date range in descending order:
 
-      iex> Lux.Lenses.Etherscan.DailyAvgHashRateLens.focus(%{
+      iex> Lux.Lenses.Etherscan.DailyAvgHashRate.focus(%{
       ...>   startdate: "2023-01-01",
       ...>   enddate: "2023-01-05",
       ...>   sort: "desc",
@@ -47,7 +47,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLens do
       }}
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     url: "https://api.etherscan.io/v2/api",
@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLens do
     headers: [{"Content-Type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: [
       chainid: [type: :integer, required: true],
@@ -79,7 +79,7 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRateLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_list(result) ->
         hash_rate_data =
           Enum.map(result, fn item ->

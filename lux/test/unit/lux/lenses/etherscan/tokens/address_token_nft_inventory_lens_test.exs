@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens
+  alias Lux.Lenses.Etherscan.AddressTokenNFTInventory
 
   setup do
     # Set up test API key in the configuration
@@ -67,7 +67,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTInventoryLens.focus(params)
+      result = AddressTokenNFTInventory.focus(params)
 
       # Verify the result
       assert {:ok, %{result: nft_inventory, nft_inventory: nft_inventory}} = result
@@ -124,7 +124,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTInventoryLens.focus(params)
+      result = AddressTokenNFTInventory.focus(params)
 
       # Verify the result
       assert {:ok, %{result: nft_inventory}} = result
@@ -150,7 +150,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTInventoryLens.focus(params)
+      result = AddressTokenNFTInventory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -175,7 +175,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTInventoryLens.focus(params)
+      result = AddressTokenNFTInventory.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -200,7 +200,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       end)
 
       # Call the lens
-      result = AddressTokenNFTInventoryLens.focus(params)
+      result = AddressTokenNFTInventory.focus(params)
 
       # Verify the result
       assert {:ok, %{result: nft_inventory, nft_inventory: nft_inventory}} = result
@@ -218,7 +218,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTInventoryLens.before_focus(params)
+      result = AddressTokenNFTInventory.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -241,7 +241,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTInventoryLens.before_focus(params)
+      result = AddressTokenNFTInventory.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -279,7 +279,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTInventoryLens.after_focus(response)
+      result = AddressTokenNFTInventory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: nft_inventory, nft_inventory: nft_inventory}} = result
@@ -311,7 +311,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTInventoryLens.after_focus(response)
+      result = AddressTokenNFTInventory.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: nft_inventory, nft_inventory: nft_inventory}} = result
@@ -327,7 +327,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTInventoryLens.after_focus(response)
+      result = AddressTokenNFTInventory.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Max rate limit reached, this endpoint is throttled to 2 calls/second"}} = result
@@ -342,7 +342,7 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventoryLensTest do
       }
 
       # Call the function
-      result = AddressTokenNFTInventoryLens.after_focus(response)
+      result = AddressTokenNFTInventory.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

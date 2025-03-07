@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.DailyAvgHashRateLens
+  alias Lux.Lenses.Etherscan.DailyAvgHashRate
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -41,7 +41,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyAvgHashRateLens.focus(%{
+    case DailyAvgHashRate.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -58,11 +58,11 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   test "can fetch daily average hash rate with required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgHashRateLens")
+      IO.puts("Skipping test: Pro API key required for DailyAvgHashRate")
       :ok
     else
       assert {:ok, %{result: hash_rate_data, daily_avg_hash_rate: hash_rate_data}} =
-               DailyAvgHashRateLens.focus(%{
+               DailyAvgHashRate.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
@@ -91,11 +91,11 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgHashRateLens")
+      IO.puts("Skipping test: Pro API key required for DailyAvgHashRate")
       :ok
     else
       assert {:ok, %{result: hash_rate_data}} =
-               DailyAvgHashRateLens.focus(%{
+               DailyAvgHashRate.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
@@ -137,7 +137,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyAvgHashRateLens.focus(%{
+    result = DailyAvgHashRate.focus(%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
@@ -163,11 +163,11 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgHashRateLens")
+      IO.puts("Skipping test: Pro API key required for DailyAvgHashRate")
       :ok
     else
       # Missing startdate and enddate
-      result = DailyAvgHashRateLens.focus(%{
+      result = DailyAvgHashRate.focus(%{
         chainid: 1
       })
 

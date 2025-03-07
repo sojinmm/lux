@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractCreationLens
+  alias Lux.Lenses.Etherscan.ContractCreation
 
   setup do
     # Set up test API key in the configuration
@@ -54,7 +54,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
       end)
 
       # Call the lens
-      result = ContractCreationLens.focus(params)
+      result = ContractCreation.focus(params)
 
       # Verify the result
       assert {:ok, %{result: contracts}} = result
@@ -104,7 +104,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
       end)
 
       # Call the lens
-      result = ContractCreationLens.focus(params)
+      result = ContractCreation.focus(params)
 
       # Verify the result
       assert {:ok, %{result: contracts}} = result
@@ -131,7 +131,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
       end)
 
       # Call the lens
-      result = ContractCreationLens.focus(params)
+      result = ContractCreation.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -147,7 +147,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
       }
 
       # Call the function
-      result = ContractCreationLens.before_focus(params)
+      result = ContractCreation.before_focus(params)
 
       # Verify the result
       assert result.module == "contract"
@@ -173,7 +173,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
       }
 
       # Call the function
-      result = ContractCreationLens.after_focus(response)
+      result = ContractCreation.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: contracts}} = result
@@ -192,7 +192,7 @@ defmodule Lux.Lenses.Etherscan.ContractCreationLensTest do
       }
 
       # Call the function
-      result = ContractCreationLens.after_focus(response)
+      result = ContractCreation.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

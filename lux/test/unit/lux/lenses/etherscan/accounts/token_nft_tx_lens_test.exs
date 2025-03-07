@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenNftTxLens
+  alias Lux.Lenses.Etherscan.TokenNftTx
 
   setup do
     # Set up test API key in the configuration
@@ -80,7 +80,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       end)
 
       # Call the lens
-      result = TokenNftTxLens.focus(params)
+      result = TokenNftTx.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -109,7 +109,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       end)
 
       # Call the lens
-      result = TokenNftTxLens.focus(params)
+      result = TokenNftTx.focus(params)
 
       # Verify the result
       assert {:error, %{message: "No transactions found", result: "No NFT transfers found"}} = result
@@ -172,7 +172,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       end)
 
       # Call the lens
-      result = TokenNftTxLens.focus(params)
+      result = TokenNftTx.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -236,7 +236,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       end)
 
       # Call the lens
-      result = TokenNftTxLens.focus(params)
+      result = TokenNftTx.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -265,7 +265,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       end)
 
       # Call the lens
-      result = TokenNftTxLens.focus(params)
+      result = TokenNftTx.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -289,7 +289,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       end)
 
       # Call the lens
-      result = TokenNftTxLens.focus(params)
+      result = TokenNftTx.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -310,7 +310,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       }
 
       # Call the function
-      result = TokenNftTxLens.before_focus(params)
+      result = TokenNftTx.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -332,7 +332,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       }
 
       # Call the function
-      result = TokenNftTxLens.before_focus(params)
+      result = TokenNftTx.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -350,7 +350,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       }
 
       # Call the function
-      result = TokenNftTxLens.before_focus(params)
+      result = TokenNftTx.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -371,7 +371,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
 
       # Expect an error to be raised
       assert_raise ArgumentError, fn ->
-        TokenNftTxLens.before_focus(params)
+        TokenNftTx.before_focus(params)
       end
     end
   end
@@ -399,7 +399,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       }
 
       # Call the function
-      result = TokenNftTxLens.after_focus(response)
+      result = TokenNftTx.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: [transfer]}} = result
@@ -417,7 +417,7 @@ defmodule Lux.Lenses.Etherscan.TokenNftTxLensTest do
       }
 
       # Call the function
-      result = TokenNftTxLens.after_focus(response)
+      result = TokenNftTx.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

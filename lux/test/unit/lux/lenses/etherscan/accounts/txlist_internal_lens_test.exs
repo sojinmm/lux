@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.TxListInternalLens
+  alias Lux.Lenses.Etherscan.TxListInternal
 
   setup do
     # Set up test API key in the configuration
@@ -75,7 +75,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       end)
 
       # Call the lens
-      result = TxListInternalLens.focus(params)
+      result = TxListInternal.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transaction]}} = result
@@ -102,7 +102,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       end)
 
       # Call the lens
-      result = TxListInternalLens.focus(params)
+      result = TxListInternal.focus(params)
 
       # Verify the result
       assert {:error, %{message: "No transactions found", result: "No internal transactions found"}} = result
@@ -156,7 +156,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       end)
 
       # Call the lens
-      result = TxListInternalLens.focus(params)
+      result = TxListInternal.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transaction]}} = result
@@ -219,7 +219,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       end)
 
       # Call the lens
-      result = TxListInternalLens.focus(params)
+      result = TxListInternal.focus(params)
 
       # Verify the result
       assert {:ok, %{result: [transaction]}} = result
@@ -247,7 +247,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       end)
 
       # Call the lens
-      result = TxListInternalLens.focus(params)
+      result = TxListInternal.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -271,7 +271,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       end)
 
       # Call the lens
-      result = TxListInternalLens.focus(params)
+      result = TxListInternal.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
@@ -292,7 +292,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       }
 
       # Call the function
-      result = TxListInternalLens.before_focus(params)
+      result = TxListInternal.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -314,7 +314,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       }
 
       # Call the function
-      result = TxListInternalLens.before_focus(params)
+      result = TxListInternal.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -335,7 +335,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       }
 
       # Call the function
-      result = TxListInternalLens.before_focus(params)
+      result = TxListInternal.before_focus(params)
 
       # Verify the result
       assert result.module == "account"
@@ -359,7 +359,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
 
       # Expect an error to be raised
       assert_raise ArgumentError, fn ->
-        TxListInternalLens.before_focus(params)
+        TxListInternal.before_focus(params)
       end
     end
   end
@@ -391,7 +391,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       }
 
       # Call the function
-      result = TxListInternalLens.after_focus(response)
+      result = TxListInternal.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: [transaction]}} = result
@@ -407,7 +407,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalLensTest do
       }
 
       # Call the function
-      result = TxListInternalLens.after_focus(response)
+      result = TxListInternal.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

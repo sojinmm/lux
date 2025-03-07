@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenBalanceLens do
+defmodule Lux.Lenses.Etherscan.TokenBalance do
   @moduledoc """
   Lens for fetching the current balance of an ERC-20 token of an address from the Etherscan API.
 
@@ -6,13 +6,13 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLens do
 
   ```elixir
   # Get ERC20 token balance for an address (default chainid: 1 for Ethereum, tag: "latest")
-  Lux.Lenses.Etherscan.TokenBalanceLens.focus(%{
+  Lux.Lenses.Etherscan.TokenBalance.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
     address: "0xe04f27eb70e025b78871a2ad7eabe85e61212761"
   })
 
   # Get ERC20 token balance for an address on a specific chain
-  Lux.Lenses.Etherscan.TokenBalanceLens.focus(%{
+  Lux.Lenses.Etherscan.TokenBalance.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
     address: "0xe04f27eb70e025b78871a2ad7eabe85e61212761",
     tag: "latest",
@@ -21,7 +21,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan ERC20 Token Balance API",
@@ -31,7 +31,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -82,7 +82,7 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} ->
         # Return a structured response with the token balance
         {:ok, %{

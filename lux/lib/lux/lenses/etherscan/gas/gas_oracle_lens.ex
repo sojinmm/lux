@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.GasOracleLens do
+defmodule Lux.Lenses.Etherscan.GasOracle do
   @moduledoc """
   Lens for fetching the current Safe, Proposed and Fast gas prices from the Etherscan API.
 
@@ -11,16 +11,16 @@ defmodule Lux.Lenses.Etherscan.GasOracleLens do
 
   ```elixir
   # Get current gas prices (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.GasOracleLens.focus(%{})
+  Lux.Lenses.Etherscan.GasOracle.focus(%{})
 
   # Get current gas prices on a specific chain
-  Lux.Lenses.Etherscan.GasOracleLens.focus(%{
+  Lux.Lenses.Etherscan.GasOracle.focus(%{
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Gas Oracle API",
@@ -30,7 +30,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -59,7 +59,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} when is_map(result) ->
         # Convert string values to appropriate types
         processed_result = %{

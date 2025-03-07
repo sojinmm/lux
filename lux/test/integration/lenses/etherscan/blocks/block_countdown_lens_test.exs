@@ -2,8 +2,8 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.BlockCountdownLens
-  alias Lux.Lenses.Etherscan.BlockByTimestampLens
+  alias Lux.Lenses.Etherscan.BlockCountdown
+  alias Lux.Lenses.Etherscan.BlockByTimestamp
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -39,7 +39,7 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     current_timestamp = DateTime.utc_now() |> DateTime.to_unix()
 
     {:ok, %{result: current_block_result}} =
-      BlockByTimestampLens.focus(%{
+      BlockByTimestamp.focus(%{
         timestamp: current_timestamp,
         closest: "before",
         chainid: 1
@@ -52,7 +52,7 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     future_block = current_block + 1000
 
     assert {:ok, %{result: result}} =
-             BlockCountdownLens.focus(%{
+             BlockCountdown.focus(%{
                blockno: future_block,
                chainid: 1
              })

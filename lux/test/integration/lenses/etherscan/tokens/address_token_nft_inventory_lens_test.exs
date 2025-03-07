@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   use IntegrationCase, async: false
   @moduletag timeout: 120_000
 
-  alias Lux.Lenses.Etherscan.AddressTokenNFTInventoryLens
+  alias Lux.Lenses.Etherscan.AddressTokenNFTInventory
 
   # Example address that holds NFTs
   @nft_holder "0x123432244443b54409430979df8333f9308a6040"
@@ -57,7 +57,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = AddressTokenNFTInventoryLens.focus(%{
+    result = AddressTokenNFTInventory.focus(%{
       address: @nft_holder,
       contractaddress: @nft_contract,
       chainid: 1
@@ -73,10 +73,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   test "can fetch NFT inventory for an address filtered by contract" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenNFTInventoryLens")
+      IO.puts("Skipping test: Pro API key required for AddressTokenNFTInventory")
       :ok
     else
-      result = AddressTokenNFTInventoryLens.focus(%{
+      result = AddressTokenNFTInventory.focus(%{
         address: @nft_holder,
         contractaddress: @nft_contract,
         chainid: 1
@@ -118,13 +118,13 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   test "can fetch NFT inventory with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenNFTInventoryLens")
+      IO.puts("Skipping test: Pro API key required for AddressTokenNFTInventory")
       :ok
     else
       # Using a small offset to test pagination
       offset = 5
 
-      result = AddressTokenNFTInventoryLens.focus(%{
+      result = AddressTokenNFTInventory.focus(%{
         address: @nft_holder,
         contractaddress: @nft_contract,
         page: 1,
@@ -153,7 +153,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "returns error for invalid address" do
     # Using an invalid address format
-    result = AddressTokenNFTInventoryLens.focus(%{
+    result = AddressTokenNFTInventory.focus(%{
       address: "0xinvalid",
       contractaddress: @nft_contract,
       chainid: 1
@@ -180,7 +180,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = AddressTokenNFTInventoryLens.focus(%{
+    result = AddressTokenNFTInventory.focus(%{
       address: @nft_holder,
       contractaddress: "0xinvalid",
       chainid: 1

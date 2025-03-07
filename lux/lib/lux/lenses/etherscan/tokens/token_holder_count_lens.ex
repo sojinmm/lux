@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.TokenHolderCountLens do
+defmodule Lux.Lenses.Etherscan.TokenHolderCount do
   @moduledoc """
   Lens for fetching a simple count of the number of ERC20 token holders from the Etherscan API.
 
@@ -6,19 +6,19 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLens do
 
   ```elixir
   # Get token holder count (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.TokenHolderCountLens.focus(%{
+  Lux.Lenses.Etherscan.TokenHolderCount.focus(%{
     contractaddress: "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d"
   })
 
   # Get token holder count on a specific chain
-  Lux.Lenses.Etherscan.TokenHolderCountLens.focus(%{
+  Lux.Lenses.Etherscan.TokenHolderCount.focus(%{
     contractaddress: "0xaaaebe6fe48e54f431b0c390cfaf0b017d09d42d",
     chainid: 1
   })
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Token Holder Count API",
@@ -28,7 +28,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -62,7 +62,7 @@ defmodule Lux.Lenses.Etherscan.TokenHolderCountLens do
   """
   @impl true
   def after_focus(response) do
-    case BaseLens.process_response(response) do
+    case Base.process_response(response) do
       {:ok, %{result: result}} ->
         # Return a structured response with the token holder count
         {:ok, %{

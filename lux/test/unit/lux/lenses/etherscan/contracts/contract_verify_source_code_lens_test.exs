@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractVerifySourceCodeLens
+  alias Lux.Lenses.Etherscan.ContractVerifySourceCode
 
   setup do
     # Set up test API key in the configuration
@@ -48,7 +48,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       end)
 
       # Call the lens
-      result = ContractVerifySourceCodeLens.focus(params)
+      result = ContractVerifySourceCode.focus(params)
 
       # Verify the result
       assert {:ok, %{result: verification_info}} = result
@@ -83,7 +83,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       end)
 
       # Call the lens
-      result = ContractVerifySourceCodeLens.focus(params)
+      result = ContractVerifySourceCode.focus(params)
 
       # Verify the result
       assert {:ok, %{result: verification_info}} = result
@@ -113,7 +113,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       end)
 
       # Call the lens
-      result = ContractVerifySourceCodeLens.focus(params)
+      result = ContractVerifySourceCode.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result
@@ -136,7 +136,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractVerifySourceCodeLens.before_focus(params)
+      result = ContractVerifySourceCode.before_focus(params)
 
       # Verify the result
       assert result.module == "contract"
@@ -166,7 +166,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractVerifySourceCodeLens.before_focus(params)
+      result = ContractVerifySourceCode.before_focus(params)
 
       # Verify the result
       assert result.optimizationUsed == "1"
@@ -185,7 +185,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractVerifySourceCodeLens.after_focus(response)
+      result = ContractVerifySourceCode.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: verification_info}} = result
@@ -202,7 +202,7 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCodeLensTest do
       }
 
       # Call the function
-      result = ContractVerifySourceCodeLens.after_focus(response)
+      result = ContractVerifySourceCode.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid address format"}} = result

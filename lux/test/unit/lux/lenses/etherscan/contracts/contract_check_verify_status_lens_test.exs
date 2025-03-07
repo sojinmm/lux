@@ -1,7 +1,7 @@
 defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
   use UnitAPICase, async: false
 
-  alias Lux.Lenses.Etherscan.ContractCheckVerifyStatusLens
+  alias Lux.Lenses.Etherscan.ContractCheckVerifyStatus
 
   setup do
     # Set up test API key in the configuration
@@ -48,7 +48,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       end)
 
       # Call the lens
-      result = ContractCheckVerifyStatusLens.focus(params)
+      result = ContractCheckVerifyStatus.focus(params)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -74,7 +74,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       end)
 
       # Call the lens
-      result = ContractCheckVerifyStatusLens.focus(params)
+      result = ContractCheckVerifyStatus.focus(params)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -100,7 +100,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       end)
 
       # Call the lens
-      result = ContractCheckVerifyStatusLens.focus(params)
+      result = ContractCheckVerifyStatus.focus(params)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -126,7 +126,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       end)
 
       # Call the lens
-      result = ContractCheckVerifyStatusLens.focus(params)
+      result = ContractCheckVerifyStatus.focus(params)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid GUID format"}} = result
@@ -142,7 +142,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       }
 
       # Call the function
-      result = ContractCheckVerifyStatusLens.before_focus(params)
+      result = ContractCheckVerifyStatus.before_focus(params)
 
       # Verify the result
       assert result.module == "contract"
@@ -162,7 +162,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       }
 
       # Call the function
-      result = ContractCheckVerifyStatusLens.after_focus(response)
+      result = ContractCheckVerifyStatus.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -179,7 +179,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       }
 
       # Call the function
-      result = ContractCheckVerifyStatusLens.after_focus(response)
+      result = ContractCheckVerifyStatus.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -196,7 +196,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       }
 
       # Call the function
-      result = ContractCheckVerifyStatusLens.after_focus(response)
+      result = ContractCheckVerifyStatus.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -213,7 +213,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       }
 
       # Call the function
-      result = ContractCheckVerifyStatusLens.after_focus(response)
+      result = ContractCheckVerifyStatus.after_focus(response)
 
       # Verify the result
       assert {:ok, %{result: status_info}} = result
@@ -230,7 +230,7 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatusLensTest do
       }
 
       # Call the function
-      result = ContractCheckVerifyStatusLens.after_focus(response)
+      result = ContractCheckVerifyStatus.after_focus(response)
 
       # Verify the result
       assert {:error, %{message: "Error", result: "Invalid GUID format"}} = result

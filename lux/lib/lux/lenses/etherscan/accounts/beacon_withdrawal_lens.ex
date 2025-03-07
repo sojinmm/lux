@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLens do
+defmodule Lux.Lenses.Etherscan.BeaconWithdrawal do
   @moduledoc """
   Lens for fetching beacon chain withdrawals made to an Ethereum address from the Etherscan API.
 
@@ -6,12 +6,12 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLens do
 
   ```elixir
   # Get beacon chain withdrawals for an address (default chainid: 1 for Ethereum)
-  Lux.Lenses.Etherscan.BeaconWithdrawalLens.focus(%{
+  Lux.Lenses.Etherscan.BeaconWithdrawal.focus(%{
     address: "0xB9D7934878B5FB9610B3fE8A5e441e8fad7E293f"
   })
 
   # Get beacon chain withdrawals for an address with pagination and block range
-  Lux.Lenses.Etherscan.BeaconWithdrawalLens.focus(%{
+  Lux.Lenses.Etherscan.BeaconWithdrawal.focus(%{
     address: "0xB9D7934878B5FB9610B3fE8A5e441e8fad7E293f",
     startblock: 17000000,
     endblock: 18000000,
@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLens do
   ```
   """
 
-  alias Lux.Lenses.Etherscan.BaseLens
+  alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
     name: "Etherscan Beacon Chain Withdrawals API",
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLens do
     headers: [{"content-type", "application/json"}],
     auth: %{
       type: :custom,
-      auth_function: &BaseLens.add_api_key/1
+      auth_function: &Base.add_api_key/1
     },
     schema: %{
       type: :object,
@@ -92,6 +92,6 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawalLens do
   """
   @impl true
   def after_focus(response) do
-    BaseLens.process_response(response)
+    Base.process_response(response)
   end
 end
