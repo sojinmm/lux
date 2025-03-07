@@ -21,8 +21,8 @@ defmodule Lux.Lenses.Etherscan.TxStatus do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Contract Execution Status API",
-    description: "Checks the execution status of a contract",
+    name: "Etherscan.TxStatus",
+    description: "Checks if a contract transaction executed successfully or encountered errors with detailed error messages",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -35,12 +35,12 @@ defmodule Lux.Lenses.Etherscan.TxStatus do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         txhash: %{
           type: :string,
-          description: "Transaction hash to check the execution status",
+          description: "Transaction hash to check contract execution status for (must be valid 66-character hex format)",
           pattern: "^0x[a-fA-F0-9]{64}$"
         }
       },

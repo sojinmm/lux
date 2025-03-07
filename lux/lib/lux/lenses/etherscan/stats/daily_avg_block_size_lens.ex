@@ -26,8 +26,8 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSize do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Daily Average Block Size API",
-    description: "Fetches the daily average block size within a date range",
+    name: "Etherscan.DailyAvgBlockSize",
+    description: "Provides historical data on average blockchain block sizes over time (requires Pro API key)",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -40,20 +40,20 @@ defmodule Lux.Lenses.Etherscan.DailyAvgBlockSize do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         startdate: %{
           type: :string,
-          description: "The starting date in yyyy-MM-dd format, e.g., 2019-02-01"
+          description: "Beginning date for block size data in yyyy-MM-dd format"
         },
         enddate: %{
           type: :string,
-          description: "The ending date in yyyy-MM-dd format, e.g., 2019-02-28"
+          description: "Ending date for block size data in yyyy-MM-dd format"
         },
         sort: %{
           type: :string,
-          description: "The sorting preference, use 'asc' to sort by ascending and 'desc' to sort by descending",
+          description: "Chronological ordering of results (asc=oldest first, desc=newest first)",
           enum: ["asc", "desc"],
           default: "asc"
         }

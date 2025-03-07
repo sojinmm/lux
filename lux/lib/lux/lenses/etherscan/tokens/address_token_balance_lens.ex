@@ -25,8 +25,8 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalance do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Address Token Balance API",
-    description: "Fetches the ERC-20 tokens and amount held by an address",
+    name: "Etherscan.AddressTokenBalance",
+    description: "Retrieves all ERC-20 tokens and quantities held by a specific wallet address",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -39,22 +39,22 @@ defmodule Lux.Lenses.Etherscan.AddressTokenBalance do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "The address to check for token balances",
+          description: "Wallet address to query for token balances (must be valid hex format)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         page: %{
           type: :integer,
-          description: "The integer page number, if pagination is enabled",
+          description: "Page number for paginated results when wallet holds many tokens",
           default: 1
         },
         offset: %{
           type: :integer,
-          description: "The number of token balances displayed per page",
+          description: "Number of token records to return per page (max 100)",
           default: 100
         }
       },

@@ -21,8 +21,8 @@ defmodule Lux.Lenses.Etherscan.BlockReward do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Block Reward API",
-    description: "Fetches block and uncle rewards for a specific block",
+    name: "Etherscan.BlockReward",
+    description: "Retrieves mining rewards for a block including miner compensation and uncle rewards",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -35,12 +35,12 @@ defmodule Lux.Lenses.Etherscan.BlockReward do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         blockno: %{
           type: [:integer, :string],
-          description: "Block number to check rewards for"
+          description: "Block height to query reward information for"
         }
       },
       required: ["blockno"]

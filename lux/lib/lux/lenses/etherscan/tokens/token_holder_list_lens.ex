@@ -23,8 +23,8 @@ defmodule Lux.Lenses.Etherscan.TokenHolderList do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Token Holder List API",
-    description: "Fetches the current ERC20 token holders and number of tokens held",
+    name: "Etherscan.TokenHolderList",
+    description: "Lists top wallet addresses holding a specific ERC-20 token with quantities and ownership percentages",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -37,22 +37,22 @@ defmodule Lux.Lenses.Etherscan.TokenHolderList do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         contractaddress: %{
           type: :string,
-          description: "The contract address of the ERC-20 token",
+          description: "ERC-20 token contract address to query holders for (must be valid hex format)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         page: %{
           type: :integer,
-          description: "The integer page number, if pagination is enabled",
+          description: "Page number for paginated results when token has many holders",
           default: 1
         },
         offset: %{
           type: :integer,
-          description: "The number of token holders displayed per page",
+          description: "Number of token holder records to return per page (default 10)",
           default: 10
         }
       },

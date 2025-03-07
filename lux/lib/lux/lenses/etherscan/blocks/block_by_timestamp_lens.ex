@@ -22,8 +22,8 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestamp do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Block Number by Timestamp API",
-    description: "Fetches the block number that was mined at a certain timestamp",
+    name: "Etherscan.BlockByTimestamp",
+    description: "Converts a Unix timestamp to the nearest block number mined before or after that time",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -36,16 +36,16 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestamp do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         timestamp: %{
           type: [:integer, :string],
-          description: "The Unix timestamp in seconds"
+          description: "Unix timestamp in seconds to find corresponding block for"
         },
         closest: %{
           type: :string,
-          description: "The closest available block to the provided timestamp, either 'before' or 'after'",
+          description: "Direction to search (before=earlier block, after=later block)",
           enum: ["before", "after"],
           default: "before"
         }

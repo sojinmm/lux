@@ -25,8 +25,8 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawal do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Beacon Chain Withdrawals API",
-    description: "Fetches beacon chain withdrawals made to an Ethereum address",
+    name: "Etherscan.BeaconWithdrawal",
+    description: "Retrieves Ethereum 2.0 beacon chain withdrawal transactions for a specific address",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -39,37 +39,37 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawal do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "Ethereum address to query for beacon withdrawals",
+          description: "Target Ethereum address to query for beacon chain withdrawals",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         startblock: %{
           type: :integer,
-          description: "Starting block number",
+          description: "Lower block height boundary for filtering withdrawals",
           default: 0
         },
         endblock: %{
           type: :integer,
-          description: "Ending block number",
+          description: "Upper block height boundary for filtering withdrawals",
           default: 99999999
         },
         page: %{
           type: :integer,
-          description: "Page number for pagination",
+          description: "Page number for paginated results (starts at 1)",
           default: 1
         },
         offset: %{
           type: :integer,
-          description: "Number of withdrawals per page",
+          description: "Number of withdrawal records to return per page",
           default: 100
         },
         sort: %{
           type: :string,
-          description: "Sorting direction",
+          description: "Chronological ordering of results (asc=oldest first, desc=newest first)",
           enum: ["asc", "desc"],
           default: "asc"
         }

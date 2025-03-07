@@ -25,8 +25,8 @@ defmodule Lux.Lenses.Etherscan.BalanceHistory do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Historical ETH Balance API",
-    description: "Fetches historical ETH balance for an Ethereum address at a specific block",
+    name: "Etherscan.BalanceHistory",
+    description: "Retrieves ETH balance for an address at a specific historical block number across supported networks",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -39,17 +39,17 @@ defmodule Lux.Lenses.Etherscan.BalanceHistory do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "Ethereum address to query",
+          description: "Target Ethereum address in standard 0x hex format",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         blockno: %{
           type: :integer,
-          description: "Block number to check balance at"
+          description: "Specific historical block height to query balance at"
         }
       },
       required: ["address", "blockno"]

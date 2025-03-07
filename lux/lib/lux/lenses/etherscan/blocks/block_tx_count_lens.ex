@@ -17,7 +17,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCount do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Block Transactions Count API",
+    name: "Etherscan.BlockTxCount",
     description: "Fetches the number of transactions in a specified block",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
@@ -31,12 +31,12 @@ defmodule Lux.Lenses.Etherscan.BlockTxCount do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (only 1 for Ethereum is supported)",
+          description: "Network identifier (must be 1 for Ethereum mainnet only)",
           default: 1
         },
         blockno: %{
           type: [:integer, :string],
-          description: "Block number to get transaction count for"
+          description: "Block height to analyze transaction counts for"
         }
       },
       required: ["blockno"]

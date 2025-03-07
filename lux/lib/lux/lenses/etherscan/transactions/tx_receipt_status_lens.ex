@@ -23,8 +23,8 @@ defmodule Lux.Lenses.Etherscan.TxReceiptStatus do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Transaction Receipt Status API",
-    description: "Checks the receipt status of a transaction",
+    name: "Etherscan.TxReceiptStatus",
+    description: "Verifies if a transaction was successfully mined with status 1 (success) or 0 (failure)",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -37,12 +37,12 @@ defmodule Lux.Lenses.Etherscan.TxReceiptStatus do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         txhash: %{
           type: :string,
-          description: "Transaction hash to check the receipt status",
+          description: "Transaction hash to check receipt status for (must be valid 66-character hex format)",
           pattern: "^0x[a-fA-F0-9]{64}$"
         }
       },

@@ -23,8 +23,8 @@ defmodule Lux.Lenses.Etherscan.TokenInfo do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Token Info API",
-    description: "Fetches project information and social media links of an ERC20/ERC721/ERC1155 token",
+    name: "Etherscan.TokenInfo",
+    description: "Retrieves comprehensive token metadata including project details, social media links, and current price",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -37,12 +37,12 @@ defmodule Lux.Lenses.Etherscan.TokenInfo do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         contractaddress: %{
           type: :string,
-          description: "The contract address of the ERC-20/ERC-721/ERC1155 token",
+          description: "Token contract address to query metadata for (works with ERC-20, ERC-721, or ERC-1155)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         }
       },

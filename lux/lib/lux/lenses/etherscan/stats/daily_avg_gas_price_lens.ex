@@ -25,8 +25,8 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPrice do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Daily Average Gas Price API",
-    description: "Fetches the daily average gas price used on the Ethereum network",
+    name: "Etherscan.DailyAvgGasPrice",
+    description: "Provides historical transaction fee data showing daily average gas prices in wei",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -39,20 +39,20 @@ defmodule Lux.Lenses.Etherscan.DailyAvgGasPrice do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         startdate: %{
           type: :string,
-          description: "The starting date in yyyy-MM-dd format, e.g., 2023-01-01"
+          description: "Beginning date for gas price data in yyyy-MM-dd format"
         },
         enddate: %{
           type: :string,
-          description: "The ending date in yyyy-MM-dd format, e.g., 2023-01-31"
+          description: "Ending date for gas price data in yyyy-MM-dd format"
         },
         sort: %{
           type: :string,
-          description: "The sorting preference, use asc to sort by ascending and desc to sort by descending",
+          description: "Chronological ordering of results (asc=oldest first, desc=newest first)",
           enum: ["asc", "desc"],
           default: "asc"
         }

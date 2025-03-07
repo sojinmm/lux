@@ -21,8 +21,8 @@ defmodule Lux.Lenses.Etherscan.GasEstimate do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Gas Estimate API",
-    description: "Fetches the estimated time, in seconds, for a transaction to be confirmed on the blockchain",
+    name: "Etherscan.GasEstimate",
+    description: "Predicts transaction confirmation time in seconds based on a specified gas price",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -35,12 +35,12 @@ defmodule Lux.Lenses.Etherscan.GasEstimate do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         gasprice: %{
           type: :integer,
-          description: "The price paid per unit of gas, in wei"
+          description: "Transaction gas price in wei to estimate confirmation time for"
         }
       },
       required: ["gasprice"]

@@ -23,8 +23,8 @@ defmodule Lux.Lenses.Etherscan.GasOracle do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Gas Oracle API",
-    description: "Fetches the current Safe, Proposed and Fast gas prices",
+    name: "Etherscan.GasOracle",
+    description: "Provides real-time gas price recommendations (slow/average/fast) and network congestion metrics",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -37,7 +37,7 @@ defmodule Lux.Lenses.Etherscan.GasOracle do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         }
       },

@@ -28,8 +28,8 @@ defmodule Lux.Lenses.Etherscan.ContractCreation do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Contract Creator API",
-    description: "Fetches a contract's deployer address and transaction hash it was created",
+    name: "Etherscan.ContractCreation",
+    description: "Identifies the creator address and deployment transaction for up to 5 contracts",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -42,12 +42,12 @@ defmodule Lux.Lenses.Etherscan.ContractCreation do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         contractaddresses: %{
           type: :string,
-          description: "Comma-separated list of contract addresses (up to 5)",
+          description: "Comma-separated list of contract addresses to query (maximum 5)",
           pattern: "^(0x[a-fA-F0-9]{40})(,0x[a-fA-F0-9]{40}){0,4}$"
         }
       },

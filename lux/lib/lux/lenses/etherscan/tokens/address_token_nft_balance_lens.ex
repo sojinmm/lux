@@ -25,8 +25,8 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalance do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Address ERC721 Token Balance API",
-    description: "Fetches the ERC-721 tokens and amount held by an address",
+    name: "Etherscan.AddressTokenNFTBalance",
+    description: "Retrieves all ERC-721 NFT collections and quantities held by a specific wallet address",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -39,22 +39,22 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalance do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "The address to check for NFT balances",
+          description: "Wallet address to query for NFT holdings (must be valid hex format)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         page: %{
           type: :integer,
-          description: "The integer page number, if pagination is enabled",
+          description: "Page number for paginated results when wallet holds many NFT collections",
           default: 1
         },
         offset: %{
           type: :integer,
-          description: "The number of NFT balances displayed per page",
+          description: "Number of NFT collection records to return per page (max 100)",
           default: 100
         }
       },

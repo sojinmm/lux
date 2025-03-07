@@ -21,8 +21,8 @@ defmodule Lux.Lenses.Etherscan.BlockCountdown do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Block Countdown API",
-    description: "Fetches the estimated time remaining until a certain block is mined",
+    name: "Etherscan.BlockCountdown",
+    description: "Estimates time remaining until a future block is mined based on current network conditions",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -35,12 +35,12 @@ defmodule Lux.Lenses.Etherscan.BlockCountdown do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         blockno: %{
           type: [:integer, :string],
-          description: "Block number to estimate time remaining to be mined"
+          description: "Target future block number to calculate time estimation for"
         }
       },
       required: ["blockno"]

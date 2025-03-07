@@ -27,8 +27,8 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventory do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Address ERC721 Token Inventory API",
-    description: "Fetches the ERC-721 token inventory of an address, filtered by contract address",
+    name: "Etherscan.AddressTokenNFTInventory",
+    description: "Lists all individual NFTs owned by an address from a specific NFT collection contract",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -41,27 +41,27 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTInventory do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "The address to check for NFT inventory",
+          description: "Wallet address to query for NFT ownership (must be valid hex format)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         contractaddress: %{
           type: :string,
-          description: "The contract address of the ERC-721 token",
+          description: "NFT collection contract address to filter results by (must be valid hex format)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         page: %{
           type: :integer,
-          description: "The integer page number, if pagination is enabled",
+          description: "Page number for paginated results when wallet holds many NFTs in the collection",
           default: 1
         },
         offset: %{
           type: :integer,
-          description: "The number of NFT tokens displayed per page",
+          description: "Number of individual NFT tokens to return per page (max 100)",
           default: 100
         }
       },

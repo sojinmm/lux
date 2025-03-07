@@ -18,8 +18,8 @@ defmodule Lux.Lenses.Etherscan.NodeCount do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Node Count API",
-    description: "Fetches the total number of discoverable Ethereum nodes",
+    name: "Etherscan.NodeCount",
+    description: "Provides network health metrics showing total node count by client implementation",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.NodeCount do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         }
       },

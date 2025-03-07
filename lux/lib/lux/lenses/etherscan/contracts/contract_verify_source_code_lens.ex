@@ -48,8 +48,8 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCode do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Contract Verification API",
-    description: "Submits a contract source code to Etherscan for verification",
+    name: "Etherscan.ContractVerifySourceCode",
+    description: "Submits contract source code for verification to make it publicly accessible and verified on Etherscan",
     url: "https://api.etherscan.io/v2/api",
     method: :post,
     headers: [{"content-type", "application/x-www-form-urlencoded"}],
@@ -62,67 +62,67 @@ defmodule Lux.Lenses.Etherscan.ContractVerifySourceCode do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to submit verification to (e.g., 1 for Ethereum mainnet)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         contractaddress: %{
           type: :string,
-          description: "The address of the deployed contract",
+          description: "Deployed contract address to verify source code for",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         sourceCode: %{
           type: :string,
-          description: "The Solidity source code or JSON input"
+          description: "Complete contract source code or JSON input containing source files"
         },
         codeformat: %{
           type: :string,
-          description: "The format of the source code",
+          description: "Source format (single-file=direct code, standard-json-input=multiple files)",
           enum: ["solidity-single-file", "solidity-standard-json-input"]
         },
         contractname: %{
           type: :string,
-          description: "The name of the contract, e.g., 'MyContract' or 'contracts/MyContract.sol:MyContract'"
+          description: "Contract name or path:name for multi-file projects"
         },
         compilerversion: %{
           type: :string,
-          description: "The compiler version used, e.g., 'v0.8.0+commit.c7dfd78e'"
+          description: "Solidity compiler version with commit hash (e.g., 'v0.8.0+commit.c7dfd78e')"
         },
         optimizationUsed: %{
           type: [:integer, :string],
-          description: "Whether optimization was used (1 for yes, 0 for no)",
+          description: "Compiler optimization flag (1=enabled, 0=disabled)",
           enum: [0, 1, "0", "1"]
         },
         runs: %{
           type: [:integer, :string],
-          description: "The number of optimization runs"
+          description: "Optimization runs parameter when optimization is enabled"
         },
         constructorArguements: %{
           type: :string,
-          description: "The ABI-encoded constructor arguments (if any)"
+          description: "ABI-encoded constructor arguments in hex format (without 0x prefix)"
         },
         evmversion: %{
           type: :string,
-          description: "The EVM version (optional)"
+          description: "EVM version target for bytecode generation"
         },
         licenseType: %{
           type: [:integer, :string],
-          description: "The license type (optional)"
+          description: "Open source license identifier number"
         },
         libraryname1: %{
           type: :string,
-          description: "The name of library 1 (optional)"
+          description: "Name of external library dependency #1"
         },
         libraryaddress1: %{
           type: :string,
-          description: "The address of library 1 (optional)"
+          description: "Deployed address of external library dependency #1"
         },
         libraryname2: %{
           type: :string,
-          description: "The name of library 2 (optional)"
+          description: "Name of external library dependency #2"
         },
         libraryaddress2: %{
           type: :string,
-          description: "The address of library 2 (optional)"
+          description: "Deployed address of external library dependency #2"
         }
       },
       required: ["contractaddress", "sourceCode", "codeformat", "contractname", "compilerversion"]

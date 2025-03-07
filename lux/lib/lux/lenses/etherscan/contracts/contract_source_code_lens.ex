@@ -21,8 +21,8 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCode do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Contract Source Code API",
-    description: "Fetches the source code of a verified smart contract",
+    name: "Etherscan.ContractSourceCode",
+    description: "Retrieves complete source code and metadata for a verified smart contract",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -35,12 +35,12 @@ defmodule Lux.Lenses.Etherscan.ContractSourceCode do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "Contract address with verified source code",
+          description: "Target contract address with verified source code on Etherscan",
           pattern: "^0x[a-fA-F0-9]{40}$"
         }
       },

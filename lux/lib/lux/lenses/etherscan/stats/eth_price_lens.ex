@@ -18,8 +18,8 @@ defmodule Lux.Lenses.Etherscan.EthPrice do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan ETH Price API",
-    description: "Fetches the latest price of 1 ETH",
+    name: "Etherscan.EthPrice",
+    description: "Retrieves current real-time ETH price in USD and BTC with timestamps",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -32,7 +32,7 @@ defmodule Lux.Lenses.Etherscan.EthPrice do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         }
       },

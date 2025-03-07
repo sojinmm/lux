@@ -19,8 +19,8 @@ defmodule Lux.Lenses.Etherscan.EthSupply2 do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan ETH Supply 2 API",
-    description: "Fetches the current amount of Ether in circulation, ETH2 Staking rewards, EIP1559 burnt fees, and total withdrawn ETH from the beacon chain",
+    name: "Etherscan.EthSupply2",
+    description: "Provides comprehensive ETH supply metrics including staking rewards, burnt fees, and withdrawals",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -33,7 +33,7 @@ defmodule Lux.Lenses.Etherscan.EthSupply2 do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         }
       },

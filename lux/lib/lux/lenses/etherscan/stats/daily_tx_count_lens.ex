@@ -50,6 +50,8 @@ defmodule Lux.Lenses.Etherscan.DailyTxCount do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
+    name: "Etherscan.DailyTxCount",
+    description: "Measures blockchain activity through daily transaction volume metrics over time",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"Content-Type", "application/json"}],
@@ -57,12 +59,31 @@ defmodule Lux.Lenses.Etherscan.DailyTxCount do
       type: :custom,
       auth_function: &Base.add_api_key/1
     },
-    schema: [
-      chainid: [type: :integer, required: true],
-      startdate: [type: :string, required: true],
-      enddate: [type: :string, required: true],
-      sort: [type: :string, required: false]
-    ]
+    schema: %{
+      type: :object,
+      properties: %{
+        chainid: %{
+          type: :integer,
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
+          default: 1
+        },
+        startdate: %{
+          type: :string,
+          description: "Beginning date for transaction count data in yyyy-MM-dd format"
+        },
+        enddate: %{
+          type: :string,
+          description: "Ending date for transaction count data in yyyy-MM-dd format"
+        },
+        sort: %{
+          type: :string,
+          description: "Chronological ordering of results (asc=oldest first, desc=newest first)",
+          enum: ["asc", "desc"],
+          default: "asc"
+        }
+      },
+      required: ["startdate", "enddate"]
+    }
 
   @doc """
   Prepares parameters for the API request.

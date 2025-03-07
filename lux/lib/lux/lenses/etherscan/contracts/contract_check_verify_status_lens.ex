@@ -21,8 +21,8 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatus do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Contract Verification Status API",
-    description: "Checks the status of a contract verification request",
+    name: "Etherscan.ContractCheckVerifyStatus",
+    description: "Checks progress of a pending contract verification request using its GUID",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -35,12 +35,12 @@ defmodule Lux.Lenses.Etherscan.ContractCheckVerifyStatus do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum, 137 for Polygon)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         guid: %{
           type: :string,
-          description: "The unique GUID received from the verification request"
+          description: "Unique identifier returned from a previous contract verification submission"
         }
       },
       required: ["guid"]

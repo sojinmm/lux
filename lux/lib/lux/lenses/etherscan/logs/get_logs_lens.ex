@@ -46,8 +46,8 @@ defmodule Lux.Lenses.Etherscan.GetLogs do
   alias Lux.Lenses.Etherscan.Base
 
   use Lux.Lens,
-    name: "Etherscan Event Logs API",
-    description: "Fetches event logs from an address with optional filtering by block range and topics",
+    name: "Etherscan.GetLogs",
+    description: "Retrieves blockchain event logs with powerful filtering by address, block range, and event topics",
     url: "https://api.etherscan.io/v2/api",
     method: :get,
     headers: [{"content-type", "application/json"}],
@@ -60,76 +60,76 @@ defmodule Lux.Lenses.Etherscan.GetLogs do
       properties: %{
         chainid: %{
           type: :integer,
-          description: "Chain ID to query (e.g., 1 for Ethereum)",
+          description: "Network identifier (1=Ethereum, 137=Polygon, 56=BSC, etc.)",
           default: 1
         },
         address: %{
           type: :string,
-          description: "The string representing the address to check for logs",
+          description: "Contract address to filter logs from (optional if filtering by topics only)",
           pattern: "^0x[a-fA-F0-9]{40}$"
         },
         fromBlock: %{
           type: :integer,
-          description: "The integer block number to start searching for logs"
+          description: "Starting block height to search for logs (inclusive)"
         },
         toBlock: %{
           type: :integer,
-          description: "The integer block number to stop searching for logs"
+          description: "Ending block height to search for logs (inclusive)"
         },
         page: %{
           type: :integer,
-          description: "The integer page number, if pagination is enabled",
+          description: "Page number for paginated results (starts at 1)",
           default: 1
         },
         offset: %{
           type: :integer,
-          description: "The number of transactions displayed per page (limited to 1000 records per query)",
+          description: "Number of log records to return per page (maximum 1000)",
           default: 1000
         },
         topic0: %{
           type: :string,
-          description: "The first topic to filter by"
+          description: "Event signature hash or indexed parameter to filter by (first topic position)"
         },
         topic1: %{
           type: :string,
-          description: "The second topic to filter by"
+          description: "First indexed parameter to filter by (second topic position)"
         },
         topic2: %{
           type: :string,
-          description: "The third topic to filter by"
+          description: "Second indexed parameter to filter by (third topic position)"
         },
         topic3: %{
           type: :string,
-          description: "The fourth topic to filter by"
+          description: "Third indexed parameter to filter by (fourth topic position)"
         },
         topic0_1_opr: %{
           type: :string,
-          description: "The operator between topic0 and topic1",
+          description: "Logical operator between topic0 and topic1 (and=both required, or=either accepted)",
           enum: ["and", "or"]
         },
         topic0_2_opr: %{
           type: :string,
-          description: "The operator between topic0 and topic2",
+          description: "Logical operator between topic0 and topic2 (and=both required, or=either accepted)",
           enum: ["and", "or"]
         },
         topic0_3_opr: %{
           type: :string,
-          description: "The operator between topic0 and topic3",
+          description: "Logical operator between topic0 and topic3 (and=both required, or=either accepted)",
           enum: ["and", "or"]
         },
         topic1_2_opr: %{
           type: :string,
-          description: "The operator between topic1 and topic2",
+          description: "Logical operator between topic1 and topic2 (and=both required, or=either accepted)",
           enum: ["and", "or"]
         },
         topic1_3_opr: %{
           type: :string,
-          description: "The operator between topic1 and topic3",
+          description: "Logical operator between topic1 and topic3 (and=both required, or=either accepted)",
           enum: ["and", "or"]
         },
         topic2_3_opr: %{
           type: :string,
-          description: "The operator between topic2 and topic3",
+          description: "Logical operator between topic2 and topic3 (and=both required, or=either accepted)",
           enum: ["and", "or"]
         }
       },
