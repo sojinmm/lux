@@ -1,13 +1,13 @@
-defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
+defmodule Lux.Integration.Etherscan.TokenAddressContractTxLensTest do
   @moduledoc false
   use IntegrationCase, async: false
 
-  alias Lux.Lenses.Etherscan.TokenNftTx
+  alias Lux.Lenses.Etherscan.TokenAddressContractTx
 
-  # Address with NFT transfers
-  @address "0x6975be450864c02b4613023c2152ee0743572325"
-  # CryptoKitties contract address
-  @contract_address "0x06012c8cf97bead5deae237070f9587f8e7a266d"
+  # Address with ERC-20 token transfers
+  @address "0x4e83362442b8d1bec281594cea3050c8eb01311c"
+  # MKR token contract address
+  @contract_address "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -16,13 +16,13 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
     :ok
   end
 
-  defmodule NoAuthTokenNftTxLens do
+  defmodule NoAuthTokenAddressContractTxLens do
     @moduledoc """
     Going to call the api without auth so that we always fail
     """
     use Lux.Lens,
-      name: "Etherscan ERC-721 NFT Token Transfer Events API",
-      description: "Fetches ERC-721 (NFT) token transfer events from Etherscan API",
+      name: "Etherscan.TokenAddressContractTx",
+      description: "Retrieves ERC-20 token transfers for a specific wallet address from a specific token contract",
       url: "https://api.etherscan.io/v2/api",
       method: :get,
       headers: [{"content-type", "application/json"}]
@@ -34,14 +34,15 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
       # Set module and action for this endpoint
       params
       |> Map.put(:module, "account")
-      |> Map.put(:action, "tokennfttx")
+      |> Map.put(:action, "tokentx")
     end
   end
 
-  test "can fetch NFT transfers for an address" do
+  test "can fetch ERC-20 transfers for an address filtered by contract" do
     assert {:ok, %{result: transfers}} =
-             TokenNftTx.focus(%{
+             TokenAddressContractTx.focus(%{
                address: @address,
+               contractaddress: @contract_address,
                chainid: 1
              })
 
@@ -58,50 +59,10 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
       assert Map.has_key?(transfer, "contractAddress")
       assert Map.has_key?(transfer, "from")
       assert Map.has_key?(transfer, "to")
-      assert Map.has_key?(transfer, "tokenID")
+      assert Map.has_key?(transfer, "value")
       assert Map.has_key?(transfer, "tokenName")
       assert Map.has_key?(transfer, "tokenSymbol")
-
-      # Verify the address is involved in the transfer
-      address_downcase = String.downcase(@address)
-      assert String.downcase(transfer["from"]) == address_downcase ||
-             String.downcase(transfer["to"]) == address_downcase
-    end
-  end
-
-  test "can fetch NFT transfers for a contract address" do
-    assert {:ok, %{result: transfers}} =
-             TokenNftTx.focus(%{
-               contractaddress: @contract_address,
-               chainid: 1
-             })
-
-    # Verify we got results
-    assert is_list(transfers)
-
-    # If there are transfers, check their structure
-    if length(transfers) > 0 do
-      transfer = List.first(transfers)
-
-      # Verify the contract address matches
-      assert String.downcase(transfer["contractAddress"]) == String.downcase(@contract_address)
-    end
-  end
-
-  test "can fetch NFT transfers for an address filtered by contract" do
-    assert {:ok, %{result: transfers}} =
-             TokenNftTx.focus(%{
-               address: @address,
-               contractaddress: @contract_address,
-               chainid: 1
-             })
-
-    # Verify we got results
-    assert is_list(transfers)
-
-    # If there are transfers, check their structure
-    if length(transfers) > 0 do
-      transfer = List.first(transfers)
+      assert Map.has_key?(transfer, "tokenDecimal")
 
       # Verify both the address and contract address match
       address_downcase = String.downcase(@address)
@@ -111,10 +72,11 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
     end
   end
 
-  test "can fetch NFT transfers with pagination" do
+  test "can fetch ERC-20 transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenNftTx.focus(%{
+             TokenAddressContractTx.focus(%{
                address: @address,
+               contractaddress: @contract_address,
                chainid: 1,
                page: 1,
                offset: 5
@@ -125,9 +87,10 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
   end
 
   test "fails when no auth is provided" do
-    # The NoAuthTokenNftTxLens doesn't have an API key, so it should fail
-    result = NoAuthTokenNftTxLens.focus(%{
+    # The NoAuthTokenAddressContractTxLens doesn't have an API key, so it should fail
+    result = NoAuthTokenAddressContractTxLens.focus(%{
       address: @address,
+      contractaddress: @contract_address,
       chainid: 1
     })
 
@@ -140,4 +103,4 @@ defmodule Lux.Integration.Etherscan.TokenNftTxLensTest do
         assert error != nil
     end
   end
-end
+end 
