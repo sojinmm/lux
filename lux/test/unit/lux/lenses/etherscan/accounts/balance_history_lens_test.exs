@@ -10,10 +10,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       etherscan_pro: true  # Pro API key is required for this endpoint
     ])
 
-    on_exit(fn ->
-      # Clean up after tests
-      Application.delete_env(:lux, :api_keys)
-    end)
+
 
     :ok
   end

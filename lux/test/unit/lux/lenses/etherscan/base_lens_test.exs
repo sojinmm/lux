@@ -1,5 +1,5 @@
 defmodule Lux.Lenses.Etherscan.BaseLensTest do
-  use UnitAPICase, async: true
+  use UnitAPICase, async: false
 
   alias Lux.Lenses.Etherscan.Base
 
@@ -10,10 +10,7 @@ defmodule Lux.Lenses.Etherscan.BaseLensTest do
       etherscan_pro: false
     ])
 
-    on_exit(fn ->
-      # Clean up after tests
-      Application.delete_env(:lux, :api_keys)
-    end)
+
 
     :ok
   end

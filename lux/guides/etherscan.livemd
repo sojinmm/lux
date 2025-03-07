@@ -292,10 +292,7 @@ addresses = [
   "0x85f5c8de3a3e5ff70e94a9b4d50d400dc4c1f00d"
 ]
 
-results = Enum.map(addresses, fn address ->
-  # Add delay to avoid rate limiting
-  Process.sleep(300)
-  
+results = Enum.map(addresses, fn address ->  
   Balance.focus(%{
     address: address,
     chainid: 1
@@ -417,12 +414,6 @@ defmodule MyApp.Integration.EtherscanTest do
     else
       :ok
     end
-  end
-  
-  # Add delay between tests to avoid rate limiting
-  setup do
-    Process.sleep(300)
-    :ok
   end
   
   test "can fetch ETH balance" do

@@ -10,10 +10,7 @@ defmodule Lux.Lenses.Etherscan.EthDailyPriceLensTest do
       etherscan_pro: true
     ])
 
-    on_exit(fn ->
-      # Clean up after tests
-      Application.delete_env(:lux, :api_keys)
-    end)
+
 
     :ok
   end

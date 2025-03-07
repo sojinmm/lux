@@ -10,10 +10,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
       etherscan_pro: false
     ])
 
-    on_exit(fn ->
-      # Clean up after tests
-      Application.delete_env(:lux, :api_keys)
-    end)
+
 
     :ok
   end
