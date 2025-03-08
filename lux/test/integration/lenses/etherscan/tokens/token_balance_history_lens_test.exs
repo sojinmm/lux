@@ -15,7 +15,7 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
     # Sleep for 2000ms to avoid hitting the Etherscan API rate limit (2 calls per second for this endpoint)
-    Process.sleep(2000)
+    Process.sleep(200)
     :ok
   end
 

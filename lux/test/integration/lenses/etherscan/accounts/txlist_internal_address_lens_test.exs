@@ -3,14 +3,15 @@ defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TxListInternalAddress
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Address with internal transactions - using a more active address
   @address "0x7a250d5630b4cf539739df2c5dacb4c659f2488d" # Uniswap Router
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -38,10 +39,10 @@ defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
 
   test "can fetch internal transactions for an address" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalAddress.focus(%{
+             RateLimitedAPI.call_standard(TxListInternalAddress, :focus, [%{
                address: @address,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transactions)
@@ -68,12 +69,12 @@ defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
 
   test "can fetch internal transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalAddress.focus(%{
+             RateLimitedAPI.call_standard(TxListInternalAddress, :focus, [%{
                address: @address,
                chainid: 1,
                page: 1,
                offset: 5
-             })
+             }])
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transactions) <= 5
@@ -81,10 +82,10 @@ defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTxListInternalAddressLens doesn't have an API key, so it should fail
-    result = NoAuthTxListInternalAddressLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTxListInternalAddressLens, :focus, [%{
       address: @address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

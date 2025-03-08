@@ -4,14 +4,15 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
   alias Lux.Lenses.Etherscan.BlockTxCount
   alias Lux.Lenses.Etherscan.BlockByTimestamp
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Block number to check transaction count (from the example in the documentation)
   @block_number 2165403
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -39,10 +40,10 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
   test "can fetch transaction count for a specific block" do
     assert {:ok, %{result: result}} =
-             BlockTxCount.focus(%{
+             RateLimitedAPI.call_standard(BlockTxCount, :focus, [%{
                blockno: @block_number,
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_map(result)
@@ -107,20 +108,20 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
     timestamp = DateTime.utc_now() |> DateTime.add(-5 * 60, :second) |> DateTime.to_unix()
 
     {:ok, %{result: recent_block_result}} =
-      BlockByTimestamp.focus(%{
+      RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
         timestamp: timestamp,
         closest: "before",
         chainid: 1
-      })
+      }])
 
     # Parse the recent block number
     recent_block = String.to_integer(recent_block_result.block_number)
 
     assert {:ok, %{result: result}} =
-             BlockTxCount.focus(%{
+             RateLimitedAPI.call_standard(BlockTxCount, :focus, [%{
                blockno: recent_block,
                chainid: 1
-             })
+             }])
 
     # Verify we got a result
     assert result != nil
@@ -146,10 +147,10 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthBlockTxCountLens doesn't have an API key, so it should fail
-    result = NoAuthBlockTxCountLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthBlockTxCountLens, :focus, [%{
       blockno: @block_number,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

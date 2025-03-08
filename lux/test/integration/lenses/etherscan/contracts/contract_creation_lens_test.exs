@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractCreation
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Contract addresses from the example in the documentation
   @contract_addresses "0xB83c27805aAcA5C7082eB45C868d955Cf04C337F,0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45,0xe4462eb568E2DFbb5b0cA2D3DbB1A35C9Aa98aad"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1500ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1500)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -42,10 +43,10 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
   test "can fetch contract creation info for multiple contracts" do
     assert {:ok, %{result: contracts}} =
-             ContractCreation.focus(%{
+             RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
                contractaddresses: @contract_addresses,
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_list(contracts)
@@ -79,10 +80,10 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
   test "can fetch contract creation info for a single contract" do
     assert {:ok, %{result: contracts}} =
-             ContractCreation.focus(%{
+             RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
                contractaddresses: @single_contract,
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_list(contracts)
@@ -109,10 +110,10 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
     # Using an invalid address format
     invalid_address = "0xinvalid"
 
-    result = ContractCreation.focus(%{
+    result = RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
       contractaddresses: invalid_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -131,10 +132,10 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthContractCreationLens doesn't have an API key, so it should fail
-    result = NoAuthContractCreationLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthContractCreationLens, :focus, [%{
       contractaddresses: @single_contract,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

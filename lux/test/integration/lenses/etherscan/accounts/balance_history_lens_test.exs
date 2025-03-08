@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
 
   alias Lux.Lenses.Etherscan.BalanceHistory
   alias Lux.Lenses.Etherscan.Base
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Ethereum Foundation address
   @eth_foundation "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
@@ -12,8 +13,8 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 2000ms to avoid hitting the Etherscan API rate limit (2 calls per second for this endpoint)
-    Process.sleep(2000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_pro_api()
     :ok
   end
 
@@ -54,11 +55,11 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
       :ok
     else
       assert {:ok, %{result: balance}} =
-               BalanceHistory.focus(%{
+               RateLimitedAPI.call_pro(BalanceHistory, :focus, [%{
                  address: @eth_foundation,
                  blockno: @block_number,
                  chainid: 1
-               })
+               }])
 
       # Convert balance from wei to ether for easier validation
       balance_in_eth = String.to_integer(balance) / 1.0e18
@@ -74,11 +75,11 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthBalanceHistoryLens doesn't have an API key, so it should fail
-    result = NoAuthBalanceHistoryLens.focus(%{
+    result = RateLimitedAPI.call_pro(NoAuthBalanceHistoryLens, :focus, [%{
       address: @eth_foundation,
       blockno: @block_number,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
@@ -98,11 +99,11 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
     else
       # This should raise an ArgumentError because we don't have a Pro API key
       assert_raise ArgumentError, fn ->
-        BalanceHistory.focus(%{
+        RateLimitedAPI.call_pro(BalanceHistory, :focus, [%{
           address: @eth_foundation,
           blockno: @block_number,
           chainid: 1
-        })
+        }])
       end
     end
   end

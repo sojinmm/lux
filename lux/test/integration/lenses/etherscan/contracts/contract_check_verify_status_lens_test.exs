@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractCheckVerifyStatus
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example GUID from the documentation
   @example_guid "x3ryqcqr1zdknhfhkimqmizlcqpxncqc6nrvp3pgrcpfsqedqi"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1500ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1500)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -43,10 +44,10 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   test "can check verification status with example GUID" do
     # Note: This test might fail if the example GUID is no longer valid
     # In that case, we'll need to update the test with a new GUID
-    result = ContractCheckVerifyStatus.focus(%{
+    result = RateLimitedAPI.call_standard(ContractCheckVerifyStatus, :focus, [%{
       guid: @example_guid,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: status_info}} ->
@@ -75,10 +76,10 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   end
 
   test "returns error for invalid GUID" do
-    result = ContractCheckVerifyStatus.focus(%{
+    result = RateLimitedAPI.call_standard(ContractCheckVerifyStatus, :focus, [%{
       guid: @invalid_guid,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: status_info}} ->
@@ -98,10 +99,10 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthContractCheckVerifyStatusLens doesn't have an API key, so it should fail
-    result = NoAuthContractCheckVerifyStatusLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthContractCheckVerifyStatusLens, :focus, [%{
       guid: @example_guid,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

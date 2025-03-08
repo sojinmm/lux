@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractAbi
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1500ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1500)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -42,10 +43,10 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   test "can fetch ABI for a verified contract" do
     assert {:ok, %{result: abi}} =
-             ContractAbi.focus(%{
+             RateLimitedAPI.call_standard(ContractAbi, :focus, [%{
                address: @contract_address,
                chainid: 1
-             })
+             }])
 
     # Verify the ABI structure
     assert is_list(abi)
@@ -70,10 +71,10 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   test "can fetch ABI for another verified contract" do
     assert {:ok, %{result: abi}} =
-             ContractAbi.focus(%{
+             RateLimitedAPI.call_standard(ContractAbi, :focus, [%{
                address: @uniswap_router,
                chainid: 1
-             })
+             }])
 
     # Verify the ABI structure
     assert is_list(abi)
@@ -96,10 +97,10 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
     # Using a random EOA address which won't have verified contract code
     random_address = "0x000000000000000000000000000000000000dEaD"
 
-    result = ContractAbi.focus(%{
+    result = RateLimitedAPI.call_standard(ContractAbi, :focus, [%{
       address: random_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: "Contract source code not verified"}} ->
@@ -114,10 +115,10 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthContractAbiLens doesn't have an API key, so it should fail
-    result = NoAuthContractAbiLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthContractAbiLens, :focus, [%{
       address: @contract_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

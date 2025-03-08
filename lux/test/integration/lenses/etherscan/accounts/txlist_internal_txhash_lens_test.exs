@@ -3,14 +3,15 @@ defmodule Lux.Integration.Etherscan.TxListInternalTxhashLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TxListInternalTxhash
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Transaction hash with internal transactions
   @txhash "0x40eb908387324f2b575b4879cd9d7188f69c8fc9d87c901b9e2daaea4b442170"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -38,10 +39,10 @@ defmodule Lux.Integration.Etherscan.TxListInternalTxhashLensTest do
 
   test "can fetch internal transactions for a transaction hash" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalTxhash.focus(%{
+             RateLimitedAPI.call_standard(TxListInternalTxhash, :focus, [%{
                txhash: @txhash,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transactions)
@@ -66,10 +67,10 @@ defmodule Lux.Integration.Etherscan.TxListInternalTxhashLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTxListInternalTxhashLens doesn't have an API key, so it should fail
-    result = NoAuthTxListInternalTxhashLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTxListInternalTxhashLens, :focus, [%{
       txhash: @txhash,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

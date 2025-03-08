@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.ChainSize
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 300ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(300)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -39,11 +40,11 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   end
 
   test "can fetch chain size data with required parameters" do
-    result = ChainSize.focus(%{
+    result = RateLimitedAPI.call_standard(ChainSize, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: chain_size_data, chain_size: chain_size_data}} ->
@@ -79,14 +80,14 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   end
 
   test "can fetch chain size data with all parameters" do
-    result = ChainSize.focus(%{
+    result = RateLimitedAPI.call_standard(ChainSize, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       clienttype: "geth",
       syncmode: "default",
       sort: "asc",
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: chain_size_data}} ->
@@ -105,12 +106,12 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
   end
 
   test "can specify different sort order" do
-    result = ChainSize.focus(%{
+    result = RateLimitedAPI.call_standard(ChainSize, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       sort: "desc",
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: chain_size_data}} ->
@@ -130,11 +131,11 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthChainSizeLens doesn't have an API key, so it should fail
-    result = NoAuthChainSizeLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthChainSizeLens, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
@@ -148,9 +149,9 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   test "returns error for missing required parameters" do
     # Missing startdate and enddate
-    result = ChainSize.focus(%{
+    result = RateLimitedAPI.call_standard(ChainSize, :focus, [%{
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->

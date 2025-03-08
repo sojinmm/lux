@@ -3,14 +3,15 @@ defmodule Lux.Integration.Etherscan.TokenErc1155ContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenErc1155ContractTx
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # ERC-1155 contract address
   @contract_address "0x76be3b62873462d2142405439777e971754e8e77"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -38,10 +39,10 @@ defmodule Lux.Integration.Etherscan.TokenErc1155ContractTxLensTest do
 
   test "can fetch ERC-1155 transfers for a contract address" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155ContractTx.focus(%{
+             RateLimitedAPI.call_standard(TokenErc1155ContractTx, :focus, [%{
                contractaddress: @contract_address,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transfers)
@@ -66,12 +67,12 @@ defmodule Lux.Integration.Etherscan.TokenErc1155ContractTxLensTest do
 
   test "can fetch ERC-1155 transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155ContractTx.focus(%{
+             RateLimitedAPI.call_standard(TokenErc1155ContractTx, :focus, [%{
                contractaddress: @contract_address,
                chainid: 1,
                page: 1,
                offset: 5
-             })
+             }])
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5
@@ -79,10 +80,10 @@ defmodule Lux.Integration.Etherscan.TokenErc1155ContractTxLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTokenErc1155ContractTxLens doesn't have an API key, so it should fail
-    result = NoAuthTokenErc1155ContractTxLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTokenErc1155ContractTxLens, :focus, [%{
       contractaddress: @contract_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

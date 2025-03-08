@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractSourceCode
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1500ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1500)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -42,10 +43,10 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   test "can fetch source code for a verified contract" do
     assert {:ok, %{result: source_info}} =
-             ContractSourceCode.focus(%{
+             RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
                address: @contract_address,
                chainid: 1
-             })
+             }])
 
     # Verify the source code structure
     assert is_map(source_info)
@@ -79,10 +80,10 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   test "can fetch source code for another verified contract" do
     assert {:ok, %{result: source_info}} =
-             ContractSourceCode.focus(%{
+             RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
                address: @uniswap_router,
                chainid: 1
-             })
+             }])
 
     # Verify the source code structure
     assert is_map(source_info)
@@ -105,10 +106,10 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
     random_address = "0x000000000000000000000000000000000000dEaD"
 
     assert {:ok, %{result: source_info}} =
-             ContractSourceCode.focus(%{
+             RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
                address: random_address,
                chainid: 1
-             })
+             }])
 
     # Verify the source code structure
     assert is_map(source_info)
@@ -122,10 +123,10 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthContractSourceCodeLens doesn't have an API key, so it should fail
-    result = NoAuthContractSourceCodeLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthContractSourceCodeLens, :focus, [%{
       address: @contract_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

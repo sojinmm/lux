@@ -3,14 +3,15 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.BlockByTimestamp
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Unix timestamp (January 10, 2020)
   @timestamp 1578638524
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -38,11 +39,11 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with 'before' closest parameter" do
     assert {:ok, %{result: result}} =
-             BlockByTimestamp.focus(%{
+             RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
                timestamp: @timestamp,
                closest: "before",
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_map(result)
@@ -64,11 +65,11 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with 'after' closest parameter" do
     assert {:ok, %{result: result}} =
-             BlockByTimestamp.focus(%{
+             RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
                timestamp: @timestamp,
                closest: "after",
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_map(result)
@@ -90,10 +91,10 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with default parameters" do
     assert {:ok, %{result: result}} =
-             BlockByTimestamp.focus(%{
+             RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
                timestamp: @timestamp,
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_map(result)
@@ -109,11 +110,11 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthBlockByTimestampLens doesn't have an API key, so it should fail
-    result = NoAuthBlockByTimestampLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthBlockByTimestampLens, :focus, [%{
       timestamp: @timestamp,
       closest: "before",
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

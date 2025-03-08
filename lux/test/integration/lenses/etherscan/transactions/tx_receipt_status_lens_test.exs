@@ -4,14 +4,15 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TxReceiptStatus
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example successful transaction hash
   @successful_tx "0x513c1ba0bebf66436b5fed86ab668452b7805593c05073eb2d51d3a52f480a76"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 300ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(300)
+    # Use our rate limiter instead of Process.sleep
+    RateLimitedAPI.throttle_standard_api()
     :ok
   end
 
@@ -39,10 +40,10 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
 
   test "can check receipt status for a successful transaction" do
     assert {:ok, %{result: %{status: status, is_success: is_success}}} =
-             TxReceiptStatus.focus(%{
+             RateLimitedAPI.call_standard(TxReceiptStatus, :focus, [%{
                txhash: @successful_tx,
                chainid: 1
-             })
+             }])
 
     # Verify the status is "1" for a successful transaction
     assert status == "1"
@@ -55,10 +56,10 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
   test "can check receipt status for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on whether the transaction exists on that chain
-    result = TxReceiptStatus.focus(%{
+    result = RateLimitedAPI.call_standard(TxReceiptStatus, :focus, [%{
       txhash: @successful_tx,
       chainid: 137 # Polygon
-    })
+    }])
 
     case result do
       {:ok, %{result: %{status: status, is_success: is_success}}} ->
@@ -74,10 +75,10 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
 
   test "returns appropriate status for invalid transaction hash" do
     # Using an invalid transaction hash format
-    result = TxReceiptStatus.focus(%{
+    result = RateLimitedAPI.call_standard(TxReceiptStatus, :focus, [%{
       txhash: "0xinvalid",
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -94,10 +95,10 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTxReceiptStatusLens doesn't have an API key, so it should fail
-    result = NoAuthTxReceiptStatusLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTxReceiptStatusLens, :focus, [%{
       txhash: @successful_tx,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

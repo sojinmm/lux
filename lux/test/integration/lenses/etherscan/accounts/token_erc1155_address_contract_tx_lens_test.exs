@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155AddressContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenErc1155AddressContractTx
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Address with ERC-1155 token transfers
   @address "0x83f564d180b58ad9a02a449105568189ee7de8cb"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.TokenErc1155AddressContractTxLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -40,11 +41,11 @@ defmodule Lux.Integration.Etherscan.TokenErc1155AddressContractTxLensTest do
 
   test "can fetch ERC-1155 transfers for an address filtered by contract" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155AddressContractTx.focus(%{
+             RateLimitedAPI.call_standard(TokenErc1155AddressContractTx, :focus, [%{
                address: @address,
                contractaddress: @contract_address,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transfers)
@@ -72,13 +73,13 @@ defmodule Lux.Integration.Etherscan.TokenErc1155AddressContractTxLensTest do
 
   test "can fetch ERC-1155 transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenErc1155AddressContractTx.focus(%{
+             RateLimitedAPI.call_standard(TokenErc1155AddressContractTx, :focus, [%{
                address: @address,
                contractaddress: @contract_address,
                chainid: 1,
                page: 1,
                offset: 5
-             })
+             }])
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5
@@ -86,11 +87,11 @@ defmodule Lux.Integration.Etherscan.TokenErc1155AddressContractTxLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTokenErc1155AddressContractTxLens doesn't have an API key, so it should fail
-    result = NoAuthTokenErc1155AddressContractTxLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTokenErc1155AddressContractTxLens, :focus, [%{
       address: @address,
       contractaddress: @contract_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

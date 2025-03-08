@@ -3,14 +3,15 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenNftAddressTx
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Address with NFT transfers
   @address "0x6975be450864c02b4613023c2152ee0743572325"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -38,10 +39,10 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressTxLensTest do
 
   test "can fetch NFT transfers for an address" do
     assert {:ok, %{result: transfers}} =
-             TokenNftAddressTx.focus(%{
+             RateLimitedAPI.call_standard(TokenNftAddressTx, :focus, [%{
                address: @address,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transfers)
@@ -69,12 +70,12 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressTxLensTest do
 
   test "can fetch NFT transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenNftAddressTx.focus(%{
+             RateLimitedAPI.call_standard(TokenNftAddressTx, :focus, [%{
                address: @address,
                chainid: 1,
                page: 1,
                offset: 5
-             })
+             }])
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5
@@ -82,10 +83,10 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressTxLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTokenNftAddressTxLens doesn't have an API key, so it should fail
-    result = NoAuthTokenNftAddressTxLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTokenNftAddressTxLens, :focus, [%{
       address: @address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

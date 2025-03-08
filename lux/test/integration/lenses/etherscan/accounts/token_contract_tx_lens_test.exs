@@ -3,14 +3,15 @@ defmodule Lux.Integration.Etherscan.TokenContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenContractTx
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # MKR token contract address
   @contract_address "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -38,10 +39,10 @@ defmodule Lux.Integration.Etherscan.TokenContractTxLensTest do
 
   test "can fetch ERC-20 transfers for a contract address" do
     assert {:ok, %{result: transfers}} =
-             TokenContractTx.focus(%{
+             RateLimitedAPI.call_standard(TokenContractTx, :focus, [%{
                contractaddress: @contract_address,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transfers)
@@ -68,12 +69,12 @@ defmodule Lux.Integration.Etherscan.TokenContractTxLensTest do
 
   test "can fetch ERC-20 transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             TokenContractTx.focus(%{
+             RateLimitedAPI.call_standard(TokenContractTx, :focus, [%{
                contractaddress: @contract_address,
                chainid: 1,
                page: 1,
                offset: 5
-             })
+             }])
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5
@@ -81,10 +82,10 @@ defmodule Lux.Integration.Etherscan.TokenContractTxLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTokenContractTxLens doesn't have an API key, so it should fail
-    result = NoAuthTokenContractTxLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTokenContractTxLens, :focus, [%{
       contractaddress: @contract_address,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

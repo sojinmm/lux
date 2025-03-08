@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TxListInternalBlockRange
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Block range with internal transactions
   @startblock 13481773
@@ -10,8 +11,8 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -39,11 +40,11 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
 
   test "can fetch internal transactions for a block range" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalBlockRange.focus(%{
+             RateLimitedAPI.call_standard(TxListInternalBlockRange, :focus, [%{
                startblock: @startblock,
                endblock: @endblock,
                chainid: 1
-             })
+             }])
 
     # Verify we got results
     assert is_list(transactions)
@@ -70,13 +71,13 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
 
   test "can fetch internal transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             TxListInternalBlockRange.focus(%{
+             RateLimitedAPI.call_standard(TxListInternalBlockRange, :focus, [%{
                startblock: @startblock,
                endblock: @endblock,
                chainid: 1,
                page: 1,
                offset: 5
-             })
+             }])
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transactions) <= 5
@@ -84,11 +85,11 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTxListInternalBlockRangeLens doesn't have an API key, so it should fail
-    result = NoAuthTxListInternalBlockRangeLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTxListInternalBlockRangeLens, :focus, [%{
       startblock: @startblock,
       endblock: @endblock,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

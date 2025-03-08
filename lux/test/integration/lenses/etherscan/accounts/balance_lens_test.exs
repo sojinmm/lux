@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.Balance
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Vitalik's address
   @vitalik "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 300ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(300)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -29,11 +30,12 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
   end
 
   test "can fetch ETH balance for a single address" do
+    # Use RateLimitedAPI instead of calling Balance.focus directly
     assert {:ok, %{result: balance}} =
-             Balance.focus(%{
+             RateLimitedAPI.call_standard(Balance, :focus, [%{
                address: @vitalik,
                chainid: 1
-             })
+             }])
 
     # Convert balance from wei to ether for easier validation
     balance_in_eth = String.to_integer(balance) / 1.0e18
@@ -47,11 +49,12 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
   end
 
   test "can fetch ETH balance for a different address" do
+    # Use RateLimitedAPI instead of calling Balance.focus directly
     assert {:ok, %{result: balance}} =
-             Balance.focus(%{
+             RateLimitedAPI.call_standard(Balance, :focus, [%{
                address: @eth_foundation,
                chainid: 1
-             })
+             }])
 
     # Convert balance from wei to ether for easier validation
     balance_in_eth = String.to_integer(balance) / 1.0e18
@@ -65,21 +68,22 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
   end
 
   test "can specify a different tag (block parameter)" do
+    # Use RateLimitedAPI instead of calling Balance.focus directly
     assert {:ok, %{result: _balance}} =
-             Balance.focus(%{
+             RateLimitedAPI.call_standard(Balance, :focus, [%{
                address: @vitalik,
                chainid: 1,
                tag: "latest"
-             })
+             }])
   end
 
   test "returns zero balance for invalid address format" do
-    # Etherscan API returns "0" for invalid addresses instead of an error
+    # Use RateLimitedAPI instead of calling Balance.focus directly
     assert {:ok, %{result: balance}} =
-             Balance.focus(%{
+             RateLimitedAPI.call_standard(Balance, :focus, [%{
                address: "0xinvalid",
                chainid: 1
-             })
+             }])
 
     assert balance == "0"
   end
@@ -87,10 +91,10 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
   test "fails when no auth is provided" do
     # The NoAuthBalanceLens doesn't have an API key, so it should fail
     # but the response format is different than expected
-    result = NoAuthBalanceLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthBalanceLens, :focus, [%{
       address: @vitalik,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

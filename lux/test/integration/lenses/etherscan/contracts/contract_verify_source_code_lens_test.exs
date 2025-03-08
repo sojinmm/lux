@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractVerifySourceCode
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example contract address for verification (this is just for testing, not a real verification)
   @contract_address "0x123456789012345678901234567890123456789"
@@ -13,8 +14,8 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1500ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1500)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -50,7 +51,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
     # Using an invalid address format
     invalid_address = "0xinvalid"
 
-    result = ContractVerifySourceCode.focus(%{
+    result = RateLimitedAPI.call_standard(ContractVerifySourceCode, :focus, [%{
       chainid: 1,
       contractaddress: invalid_address,
       sourceCode: @source_code,
@@ -59,7 +60,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
       compilerversion: @compiler_version,
       optimizationUsed: 1,
       runs: 200
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -78,13 +79,13 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
 
   test "returns error for missing required parameters" do
     # Missing sourceCode parameter
-    result = ContractVerifySourceCode.focus(%{
+    result = RateLimitedAPI.call_standard(ContractVerifySourceCode, :focus, [%{
       chainid: 1,
       contractaddress: @contract_address,
       codeformat: "solidity-single-file",
       contractname: "TestContract",
       compilerversion: @compiler_version
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -103,7 +104,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthContractVerifySourceCodeLens doesn't have an API key, so it should fail
-    result = NoAuthContractVerifySourceCodeLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthContractVerifySourceCodeLens, :focus, [%{
       chainid: 1,
       contractaddress: @contract_address,
       sourceCode: @source_code,
@@ -112,7 +113,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
       compilerversion: @compiler_version,
       optimizationUsed: 1,
       runs: 200
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

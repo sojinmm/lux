@@ -31,6 +31,18 @@ defmodule IntegrationCase do
   using do
     quote do
       @moduletag :integration
+      
+      # Import the rate limiter functions for easy access in tests
+      import Lux.Lenses.Etherscan.RateLimitedAPI, only: [
+        throttle_standard_api: 0,
+        throttle_pro_api: 0
+      ]
     end
+  end
+  
+  # Add a setup callback that will be run before each test
+  setup do
+    # Hammer is now configured in config.exs
+    :ok
   end
 end

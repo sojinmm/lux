@@ -3,11 +3,12 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.EthSupply
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 300ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(300)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -35,9 +36,9 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
 
   test "can fetch total ETH supply" do
     assert {:ok, %{result: eth_supply, eth_supply: eth_supply}} =
-             EthSupply.focus(%{
+             RateLimitedAPI.call_standard(EthSupply, :focus, [%{
                chainid: 1
-             })
+             }])
 
     # ETH supply should be a large number (more than 100 million ETH)
     assert is_integer(eth_supply)
@@ -50,7 +51,7 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
 
   test "requires chainid parameter for v2 API" do
     # The v2 API requires the chainid parameter
-    result = EthSupply.focus(%{})
+    result = RateLimitedAPI.call_standard(EthSupply, :focus, [%{}])
 
     case result do
       {:error, %{message: "NOTOK", result: error_message}} ->
@@ -66,9 +67,9 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
   test "can fetch ETH supply for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on the chain
-    result = EthSupply.focus(%{
+    result = RateLimitedAPI.call_standard(EthSupply, :focus, [%{
       chainid: 137 # Polygon
-    })
+    }])
 
     case result do
       {:ok, %{result: eth_supply}} ->
@@ -86,9 +87,9 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthEthSupplyLens doesn't have an API key, so it should fail
-    result = NoAuthEthSupplyLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthEthSupplyLens, :focus, [%{
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

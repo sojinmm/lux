@@ -3,6 +3,7 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.BalanceMulti
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Vitalik's address
   @vitalik "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 300ms to avoid hitting the Etherscan API rate limit (5 calls per second)
-    Process.sleep(300)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -45,10 +46,10 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   test "can fetch ETH balances for multiple addresses" do
     assert {:ok, %{result: balances}} =
-             BalanceMulti.focus(%{
+             RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
                addresses: [@vitalik, @eth_foundation],
                chainid: 1
-             })
+             }])
 
     # Verify we got results for both addresses
     assert length(balances) == 2
@@ -76,11 +77,11 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   test "can specify a different tag (block parameter)" do
     assert {:ok, %{result: balances}} =
-             BalanceMulti.focus(%{
+             RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
                addresses: [@vitalik, @eth_foundation],
                chainid: 1,
                tag: "latest"
-             })
+             }])
 
     assert length(balances) == 2
   end
@@ -88,10 +89,10 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
   test "returns zero balance for invalid address format" do
     # Etherscan API should handle invalid addresses
     assert {:ok, %{result: balances}} =
-             BalanceMulti.focus(%{
+             RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
                addresses: [@vitalik, "0xinvalid"],
                chainid: 1
-             })
+             }])
 
     # We should still get results, but the invalid address should have 0 balance
     invalid_balance = Enum.find(balances, &(&1["account"] == "0xinvalid"))
@@ -107,10 +108,10 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthBalanceMultiLens doesn't have an API key, so it should fail
-    result = NoAuthBalanceMultiLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthBalanceMultiLens, :focus, [%{
       addresses: [@vitalik, @eth_foundation],
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

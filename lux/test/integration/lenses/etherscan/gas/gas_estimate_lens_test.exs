@@ -4,11 +4,12 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
   alias Lux.Lenses.Etherscan.GasEstimate
   alias Lux.Lenses.Etherscan.GasOracle
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    RateLimitedAPI.throttle_standard_api()
     :ok
   end
 
@@ -42,10 +43,10 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
     # Always include chainid parameter for v2 API
     assert {:ok, %{result: estimated_seconds}} =
-             GasEstimate.focus(%{
+             RateLimitedAPI.call_standard(GasEstimate, :focus, [%{
                gasprice: gas_price,
                chainid: 1
-             })
+             }])
 
     # Verify the result is a number (integer)
     assert is_integer(estimated_seconds)
@@ -61,7 +62,7 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
   test "can fetch estimated confirmation time with current fast gas price" do
     # First, get the current fast gas price from the gas oracle
     # Always include chainid parameter for v2 API
-    {:ok, %{result: gas_info}} = GasOracle.focus(%{chainid: 1})
+    {:ok, %{result: gas_info}} = RateLimitedAPI.call_standard(GasOracle, :focus, [%{chainid: 1}])
 
     # Convert the fast gas price from Gwei to wei (1 Gwei = 10^9 wei)
     fast_gas_price_wei = trunc(gas_info.fast_gas_price * 1_000_000_000)
@@ -69,10 +70,10 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     # Now get the estimated confirmation time for this gas price
     # Always include chainid parameter for v2 API
     assert {:ok, %{result: estimated_seconds}} =
-             GasEstimate.focus(%{
+             RateLimitedAPI.call_standard(GasEstimate, :focus, [%{
                gasprice: fast_gas_price_wei,
                chainid: 1
-             })
+             }])
 
     # Verify the result is a number (integer)
     assert is_integer(estimated_seconds)
@@ -92,10 +93,10 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     chain_id = 1
 
     assert {:ok, %{result: estimated_seconds}} =
-             GasEstimate.focus(%{
+             RateLimitedAPI.call_standard(GasEstimate, :focus, [%{
                gasprice: gas_price,
                chainid: chain_id
-             })
+             }])
 
     # Verify the result is a number (integer)
     assert is_integer(estimated_seconds)
@@ -114,10 +115,10 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     zero_gas_price = 0
 
     # Always include chainid parameter for v2 API
-    result = GasEstimate.focus(%{
+    result = RateLimitedAPI.call_standard(GasEstimate, :focus, [%{
       gasprice: zero_gas_price,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{result: estimated_seconds}} when is_integer(estimated_seconds) ->
@@ -141,10 +142,10 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     high_gas_price = 1000000000000
 
     # Always include chainid parameter for v2 API
-    high_result = GasEstimate.focus(%{
+    high_result = RateLimitedAPI.call_standard(GasEstimate, :focus, [%{
       gasprice: high_gas_price,
       chainid: 1
-    })
+    }])
 
     case high_result do
       {:ok, %{result: estimated_seconds}} when is_integer(estimated_seconds) ->
@@ -166,10 +167,10 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthGasEstimateLens doesn't have an API key, so it should fail
-    result = NoAuthGasEstimateLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthGasEstimateLens, :focus, [%{
       gasprice: 2000000000,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

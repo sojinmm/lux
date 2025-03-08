@@ -4,11 +4,12 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
 
   alias Lux.Lenses.Etherscan.BlockCountdown
   alias Lux.Lenses.Etherscan.BlockByTimestamp
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 1000ms to avoid hitting the Etherscan API rate limit
-    Process.sleep(1000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -39,11 +40,11 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     current_timestamp = DateTime.utc_now() |> DateTime.to_unix()
 
     {:ok, %{result: current_block_result}} =
-      BlockByTimestamp.focus(%{
+      RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
         timestamp: current_timestamp,
         closest: "before",
         chainid: 1
-      })
+      }])
 
     # Parse the current block number
     current_block = String.to_integer(current_block_result.block_number)
@@ -52,10 +53,10 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     future_block = current_block + 1000
 
     assert {:ok, %{result: result}} =
-             BlockCountdown.focus(%{
+             RateLimitedAPI.call_standard(BlockCountdown, :focus, [%{
                blockno: future_block,
                chainid: 1
-             })
+             }])
 
     # Verify the result structure
     assert is_map(result)
@@ -88,10 +89,10 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthBlockCountdownLens doesn't have an API key, so it should fail
-    result = NoAuthBlockCountdownLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthBlockCountdownLens, :focus, [%{
       blockno: 16701588,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

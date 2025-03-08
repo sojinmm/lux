@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.DailyBlockRewards
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
   @start_date "2023-01-01"
@@ -11,8 +12,8 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 2000ms to avoid hitting the Etherscan API rate limit (2 calls per second for this endpoint)
-    Process.sleep(2000)
+    # Use our rate limiter instead of Process.sleep
+    throttle_standard_api()
     :ok
   end
 
@@ -41,11 +42,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Make a test call to see if we get a Pro API error
-    case DailyBlockRewards.focus(%{
+    case RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
-    }) do
+    }]) do
       {:error, %{result: result}} ->
         # If the result contains "API Pro endpoint", we don't have a Pro API key
         not String.contains?(result, "API Pro endpoint") and
@@ -63,11 +64,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
       :ok
     else
       assert {:ok, %{result: block_rewards_data}} =
-               DailyBlockRewards.focus(%{
+               RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
-               })
+               }])
 
       # Verify the structure of the response
       assert is_list(block_rewards_data)
@@ -102,12 +103,12 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
       :ok
     else
       assert {:ok, %{result: block_rewards_data}} =
-               DailyBlockRewards.focus(%{
+               RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
                  chainid: 1
-               })
+               }])
 
       # Verify the structure of the response
       assert is_list(block_rewards_data)
@@ -125,11 +126,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthDailyBlockRewardsLens doesn't have an API key, so it should fail
-    result = NoAuthDailyBlockRewardsLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthDailyBlockRewardsLens, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
@@ -145,11 +146,11 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
   test "raises error or returns error for Pro API endpoint" do
     # This test verifies that we either get an ArgumentError or a specific error message
     # when trying to use a Pro API endpoint without a Pro API key
-    result = DailyBlockRewards.focus(%{
+    result = RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
       startdate: @start_date,
       enddate: @end_date,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, %{result: result}} ->
@@ -176,9 +177,9 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
       :ok
     else
       # Missing startdate and enddate
-      result = DailyBlockRewards.focus(%{
+      result = RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
         chainid: 1
-      })
+      }])
 
       case result do
         {:error, error} ->
