@@ -17,7 +17,7 @@ Before installing Lux, ensure you have:
 
 ```bash
 git clone https://github.com/Spectral-Finance/lux.git
-cd lux
+cd lux/lux
 ```
 
 ### 2. System Dependencies
@@ -113,8 +113,8 @@ Lux supports multiple programming languages:
 - **Node.js**: Web integration and text processing
 
 Each language has its own guide:
-- [Python Guide](python.md)
-- [Node.js Guide](nodejs.md)
+- [Python Guide](language_support/python.livemd)
+- [Node.js Guide](language_support/nodejs.livemd)
 - Additional language support coming soon!
 
 ## Development Tools
