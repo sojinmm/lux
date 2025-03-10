@@ -32,11 +32,6 @@ defmodule IntegrationCase do
     quote do
       @moduletag :integration
       
-      # Import the rate limiter functions for easy access in tests
-      import Lux.Lenses.Etherscan.RateLimitedAPI, only: [
-        throttle_standard_api: 0,
-        throttle_pro_api: 0
-      ]
     end
   end
   

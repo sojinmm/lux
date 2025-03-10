@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenNFTInventory
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example address that holds NFTs
   @nft_holder "0x123432244443b54409430979df8333f9308a6040"
@@ -12,8 +13,8 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 2000ms to avoid hitting the Etherscan API rate limit (2 calls per second for this endpoint)
-    Process.sleep(200)
+    # Use our rate limiter instead of Process.sleep
+    RateLimitedAPI.throttle_standard_api()
     :ok
   end
 
@@ -57,11 +58,11 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = AddressTokenNFTInventory.focus(%{
+    result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
       address: @nft_holder,
       contractaddress: @nft_contract,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, %{result: result}} when is_binary(result) ->
@@ -76,11 +77,11 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
       IO.puts("Skipping test: Pro API key required for AddressTokenNFTInventory")
       :ok
     else
-      result = AddressTokenNFTInventory.focus(%{
+      result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
         address: @nft_holder,
         contractaddress: @nft_contract,
         chainid: 1
-      })
+      }])
 
       case result do
         {:ok, %{result: nfts, nft_inventory: nfts}} ->
@@ -124,13 +125,13 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
       # Using a small offset to test pagination
       offset = 5
 
-      result = AddressTokenNFTInventory.focus(%{
+      result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
         address: @nft_holder,
         contractaddress: @nft_contract,
         page: 1,
         offset: offset,
         chainid: 1
-      })
+      }])
 
       case result do
         {:ok, %{result: nfts}} ->
@@ -153,11 +154,11 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "returns error for invalid address" do
     # Using an invalid address format
-    result = AddressTokenNFTInventory.focus(%{
+    result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
       address: "0xinvalid",
       contractaddress: @nft_contract,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -180,11 +181,11 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = AddressTokenNFTInventory.focus(%{
+    result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
       address: @nft_holder,
       contractaddress: "0xinvalid",
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -207,11 +208,11 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthAddressTokenNFTInventoryLens doesn't have an API key, so it should fail
-    result = NoAuthAddressTokenNFTInventoryLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthAddressTokenNFTInventoryLens, :focus, [%{
       address: @nft_holder,
       contractaddress: @nft_contract,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

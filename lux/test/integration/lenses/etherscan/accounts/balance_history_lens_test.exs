@@ -14,7 +14,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
     # Use our rate limiter instead of Process.sleep
-    throttle_pro_api()
+    RateLimitedAPI.throttle_pro_api()
     :ok
   end
 

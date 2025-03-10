@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenSupplyHistory
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -12,8 +13,8 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 2000ms to avoid hitting the Etherscan API rate limit (2 calls per second for this endpoint)
-    Process.sleep(200)
+    # Use our rate limiter instead of Process.sleep
+    RateLimitedAPI.throttle_standard_api()
     :ok
   end
 
@@ -52,11 +53,11 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = TokenSupplyHistory.focus(%{
+    result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
       contractaddress: @token_contract,
       blockno: @block_number,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, %{result: result}} when is_binary(result) ->
@@ -71,11 +72,11 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
       IO.puts("Skipping test: Pro API key required for TokenSupplyHistory")
       :ok
     else
-      result = TokenSupplyHistory.focus(%{
+      result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
         contractaddress: @token_contract,
         blockno: @block_number,
         chainid: 1
-      })
+      }])
 
       case result do
         {:ok, %{result: supply, token_supply: supply}} ->
@@ -99,11 +100,11 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
 
   test "returns error for invalid contract address" do
     # Using an invalid contract address format
-    result = TokenSupplyHistory.focus(%{
+    result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
       contractaddress: "0xinvalid",
       blockno: @block_number,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -126,11 +127,11 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthTokenSupplyHistoryLens doesn't have an API key, so it should fail
-    result = NoAuthTokenSupplyHistoryLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthTokenSupplyHistoryLens, :focus, [%{
       contractaddress: @token_contract,
       blockno: @block_number,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

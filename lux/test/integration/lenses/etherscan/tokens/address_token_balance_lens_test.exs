@@ -4,14 +4,15 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenBalance
+  alias Lux.Lenses.Etherscan.RateLimitedAPI
 
   # Example address that holds multiple tokens (Binance)
   @token_holder "0x28c6c06298d514db089934071355e5743bf21d60"
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
-    # Sleep for 2000ms to avoid hitting the Etherscan API rate limit (2 calls per second for this endpoint)
-    Process.sleep(200)
+    # Use our rate limiter instead of Process.sleep
+    RateLimitedAPI.throttle_standard_api()
     :ok
   end
 
@@ -55,10 +56,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     # Check if the API key is a Pro key by making a test request
-    result = AddressTokenBalance.focus(%{
+    result = RateLimitedAPI.call_standard(AddressTokenBalance, :focus, [%{
       address: @token_holder,
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, %{result: result}} when is_binary(result) ->
@@ -73,10 +74,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
       IO.puts("Skipping test: Pro API key required for AddressTokenBalance")
       :ok
     else
-      result = AddressTokenBalance.focus(%{
+      result = RateLimitedAPI.call_standard(AddressTokenBalance, :focus, [%{
         address: @token_holder,
         chainid: 1
-      })
+      }])
 
       case result do
         {:ok, %{result: tokens, token_balances: tokens}} ->
@@ -120,12 +121,12 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
       # Using a small offset to test pagination
       offset = 5
 
-      result = AddressTokenBalance.focus(%{
+      result = RateLimitedAPI.call_standard(AddressTokenBalance, :focus, [%{
         address: @token_holder,
         page: 1,
         offset: offset,
         chainid: 1
-      })
+      }])
 
       case result do
         {:ok, %{result: tokens}} ->
@@ -148,10 +149,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
 
   test "returns error for invalid address" do
     # Using an invalid address format
-    result = AddressTokenBalance.focus(%{
+    result = RateLimitedAPI.call_standard(AddressTokenBalance, :focus, [%{
       address: "0xinvalid",
       chainid: 1
-    })
+    }])
 
     case result do
       {:error, error} ->
@@ -174,10 +175,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
 
   test "fails when no auth is provided" do
     # The NoAuthAddressTokenBalanceLens doesn't have an API key, so it should fail
-    result = NoAuthAddressTokenBalanceLens.focus(%{
+    result = RateLimitedAPI.call_standard(NoAuthAddressTokenBalanceLens, :focus, [%{
       address: @token_holder,
       chainid: 1
-    })
+    }])
 
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->

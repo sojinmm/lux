@@ -13,7 +13,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
     # Use our rate limiter instead of Process.sleep
-    throttle_standard_api()
+    RateLimitedAPI.throttle_standard_api()
     :ok
   end
 
