@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Unix timestamp (January 10, 2020)
   @timestamp 1578638524

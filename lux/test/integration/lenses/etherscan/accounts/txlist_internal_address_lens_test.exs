@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TxListInternalAddress
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with internal transactions - using a more active address
   @address "0x7a250d5630b4cf539739df2c5dacb4c659f2488d" # Uniswap Router

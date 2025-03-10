@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.GetLogs
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example NFT contract address (PudgyPenguins)
   @contract_address "0xbd3531da5cf5857e7cfaa92426877b022e612cf8"

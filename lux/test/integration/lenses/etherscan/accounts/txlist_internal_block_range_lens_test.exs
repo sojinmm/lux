@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TxListInternalBlockRange
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block range with internal transactions
   @startblock 13481773

@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenNftContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenNftContractTx
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # CryptoKitties contract address
   @contract_address "0x06012c8cf97bead5deae237070f9587f8e7a266d"

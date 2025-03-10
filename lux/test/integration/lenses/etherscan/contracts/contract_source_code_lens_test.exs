@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractSourceCode
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"

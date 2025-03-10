@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.NodeCount
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

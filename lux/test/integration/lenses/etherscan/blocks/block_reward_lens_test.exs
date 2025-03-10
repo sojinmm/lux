@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
 
   alias Lux.Lenses.Etherscan.BlockReward
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block number with uncle rewards (from the example in the documentation)
   @block_number 2165403

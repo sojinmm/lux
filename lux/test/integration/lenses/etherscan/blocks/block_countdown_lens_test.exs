@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
 
   alias Lux.Lenses.Etherscan.BlockCountdown
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Etherscan.RateLimitedAPI do
+defmodule Lux.Integration.Etherscan.RateLimitedAPI do
   @moduledoc """
   Wrapper module for making rate-limited Etherscan API calls.
   

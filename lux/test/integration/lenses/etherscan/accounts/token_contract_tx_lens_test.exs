@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenContractTx
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # MKR token contract address
   @contract_address "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2"

@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenNftAddressContractTx
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with NFT transfers
   @address "0x6975be450864c02b4613023c2152ee0743572325"

@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.MinedBlocks
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address of a known miner/validator (Ethermine pool)
   @miner_address "0xea674fdde714fd979de3edf0f56aa9716b898ec8"

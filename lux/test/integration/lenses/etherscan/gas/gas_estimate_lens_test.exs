@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
   alias Lux.Lenses.Etherscan.GasEstimate
   alias Lux.Lenses.Etherscan.GasOracle
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

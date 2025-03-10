@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.TokenErc1155ContractTxLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.TokenErc1155ContractTx
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # ERC-1155 contract address
   @contract_address "0x76be3b62873462d2142405439777e971754e8e77"

@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TxReceiptStatus
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example successful transaction hash
   @successful_tx "0x513c1ba0bebf66436b5fed86ab668452b7805593c05073eb2d51d3a52f480a76"

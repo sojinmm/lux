@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.BeaconWithdrawal
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with beacon withdrawals
   @withdrawal_address "0xB9D7934878B5FB9610B3fE8A5e441e8fad7E293f"

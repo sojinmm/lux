@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenInfo
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"

@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockTimeLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.DailyAvgBlockTime
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
   @start_date "2023-01-01"

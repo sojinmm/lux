@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractCheckVerifyStatus
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example GUID from the documentation
   @example_guid "x3ryqcqr1zdknhfhkimqmizlcqpxncqc6nrvp3pgrcpfsqedqi"

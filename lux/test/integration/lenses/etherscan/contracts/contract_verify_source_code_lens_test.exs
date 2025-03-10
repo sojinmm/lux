@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractVerifySourceCode
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example contract address for verification (this is just for testing, not a real verification)
   @contract_address "0x123456789012345678901234567890123456789"

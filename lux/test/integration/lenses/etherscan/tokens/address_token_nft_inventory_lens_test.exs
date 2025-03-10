@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenNFTInventory
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example address that holds NFTs
   @nft_holder "0x123432244443b54409430979df8333f9308a6040"

@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenBalance
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example address that holds multiple tokens (Binance)
   @token_holder "0x28c6c06298d514db089934071355e5743bf21d60"

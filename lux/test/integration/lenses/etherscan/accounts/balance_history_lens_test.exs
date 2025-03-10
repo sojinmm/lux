@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
 
   alias Lux.Lenses.Etherscan.BalanceHistory
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Ethereum Foundation address
   @eth_foundation "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"

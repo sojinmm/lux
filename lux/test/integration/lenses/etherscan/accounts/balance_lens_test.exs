@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.Balance
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Vitalik's address
   @vitalik "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"

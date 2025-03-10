@@ -3,7 +3,7 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
   use IntegrationCase, async: false
 
   alias Lux.Lenses.Etherscan.ContractCreation
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Contract addresses from the example in the documentation
   @contract_addresses "0xB83c27805aAcA5C7082eB45C868d955Cf04C337F,0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45,0xe4462eb568E2DFbb5b0cA2D3DbB1A35C9Aa98aad"

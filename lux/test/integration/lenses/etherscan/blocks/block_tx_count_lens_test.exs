@@ -4,7 +4,7 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
   alias Lux.Lenses.Etherscan.BlockTxCount
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Lenses.Etherscan.RateLimitedAPI
+  alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block number to check transaction count (from the example in the documentation)
   @block_number 2165403
