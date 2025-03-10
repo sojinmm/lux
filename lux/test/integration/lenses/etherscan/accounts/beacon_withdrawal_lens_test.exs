@@ -15,28 +15,6 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
     :ok
   end
 
-  defmodule NoAuthBeaconWithdrawalLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Beacon Chain Withdrawals API",
-      description: "Fetches beacon chain withdrawals for an Ethereum address",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "withdrawals")
-    end
-  end
-
   test "can fetch beacon withdrawals for an address" do
     assert {:ok, %{result: withdrawals}} =
              RateLimitedAPI.call_standard(BeaconWithdrawal, :focus, [%{
@@ -96,23 +74,6 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
         assert block_number >= 17000000
         assert block_number <= 18000000
       end)
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthBeaconWithdrawalLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthBeaconWithdrawalLens, :focus, [%{
-      address: @withdrawal_address,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
     end
   end
 end

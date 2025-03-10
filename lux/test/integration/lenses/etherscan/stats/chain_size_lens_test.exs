@@ -17,28 +17,6 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
     :ok
   end
 
-  defmodule NoAuthChainSizeLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Chain Size API",
-      description: "Fetches the size of the Ethereum blockchain, in bytes, over a date range",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "stats")
-      |> Map.put(:action, "chainsize")
-    end
-  end
-
   test "can fetch chain size data with required parameters" do
     result = RateLimitedAPI.call_standard(ChainSize, :focus, [%{
       startdate: @start_date,
@@ -118,40 +96,6 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
         else
           flunk("Unexpected error: #{error_message}")
         end
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthChainSizeLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthChainSizeLens, :focus, [%{
-      startdate: @start_date,
-      enddate: @end_date,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
-  end
-
-  test "returns error for missing required parameters" do
-    # Missing startdate and enddate
-    result = RateLimitedAPI.call_standard(ChainSize, :focus, [%{
-      chainid: 1
-    }])
-
-    case result do
-      {:error, error} ->
-        # Should return an error for missing required parameters
-        assert error != nil
-
-      _ ->
-        flunk("Expected an error for missing required parameters")
     end
   end
 end

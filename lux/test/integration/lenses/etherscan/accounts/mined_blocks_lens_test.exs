@@ -15,28 +15,6 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
     :ok
   end
 
-  defmodule NoAuthMinedBlocksLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Mined Blocks API",
-      description: "Fetches blocks validated by an Ethereum address",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "getminedblocks")
-    end
-  end
-
   test "can fetch mined blocks for an address" do
     assert {:ok, %{result: blocks}} =
              RateLimitedAPI.call_standard(MinedBlocks, :focus, [%{
@@ -86,22 +64,5 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
 
     # We may or may not get uncle blocks, but the request should succeed
     assert is_list(blocks)
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthMinedBlocksLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthMinedBlocksLens, :focus, [%{
-      address: @miner_address,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

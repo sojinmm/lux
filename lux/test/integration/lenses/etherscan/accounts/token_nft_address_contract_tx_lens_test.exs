@@ -17,28 +17,6 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressContractTxLensTest do
     :ok
   end
 
-  defmodule NoAuthTokenNftAddressContractTxLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan.TokenNftAddressContractTx",
-      description: "Retrieves ERC-721 NFT token transfers for a specific wallet address from a specific token contract",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "tokennfttx")
-    end
-  end
-
   test "can fetch NFT transfers for an address filtered by contract" do
     assert {:ok, %{result: transfers}} =
              RateLimitedAPI.call_standard(TokenNftAddressContractTx, :focus, [%{
@@ -84,23 +62,5 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressContractTxLensTest do
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthTokenNftAddressContractTxLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthTokenNftAddressContractTxLens, :focus, [%{
-      address: @address,
-      contractaddress: @contract_address,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end 

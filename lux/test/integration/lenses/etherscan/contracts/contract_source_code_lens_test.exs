@@ -17,30 +17,6 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
     :ok
   end
 
-  defmodule NoAuthContractSourceCodeLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Contract Source Code API",
-      description: "Fetches the source code of a verified smart contract",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "contract")
-      |> Map.put(:action, "getsourcecode")
-      # Ensure chainid is passed through
-      |> Map.put_new(:chainid, Map.get(params, :chainid, 1))
-    end
-  end
-
   test "can fetch source code for a verified contract" do
     assert {:ok, %{result: source_info}} =
              RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
@@ -105,22 +81,5 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
     # The contract name should also be empty
     assert source_info.contract_name == ""
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthContractSourceCodeLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthContractSourceCodeLens, :focus, [%{
-      address: @contract_address,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

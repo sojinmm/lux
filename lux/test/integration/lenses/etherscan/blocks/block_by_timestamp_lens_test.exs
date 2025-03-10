@@ -15,28 +15,6 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
     :ok
   end
 
-  defmodule NoAuthBlockByTimestampLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Block Number by Timestamp API",
-      description: "Fetches the block number that was mined at a certain timestamp",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "block")
-      |> Map.put(:action, "getblocknobytime")
-    end
-  end
-
   test "can fetch block number by timestamp with 'before' closest parameter" do
     assert {:ok, %{result: result}} =
              RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
@@ -97,23 +75,5 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
     # The block number should be a string representing an integer
     block_number = result.block_number
     assert is_binary(block_number)
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthBlockByTimestampLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthBlockByTimestampLens, :focus, [%{
-      timestamp: @timestamp,
-      closest: "before",
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

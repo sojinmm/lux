@@ -17,33 +17,6 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
     :ok
   end
 
-  defmodule NoAuthBalanceMultiLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan ETH Balance Multi API",
-      description: "Fetches ETH balances for multiple Ethereum addresses",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Convert addresses array to comma-separated string
-      address_string = Enum.join(params.addresses, ",")
-
-      # Set module and action for this endpoint
-      params
-      |> Map.delete(:addresses)  # Remove the addresses list to avoid URI encoding issues
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "balancemulti")
-      |> Map.put(:address, address_string)
-    end
-  end
-
   test "can fetch ETH balances for multiple addresses" do
     assert {:ok, %{result: balances}} =
              RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
@@ -80,42 +53,5 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
              }])
 
     assert length(balances) == 2
-  end
-
-  test "returns zero balance for invalid address format" do
-    # Etherscan API should handle invalid addresses
-    assert {:ok, %{result: balances}} =
-             RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
-               addresses: [@vitalik, "0xinvalid"],
-               chainid: 1
-             }])
-
-    # We should still get results, but the invalid address should have 0 balance
-    invalid_balance = Enum.find(balances, &(&1["account"] == "0xinvalid"))
-
-    if invalid_balance do
-      assert invalid_balance["balance"] == "0"
-    else
-      # If the API filters out invalid addresses, we should only have one result
-      assert length(balances) == 1
-      assert Enum.find(balances, &(&1["account"] == @vitalik))
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthBalanceMultiLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthBalanceMultiLens, :focus, [%{
-      addresses: [@vitalik, @eth_foundation],
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

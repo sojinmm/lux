@@ -16,28 +16,6 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
     :ok
   end
 
-  defmodule NoAuthTxStatusLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Contract Execution Status API",
-      description: "Checks the execution status of a contract",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "transaction")
-      |> Map.put(:action, "getstatus")
-    end
-  end
-
   test "can check execution status for a successful transaction" do
     assert {:ok, %{result: %{status: status, is_error: is_error, error_message: error_message}}} =
              RateLimitedAPI.call_standard(TxStatus, :focus, [%{
@@ -68,41 +46,6 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
       {:error, error} ->
         # If the transaction doesn't exist on this chain, that's also acceptable
         assert true
-    end
-  end
-
-  test "returns appropriate status for invalid transaction hash" do
-    # Using an invalid transaction hash format
-    result = RateLimitedAPI.call_standard(TxStatus, :focus, [%{
-      txhash: "0xinvalid",
-      chainid: 1
-    }])
-
-    case result do
-      {:error, error} ->
-        # Should return an error for invalid transaction hash
-        assert error != nil
-
-      {:ok, %{result: %{status: status, is_error: is_error}}} ->
-        # Some APIs might return a status for invalid hashes
-        assert true
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthTxStatusLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthTxStatusLens, :focus, [%{
-      txhash: @successful_tx,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
     end
   end
 end

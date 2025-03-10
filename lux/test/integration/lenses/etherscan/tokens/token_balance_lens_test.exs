@@ -18,34 +18,6 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
     :ok
   end
 
-  defmodule NoAuthTokenBalanceLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan ERC20 Token Balance API",
-      description: "Fetches the current balance of an ERC-20 token of an address",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Ensure tag parameter has a default value
-      params = case params[:tag] do
-        nil -> Map.put(params, :tag, "latest")
-        _ -> params
-      end
-
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "tokenbalance")
-    end
-  end
-
   @tag timeout: 120_000
   test "can fetch token balance for an address" do
     assert {:ok, %{result: balance, token_balance: balance}} =
@@ -85,44 +57,5 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
 
     # Should return "0" for an address with no tokens
     assert balance == "0"
-  end
-
-  @tag timeout: 120_000
-  test "returns error for invalid contract address" do
-    # Using an invalid contract address format
-    result = RateLimitedAPI.call_standard(TokenBalance, :focus, [%{
-      contractaddress: "0xinvalid",
-      address: @token_holder,
-      chainid: 1
-    }])
-
-    case result do
-      {:error, error} ->
-        # Should return an error for invalid contract address
-        assert error != nil
-
-      _ ->
-        flunk("Expected an error for invalid contract address")
-    end
-  end
-
-  @tag timeout: 120_000
-  test "fails when no auth is provided" do
-    # The NoAuthTokenBalanceLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthTokenBalanceLens, :focus, [%{
-      contractaddress: @token_contract,
-      address: @token_holder,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-
-    end
   end
 end

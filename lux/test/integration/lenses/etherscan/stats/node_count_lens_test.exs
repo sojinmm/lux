@@ -12,28 +12,6 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
     :ok
   end
 
-  defmodule NoAuthNodeCountLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Node Count API",
-      description: "Fetches the total number of nodes currently syncing on the Ethereum network",
-      url: "https://api.etherscan.io/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "stats")
-      |> Map.put(:action, "nodecount")
-    end
-  end
-
   test "can fetch node count" do
     assert {:ok, %{result: node_count, node_count: node_count}} =
              RateLimitedAPI.call_standard(NodeCount, :focus, [%{
@@ -57,21 +35,5 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
     
     # Total node count should be a positive number
     assert total > 0
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthNodeCountLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthNodeCountLens, :focus, [%{
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

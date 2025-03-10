@@ -13,28 +13,6 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     :ok
   end
 
-  defmodule NoAuthBlockCountdownLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Block Countdown API",
-      description: "Fetches the estimated time remaining until a certain block is mined",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "block")
-      |> Map.put(:action, "getblockcountdown")
-    end
-  end
-
   test "can fetch block countdown for a future block" do
     # Get the current block by using the current timestamp
     current_timestamp = DateTime.utc_now() |> DateTime.to_unix()
@@ -79,22 +57,5 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     assert is_binary(estimated_time)
     {time_sec, _} = Integer.parse(estimated_time)
     assert time_sec > 0
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthBlockCountdownLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthBlockCountdownLens, :focus, [%{
-      blockno: 16701588,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

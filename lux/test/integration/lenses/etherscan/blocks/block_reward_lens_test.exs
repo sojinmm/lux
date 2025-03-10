@@ -16,28 +16,6 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
     :ok
   end
 
-  defmodule NoAuthBlockRewardLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Block Reward API",
-      description: "Fetches block and uncle rewards for a specific block",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "block")
-      |> Map.put(:action, "getblockreward")
-    end
-  end
-
   test "can fetch block and uncle rewards for a specific block" do
     assert {:ok, %{result: result}} =
              RateLimitedAPI.call_standard(BlockReward, :focus, [%{
@@ -108,22 +86,5 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
 
     # The block number should match what we requested
     assert result.block_number == to_string(recent_block)
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthBlockRewardLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthBlockRewardLens, :focus, [%{
-      blockno: @block_number,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

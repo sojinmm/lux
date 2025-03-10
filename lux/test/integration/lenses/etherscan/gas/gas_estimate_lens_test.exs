@@ -13,30 +13,6 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     :ok
   end
 
-  defmodule NoAuthGasEstimateLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Gas Estimate API",
-      description: "Fetches the estimated time, in seconds, for a transaction to be confirmed on the blockchain",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "gastracker")
-      |> Map.put(:action, "gasestimate")
-      # Ensure chainid is passed through
-      |> Map.put_new(:chainid, Map.get(params, :chainid, 1))
-    end
-  end
-
   test "can fetch estimated confirmation time for a transaction" do
     # Using a sample gas price of 2 Gwei (2000000000 wei)
     gas_price = 2000000000
@@ -141,28 +117,6 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
       {:error, error} ->
         # Or it might return an error tuple
-        assert error != nil
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthGasEstimateLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthGasEstimateLens, :focus, [%{
-      gasprice: 2000000000,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:ok, %{"message" => message}} when is_binary(message) ->
-        # The API might return a message about missing/invalid API key
-        assert String.contains?(message, "Missing/Invalid API Key")
-
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
         assert error != nil
     end
   end

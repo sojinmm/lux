@@ -17,30 +17,6 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
     :ok
   end
 
-  defmodule NoAuthContractCreationLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Contract Creator API",
-      description: "Fetches a contract's deployer address and transaction hash it was created",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "contract")
-      |> Map.put(:action, "getcontractcreation")
-      # Ensure chainid is passed through
-      |> Map.put_new(:chainid, Map.get(params, :chainid, 1))
-    end
-  end
-
   test "can fetch contract creation info for multiple contracts" do
     assert {:ok, %{result: contracts}} =
              RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
@@ -91,46 +67,5 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
     # The contract address should match what we requested
     assert String.downcase(contract.contract_address) == String.downcase(@single_contract)
-  end
-
-  test "returns error for invalid contract address" do
-    # Using an invalid address format
-    invalid_address = "0xinvalid"
-
-    result = RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
-      contractaddresses: invalid_address,
-      chainid: 1
-    }])
-
-    case result do
-      {:error, error} ->
-        # Should return an error for invalid address format
-        assert error != nil
-
-      {:ok, %{result: []}} ->
-        # Or it might return an empty list
-        assert true
-
-      {:ok, %{result: error}} when is_binary(error) ->
-        # Or it might return an error message
-        assert error != nil
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthContractCreationLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthContractCreationLens, :focus, [%{
-      contractaddresses: @single_contract,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end

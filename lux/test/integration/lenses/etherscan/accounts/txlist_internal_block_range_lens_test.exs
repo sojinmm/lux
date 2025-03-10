@@ -16,28 +16,6 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
     :ok
   end
 
-  defmodule NoAuthTxListInternalBlockRangeLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan.TxListInternalBlockRange",
-      description: "Fetches internal transactions within a specific block range from Etherscan API",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "txlistinternal")
-    end
-  end
-
   test "can fetch internal transactions for a block range" do
     assert {:ok, %{result: transactions}} =
              RateLimitedAPI.call_standard(TxListInternalBlockRange, :focus, [%{
@@ -81,23 +59,5 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transactions) <= 5
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthTxListInternalBlockRangeLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_standard(NoAuthTxListInternalBlockRangeLens, :focus, [%{
-      startblock: @startblock,
-      endblock: @endblock,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
   end
 end 

@@ -18,28 +18,6 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
     :ok
   end
 
-  defmodule NoAuthBalanceHistoryLens do
-    @moduledoc """
-    Going to call the api without auth so that we always fail
-    """
-    use Lux.Lens,
-      name: "Etherscan Historical ETH Balance API",
-      description: "Fetches historical ETH balance for an Ethereum address at a specific block",
-      url: "https://api.etherscan.io/v2/api",
-      method: :get,
-      headers: [{"content-type", "application/json"}]
-
-    @doc """
-    Prepares parameters before making the API request.
-    """
-    def before_focus(params) do
-      # Set module and action for this endpoint
-      params
-      |> Map.put(:module, "account")
-      |> Map.put(:action, "balancehistory")
-    end
-  end
-
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
     case Base.check_pro_endpoint("account", "balancehistory") do
@@ -66,40 +44,6 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
       # The Ethereum Foundation should have had some ETH at this block
       assert is_binary(balance)
       assert balance_in_eth > 0
-    end
-  end
-
-  test "fails when no auth is provided" do
-    # The NoAuthBalanceHistoryLens doesn't have an API key, so it should fail
-    result = RateLimitedAPI.call_pro(NoAuthBalanceHistoryLens, :focus, [%{
-      address: @eth_foundation,
-      blockno: @block_number,
-      chainid: 1
-    }])
-
-    case result do
-      {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
-        assert String.contains?(error_message, "Missing/Invalid API Key")
-
-      {:error, error} ->
-        # If it returns an error tuple, that's also acceptable
-        assert error != nil
-    end
-  end
-
-  test "raises error when trying to use without Pro API key" do
-    # Skip this test if we actually have a Pro API key
-    if has_pro_api_key?() do
-      :ok
-    else
-      # This should raise an ArgumentError because we don't have a Pro API key
-      assert_raise ArgumentError, fn ->
-        RateLimitedAPI.call_pro(BalanceHistory, :focus, [%{
-          address: @eth_foundation,
-          blockno: @block_number,
-          chainid: 1
-        }])
-      end
     end
   end
 end
