@@ -72,9 +72,15 @@ defmodule Lux.Lenses.Etherscan.DailyBlockRewards do
     end
 
     # Set module and action for this endpoint
-    params
+    params = params
     |> Map.put(:module, "stats")
     |> Map.put(:action, "dailyblockrewards")
+    
+    # Check if this endpoint requires a Pro API key
+    case Base.check_pro_endpoint("stats", "dailyblockrewards") do
+      {:ok, _} -> params
+      {:error, message} -> raise ArgumentError, message
+    end
   end
 
   @doc """

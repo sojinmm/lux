@@ -69,9 +69,15 @@ defmodule Lux.Lenses.Etherscan.TokenHolderList do
     |> Map.put_new(:offset, 10)
 
     # Set module and action for this endpoint
-    params
+    params = params
     |> Map.put(:module, "token")
     |> Map.put(:action, "tokenholderlist")
+    
+    # Check if this endpoint requires a Pro API key
+    case Base.check_pro_endpoint("token", "tokenholderlist") do
+      {:ok, _} -> params
+      {:error, message} -> raise ArgumentError, message
+    end
   end
 
   @doc """

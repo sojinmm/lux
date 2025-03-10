@@ -89,10 +89,16 @@ defmodule Lux.Lenses.Etherscan.DailyAvgHashRate do
   Prepares parameters for the API request.
   """
   def before_focus(params) do
-    params
+    params = params
     |> Map.put(:module, "stats")
     |> Map.put(:action, "dailyavghashrate")
     |> Map.put_new(:sort, "asc")
+    
+    # Check if this endpoint requires a Pro API key
+    case Base.check_pro_endpoint("stats", "dailyavghashrate") do
+      {:ok, _} -> params
+      {:error, message} -> raise ArgumentError, message
+    end
   end
 
   @doc """

@@ -97,7 +97,32 @@ defmodule Lux.Lenses.Etherscan.Base do
   """
   def check_pro_endpoint(module, action) do
     pro_endpoints = [
-      {"account", "balancehistory"}
+      {"account", "balancehistory"},
+      {"account", "addresstokenbalance"},
+      {"account", "addresstokennftbalance"},
+      {"account", "addresstokennftinventory"},
+      {"account", "tokenbalancehistory"},
+      {"stats", "chainsize"},
+      {"stats", "dailyavgblocksize"},
+      {"stats", "dailyavgblocktime"},
+      {"stats", "dailyavggaslimit"},
+      {"stats", "dailyavggasprice"},
+      {"stats", "dailyavghashrate"},
+      {"stats", "dailyavgnetdifficulty"},
+      {"stats", "dailyblkcount"},
+      {"stats", "dailyblockrewards"},
+      {"stats", "dailygasused"},
+      {"stats", "dailynetworkutilization"},
+      {"stats", "dailynewaddress"},
+      {"stats", "dailytx"},
+      {"stats", "dailytxnfee"},
+      {"stats", "dailyuncleblkcount"},
+      {"stats", "ethdailyprice"},
+      {"stats", "tokensupply"},
+      {"stats", "tokensupplyhistory"},
+      {"token", "tokeninfo"},
+      {"token", "tokenholdercount"},
+      {"token", "tokenholderlist"}
     ]
 
     if {module, action} in pro_endpoints do

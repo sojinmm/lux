@@ -71,9 +71,15 @@ defmodule Lux.Lenses.Etherscan.AddressTokenNFTBalance do
     |> Map.put_new(:offset, 100)
 
     # Set module and action for this endpoint
-    params
+    params = params
     |> Map.put(:module, "account")
     |> Map.put(:action, "addresstokennftbalance")
+    
+    # Check if this endpoint requires a Pro API key
+    case Base.check_pro_endpoint("account", "addresstokennftbalance") do
+      {:ok, _} -> params
+      {:error, message} -> raise ArgumentError, message
+    end
   end
 
   @doc """

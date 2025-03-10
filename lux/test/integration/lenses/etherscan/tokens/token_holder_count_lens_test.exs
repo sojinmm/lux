@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenHolderCount
+  alias Lux.Lenses.Etherscan.Base
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example ERC-20 token contract address (LINK token)
@@ -18,16 +19,9 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    # Check if the API key is a Pro key by making a test request
-    result = RateLimitedAPI.call_standard(TokenHolderCount, :focus, [%{
-      contractaddress: @token_contract,
-      chainid: 1
-    }])
-
-    case result do
-      {:error, %{result: result}} when is_binary(result) ->
-        not String.contains?(result, "API Pro endpoint")
-      _ -> true
+    case Base.check_pro_endpoint("token", "tokenholdercount") do
+      {:ok, _} -> true
+      {:error, _} -> false
     end
   end
 

@@ -5,6 +5,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
 
   alias Lux.Lenses.Etherscan.TokenSupplyHistory
   alias Lux.Integration.Etherscan.RateLimitedAPI
+  alias Lux.Lenses.Etherscan.Base
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
@@ -30,17 +31,9 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    # Check if the API key is a Pro key by making a test request
-    result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
-      contractaddress: @token_contract,
-      blockno: @block_number,
-      chainid: 1
-    }])
-
-    case result do
-      {:error, %{result: result}} when is_binary(result) ->
-        not String.contains?(result, "API Pro endpoint")
-      _ -> true
+    case Base.check_pro_endpoint("stats", "tokensupplyhistory") do
+      {:ok, _} -> true
+      {:error, _} -> false
     end
   end
 

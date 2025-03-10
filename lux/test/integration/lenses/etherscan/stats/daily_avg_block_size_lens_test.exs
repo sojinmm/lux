@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockSizeLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.DailyAvgBlockSize
+  alias Lux.Lenses.Etherscan.Base
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
@@ -19,24 +20,14 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockSizeLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    # Make a test call to see if we get a Pro API error
-    case RateLimitedAPI.call_standard(DailyAvgBlockSize, :focus, [%{
-      startdate: @start_date,
-      enddate: @end_date,
-      chainid: 1
-    }]) do
-      {:error, %{result: result}} ->
-        # If the result contains "API Pro endpoint", we don't have a Pro API key
-        not String.contains?(result, "API Pro endpoint") and
-        not String.contains?(result, "Missing Or invalid Action name")
-      _ ->
-        # If we get any other response, assume we have a Pro API key
-        true
+    case Base.check_pro_endpoint("stats", "dailyavgblocksize") do
+      {:ok, _} -> true
+      {:error, _} -> false
     end
   end
 
   test "can fetch daily average block size with required parameters" do
-    # Skip this test if we don't have a Pro API key or if the action name is invalid
+    # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
       :ok
     else
@@ -63,7 +54,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockSizeLensTest do
   end
 
   test "can specify different sort order" do
-    # Skip this test if we don't have a Pro API key or if the action name is invalid
+    # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
       :ok
     else

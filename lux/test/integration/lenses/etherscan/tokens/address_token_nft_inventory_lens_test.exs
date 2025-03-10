@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenNFTInventory
+  alias Lux.Lenses.Etherscan.Base
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example address that holds NFTs
@@ -30,17 +31,9 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    # Check if the API key is a Pro key by making a test request
-    result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
-      address: @nft_holder,
-      contractaddress: @nft_contract,
-      chainid: 1
-    }])
-
-    case result do
-      {:error, %{result: result}} when is_binary(result) ->
-        not String.contains?(result, "API Pro endpoint")
-      _ -> true
+    case Base.check_pro_endpoint("account", "addresstokennftinventory") do
+      {:ok, _} -> true
+      {:error, _} -> false
     end
   end
 

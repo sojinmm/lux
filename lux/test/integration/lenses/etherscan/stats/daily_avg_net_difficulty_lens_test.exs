@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgNetDifficultyLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.DailyAvgNetDifficulty
+  alias Lux.Lenses.Etherscan.Base
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
@@ -19,18 +20,9 @@ defmodule Lux.Integration.Etherscan.DailyAvgNetDifficultyLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    # Make a test call to see if we get a Pro API error
-    case RateLimitedAPI.call_standard(DailyAvgNetDifficulty, :focus, [%{
-      startdate: @start_date,
-      enddate: @end_date,
-      chainid: 1
-    }]) do
-      {:error, %{result: result}} ->
-        # If the result contains "API Pro endpoint", we don't have a Pro API key
-        not String.contains?(result, "API Pro endpoint")
-      _ ->
-        # If we get any other response, assume we have a Pro API key
-        true
+    case Base.check_pro_endpoint("stats", "dailyavgnetdifficulty") do
+      {:ok, _} -> true
+      {:error, _} -> false
     end
   end
 

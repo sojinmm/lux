@@ -170,6 +170,12 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
     end
 
     test "handles Pro API key errors" do
+      # Set up test API key without Pro access
+      Application.put_env(:lux, :api_keys, [
+        etherscan: "TEST_API_KEY",
+        etherscan_pro: false
+      ])
+
       # Set up the test parameters
       params = %{
         startdate: "2023-01-01",
@@ -177,27 +183,10 @@ defmodule Lux.Lenses.Etherscan.ChainSizeLensTest do
         chainid: 1
       }
 
-      # Update the configuration to indicate no Pro API key
-      Application.put_env(:lux, :api_keys, [
-        etherscan: "TEST_API_KEY",
-        etherscan_pro: false
-      ])
-
-      # Mock the API response
-      Req.Test.expect(Lux.Lens, fn conn ->
-        # Return a Pro API key error response
-        Req.Test.json(conn, %{
-          "status" => "0",
-          "message" => "Error",
-          "result" => "This endpoint requires a Pro subscription"
-        })
-      end)
-
-      # Call the lens
-      result = ChainSize.focus(params)
-
-      # Verify the result
-      assert {:error, %{message: "Error", result: "This endpoint requires an Etherscan Pro API key."}} = result
+      # Expect an ArgumentError to be raised
+      assert_raise ArgumentError, "This endpoint requires an Etherscan Pro API key.", fn ->
+        ChainSize.focus(params)
+      end
     end
 
     test "handles empty results" do

@@ -4,6 +4,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.DailyAvgGasPrice
+  alias Lux.Lenses.Etherscan.Base
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
@@ -19,24 +20,14 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
-    # Make a test call to see if we get a Pro API error
-    case RateLimitedAPI.call_standard(DailyAvgGasPrice, :focus, [%{
-      startdate: @start_date,
-      enddate: @end_date,
-      chainid: 1
-    }]) do
-      {:error, %{result: result}} ->
-        # If the result contains "API Pro endpoint", we don't have a Pro API key
-        not String.contains?(result, "API Pro endpoint") and
-        not String.contains?(result, "Missing Or invalid Action name")
-      _ ->
-        # If we get any other response, assume we have a Pro API key
-        true
+    case Base.check_pro_endpoint("stats", "dailyavggasprice") do
+      {:ok, _} -> true
+      {:error, _} -> false
     end
   end
 
   test "can fetch daily average gas price with required parameters" do
-    # Skip this test if we don't have a Pro API key or if the action name is invalid
+    # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
       :ok
     else
@@ -53,17 +44,17 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
       # If we got data, check the first entry
       if length(gas_price_data) > 0 do
         first_entry = List.first(gas_price_data)
-        assert Map.has_key?(first_entry, :date)
-        assert Map.has_key?(first_entry, :avg_gas_price_wei)
+        assert Map.has_key?(first_entry, :utc_date)
+        assert Map.has_key?(first_entry, :gas_price)
 
         # Average gas price should be a positive number
-        assert is_binary(first_entry.avg_gas_price_wei) or is_number(first_entry.avg_gas_price_wei)
+        assert is_number(first_entry.gas_price) or is_binary(first_entry.gas_price)
       end
     end
   end
 
   test "can specify different sort order" do
-    # Skip this test if we don't have a Pro API key or if the action name is invalid
+    # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
       :ok
     else
@@ -80,8 +71,8 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasPriceLensTest do
 
       # If we got data, check that it's in descending order
       if length(gas_price_data) > 1 do
-        first_date = List.first(gas_price_data).date
-        second_date = Enum.at(gas_price_data, 1).date
+        first_date = List.first(gas_price_data).utc_date
+        second_date = Enum.at(gas_price_data, 1).utc_date
 
         # In descending order, the first date should be later than the second date
         assert first_date >= second_date

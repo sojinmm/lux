@@ -67,9 +67,15 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistory do
   """
   def before_focus(params) do
     # Set module and action for this endpoint
-    params
+    params = params
     |> Map.put(:module, "account")
     |> Map.put(:action, "tokenbalancehistory")
+    
+    # Check if this endpoint requires a Pro API key
+    case Base.check_pro_endpoint("account", "tokenbalancehistory") do
+      {:ok, _} -> params
+      {:error, message} -> raise ArgumentError, message
+    end
   end
 
   @doc """
