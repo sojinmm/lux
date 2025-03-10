@@ -56,7 +56,6 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
   test "can fetch token holder count" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenHolderCount")
       :ok
     else
       assert {:ok, %{result: count, holder_count: count}} =
@@ -69,9 +68,6 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
       assert is_binary(count)
       {count_value, _} = Integer.parse(count)
       assert count_value > 0
-
-      # Log the count for informational purposes
-      IO.puts("LINK token holder count: #{count}")
     end
   end
 
@@ -86,17 +82,14 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
       {:error, error} ->
         # Should return an error for invalid contract address
         assert error != nil
-        IO.puts("Error for invalid contract address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid contract address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid contract address")
         assert true
     end
   end
@@ -111,7 +104,6 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
-
 
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable

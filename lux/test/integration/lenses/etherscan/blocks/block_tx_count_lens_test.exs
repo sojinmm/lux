@@ -72,34 +72,11 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
       assert tx_count >= 0
 
-      # Log the transaction count information for informational purposes
-      IO.puts("Block number: #{result.block_number}")
-      IO.puts("Transaction count: #{result.transactions_count}")
-
-      # If the response includes additional transaction type counts, log them
-      if Map.has_key?(result, :internal_transactions_count) do
-        IO.puts("Internal transactions count: #{result.internal_transactions_count}")
-      end
-
-      if Map.has_key?(result, :erc20_transactions_count) do
-        IO.puts("ERC20 transactions count: #{result.erc20_transactions_count}")
-      end
-
-      if Map.has_key?(result, :erc721_transactions_count) do
-        IO.puts("ERC721 transactions count: #{result.erc721_transactions_count}")
-      end
-
-      if Map.has_key?(result, :erc1155_transactions_count) do
-        IO.puts("ERC1155 transactions count: #{result.erc1155_transactions_count}")
-      end
     else
       # Simple string response
       assert is_binary(result)
       {tx_count, _} = Integer.parse(result)
       assert tx_count >= 0
-
-      # Log the transaction count information for informational purposes
-      IO.puts("Transaction count for block #{@block_number}: #{result}")
     end
   end
 
@@ -125,14 +102,6 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
 
     # Verify we got a result
     assert result != nil
-
-    # Log the transaction count information for informational purposes
-    IO.puts("Recent block number: #{recent_block}")
-    if is_map(result) && Map.has_key?(result, :transactions_count) do
-      IO.puts("Transaction count: #{result.transactions_count}")
-    else
-      IO.puts("Transaction count: #{result}")
-    end
   end
 
   test "raises error when trying to use with non-Ethereum chain" do

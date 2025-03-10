@@ -43,9 +43,6 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
     # Vitalik should have some ETH (more than 0)
     assert is_binary(balance)
     assert balance_in_eth > 0
-
-    # Log the balance for informational purposes
-    IO.puts("Vitalik's balance: #{balance_in_eth} ETH")
   end
 
   test "can fetch ETH balance for a different address" do
@@ -62,9 +59,6 @@ defmodule Lux.Integration.Etherscan.BalanceLensTest do
     # Ethereum Foundation should have some ETH (more than 0)
     assert is_binary(balance)
     assert balance_in_eth > 0
-
-    # Log the balance for informational purposes
-    IO.puts("Ethereum Foundation's balance: #{balance_in_eth} ETH")
   end
 
   test "can specify a different tag (block parameter)" do

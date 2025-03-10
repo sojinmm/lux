@@ -69,10 +69,6 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
     # Both addresses should have some ETH (more than 0)
     assert vitalik_balance_in_eth > 0
     assert eth_foundation_balance_in_eth > 0
-
-    # Log the balances for informational purposes
-    IO.puts("Vitalik's balance: #{vitalik_balance_in_eth} ETH")
-    IO.puts("Ethereum Foundation's balance: #{eth_foundation_balance_in_eth} ETH")
   end
 
   test "can specify a different tag (block parameter)" do

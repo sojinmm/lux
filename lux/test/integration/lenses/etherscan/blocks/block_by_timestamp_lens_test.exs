@@ -58,9 +58,6 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
     # For this timestamp (Jan 10, 2020), the block number should be around 9.2-9.3 million
     assert block_num > 9_000_000
     assert block_num < 9_500_000
-
-    # Log the block number for informational purposes
-    IO.puts("Block number before timestamp #{@timestamp}: #{block_number}")
   end
 
   test "can fetch block number by timestamp with 'after' closest parameter" do
@@ -84,9 +81,6 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
     # For this timestamp (Jan 10, 2020), the block number should be around 9.2-9.3 million
     assert block_num > 9_000_000
     assert block_num < 9_500_000
-
-    # Log the block number for informational purposes
-    IO.puts("Block number after timestamp #{@timestamp}: #{block_number}")
   end
 
   test "can fetch block number by timestamp with default parameters" do
@@ -103,9 +97,6 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
     # The block number should be a string representing an integer
     block_number = result.block_number
     assert is_binary(block_number)
-
-    # Log the block number for informational purposes
-    IO.puts("Block number for timestamp #{@timestamp} (default parameters): #{block_number}")
   end
 
   test "fails when no auth is provided" do

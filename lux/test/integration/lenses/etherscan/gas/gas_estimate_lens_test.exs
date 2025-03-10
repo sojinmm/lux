@@ -53,10 +53,6 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
     # The estimated time should be a positive number
     assert estimated_seconds >= 0
-
-    # Log the estimated confirmation time for informational purposes
-    IO.puts("Estimated confirmation time for gas price #{gas_price} wei: #{estimated_seconds} seconds")
-    IO.puts("That's approximately #{estimated_seconds / 60} minutes")
   end
 
   test "can fetch estimated confirmation time with current fast gas price" do
@@ -80,11 +76,6 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
     # The estimated time should be a positive number
     assert estimated_seconds >= 0
-
-    # Log the estimated confirmation time for informational purposes
-    IO.puts("Current fast gas price: #{gas_info.fast_gas_price} Gwei (#{fast_gas_price_wei} wei)")
-    IO.puts("Estimated confirmation time: #{estimated_seconds} seconds")
-    IO.puts("That's approximately #{estimated_seconds / 60} minutes")
   end
 
   test "can fetch estimated confirmation time for a specific chain" do
@@ -103,10 +94,6 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
     # The estimated time should be a positive number
     assert estimated_seconds >= 0
-
-    # Log the estimated confirmation time for informational purposes
-    IO.puts("Estimated confirmation time on chain #{chain_id} for gas price #{gas_price} wei: #{estimated_seconds} seconds")
-    IO.puts("That's approximately #{estimated_seconds / 60} minutes")
   end
 
   test "can handle extreme gas price values" do
@@ -123,18 +110,14 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     case result do
       {:ok, %{result: estimated_seconds}} when is_integer(estimated_seconds) ->
         # If the API accepts the zero gas price, it might return a very high confirmation time
-        IO.puts("Estimated confirmation time for zero gas price: #{estimated_seconds} seconds")
-        IO.puts("That's approximately #{estimated_seconds / 60} minutes")
         assert estimated_seconds >= 0
 
       {:ok, %{result: error_message}} when is_binary(error_message) ->
         # The API might return an error message as the result
-        IO.puts("Error message for zero gas price: #{error_message}")
         assert String.length(error_message) > 0
 
       {:error, error} ->
         # Or it might return an error tuple
-        IO.puts("Error for zero gas price: #{inspect(error)}")
         assert error != nil
     end
 
@@ -150,17 +133,14 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     case high_result do
       {:ok, %{result: estimated_seconds}} when is_integer(estimated_seconds) ->
         # If the API accepts the high gas price, it should return a very low confirmation time
-        IO.puts("Estimated confirmation time for high gas price (1000 Gwei): #{estimated_seconds} seconds")
         assert estimated_seconds >= 0
 
       {:ok, %{result: error_message}} when is_binary(error_message) ->
         # The API might return an error message as the result
-        IO.puts("Error message for high gas price: #{error_message}")
         assert String.length(error_message) > 0
 
       {:error, error} ->
         # Or it might return an error tuple
-        IO.puts("Error for high gas price: #{inspect(error)}")
         assert error != nil
     end
   end

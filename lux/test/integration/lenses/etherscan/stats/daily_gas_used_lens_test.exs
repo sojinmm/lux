@@ -60,7 +60,6 @@ defmodule Lux.Integration.Etherscan.DailyGasUsedLensTest do
   test "can fetch daily gas used with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyGasUsed or invalid action name")
       :ok
     else
       assert {:ok, %{result: gas_used_data}} =
@@ -81,10 +80,6 @@ defmodule Lux.Integration.Etherscan.DailyGasUsedLensTest do
 
         # Gas used should be a positive number
         assert is_number(first_entry.gas_used) or is_binary(first_entry.gas_used)
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.utc_date}")
-        IO.puts("Gas Used: #{first_entry.gas_used}")
       end
     end
   end
@@ -92,7 +87,6 @@ defmodule Lux.Integration.Etherscan.DailyGasUsedLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyGasUsed or invalid action name")
       :ok
     else
       assert {:ok, %{result: gas_used_data}} =
@@ -150,12 +144,10 @@ defmodule Lux.Integration.Etherscan.DailyGasUsedLensTest do
         # If we get an error about API Pro endpoint or invalid action, that's expected
         assert String.contains?(result, "API Pro endpoint") or
                String.contains?(result, "Missing Or invalid Action name")
-        IO.puts("Expected error: #{result}")
 
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint or invalid action name")
@@ -166,7 +158,6 @@ defmodule Lux.Integration.Etherscan.DailyGasUsedLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyGasUsed or invalid action name")
       :ok
     else
       # Missing startdate and enddate

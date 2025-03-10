@@ -61,7 +61,6 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
   test "can fetch token holder list" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenHolderList")
       :ok
     else
       assert {:ok, %{result: holders, token_holders: holders}} =
@@ -79,19 +78,12 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
       assert Map.has_key?(first_holder, :address)
       assert Map.has_key?(first_holder, :quantity)
       assert Map.has_key?(first_holder, :share)
-
-      # Log the number of holders returned and the top holder
-      IO.puts("Number of LINK token holders returned: #{length(holders)}")
-      IO.puts("Top holder address: #{first_holder.address}")
-      IO.puts("Top holder quantity: #{first_holder.quantity}")
-      IO.puts("Top holder share: #{first_holder.share}")
     end
   end
 
   test "can fetch token holder list with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenHolderList")
       :ok
     else
       # Using a small offset to test pagination
@@ -108,9 +100,6 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
       # Verify the holders list structure
       assert is_list(holders)
       assert length(holders) <= offset
-
-      # Log the number of holders returned
-      IO.puts("Number of LINK token holders returned with offset #{offset}: #{length(holders)}")
     end
   end
 
@@ -125,17 +114,14 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
       {:error, error} ->
         # Should return an error for invalid contract address
         assert error != nil
-        IO.puts("Error for invalid contract address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid contract address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid contract address")
         assert true
     end
   end

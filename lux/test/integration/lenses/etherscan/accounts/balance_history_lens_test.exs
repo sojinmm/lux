@@ -51,7 +51,6 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   test "can fetch historical ETH balance for an address at a specific block" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for BalanceHistory")
       :ok
     else
       assert {:ok, %{result: balance}} =
@@ -67,9 +66,6 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
       # The Ethereum Foundation should have had some ETH at this block
       assert is_binary(balance)
       assert balance_in_eth > 0
-
-      # Log the balance for informational purposes
-      IO.puts("Ethereum Foundation's balance at block #{@block_number}: #{balance_in_eth} ETH")
     end
   end
 
@@ -94,7 +90,6 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   test "raises error when trying to use without Pro API key" do
     # Skip this test if we actually have a Pro API key
     if has_pro_api_key?() do
-      IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
       :ok
     else
       # This should raise an ArgumentError because we don't have a Pro API key

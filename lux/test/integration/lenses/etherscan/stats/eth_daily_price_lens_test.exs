@@ -59,7 +59,6 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
   test "can fetch ETH daily price with required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for EthDailyPrice")
       :ok
     else
       assert {:ok, %{result: price_data, eth_daily_price: price_data}} =
@@ -84,11 +83,6 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
         assert first_entry.eth_usd > 0
         assert is_number(first_entry.eth_btc)
         assert first_entry.eth_btc > 0
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.utc_date}")
-        IO.puts("ETH/USD: $#{first_entry.eth_usd}")
-        IO.puts("ETH/BTC: #{first_entry.eth_btc}")
       end
     end
   end
@@ -96,7 +90,6 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for EthDailyPrice")
       :ok
     else
       assert {:ok, %{result: price_data}} =
@@ -152,12 +145,10 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
       {:error, %{result: result}} ->
         # If we get an error about API Pro endpoint, that's expected
         assert String.contains?(result, "API Pro endpoint")
-        IO.puts("Expected error for Pro API endpoint: #{result}")
 
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint")
@@ -168,7 +159,6 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for EthDailyPrice")
       :ok
     else
       # Missing startdate and enddate

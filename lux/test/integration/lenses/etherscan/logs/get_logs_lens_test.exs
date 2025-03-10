@@ -109,47 +109,40 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
             # The block number should be a valid number
             block_number = parse_block_number(log.block_number)
             if block_number do
-              # Just log the block number without asserting a specific value
-              # as the API might return logs from different blocks
-              IO.puts("Found event log at block #{block_number}")
+              # Just check the block number without logging
+              assert block_number != nil
             end
 
-            IO.puts("Transaction hash: #{log.transaction_hash}")
-            IO.puts("Topics: #{inspect(log.topics)}")
+            # Verify transaction hash exists without logging
+            assert is_binary(log.transaction_hash)
+            # Verify topics exist without logging
+            assert is_list(log.topics)
           else
-            IO.puts("No logs found for the specified address and block range")
+            # No logs found, which is acceptable
+            assert true
           end
 
         {:ok, %{result: result}} ->
           # Handle case where result is not a list
-          IO.puts("API returned a non-list result: #{inspect(result)}")
-          # This is acceptable for this test
           assert true
 
         {:error, error} ->
           # If the API returns an error (e.g., rate limit), log it but don't fail the test
-          IO.puts("API returned an error: #{inspect(error)}")
-          # Skip the test if we hit API limits
           if is_map(error) && Map.has_key?(error, :message) &&
              safe_contains?(error.message, "rate limit") do
-            IO.puts("Skipping test due to rate limiting")
+            assert true
           else
             # For this test, any error is acceptable as we're just testing the API behavior
-            IO.puts("API returned an error for block range: #{inspect(error)}")
             assert true
           end
       end
     rescue
       e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
-        IO.puts("Caught FunctionClauseError: #{inspect(e)}")
-        IO.puts("This is likely due to the API returning an unexpected format")
-        # This is acceptable for this test as we're just verifying API behavior
         assert true
 
       e ->
         # Log any other errors but don't fail the test
-        IO.puts("Caught unexpected error: #{inspect(e)}")
         assert true
     end
   end
@@ -175,42 +168,30 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
           # Verify the logs structure
           assert is_list(logs)
 
-          # The number of logs should not exceed the specified offset
+          # Verify we got at most the number of logs specified by the offset
           assert length(logs) <= offset
-
-          # Log the number of logs returned
-          IO.puts("Number of logs returned with offset #{offset}: #{length(logs)}")
 
         {:ok, %{result: result}} ->
           # Handle case where result is not a list
-          IO.puts("API returned a non-list result: #{inspect(result)}")
-          # This is acceptable for this test
           assert true
 
         {:error, error} ->
           # If the API returns an error (e.g., rate limit), log it but don't fail the test
-          IO.puts("API returned an error: #{inspect(error)}")
-          # Skip the test if we hit API limits
           if is_map(error) && Map.has_key?(error, :message) &&
              safe_contains?(error.message, "rate limit") do
-            IO.puts("Skipping test due to rate limiting")
+            assert true
           else
             # For this test, any error is acceptable as we're just testing the API behavior
-            IO.puts("API returned an error for pagination: #{inspect(error)}")
             assert true
           end
       end
     rescue
       e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
-        IO.puts("Caught FunctionClauseError: #{inspect(e)}")
-        IO.puts("This is likely due to the API returning an unexpected format")
-        # This is acceptable for this test as we're just verifying API behavior
         assert true
 
       e ->
         # Log any other errors but don't fail the test
-        IO.puts("Caught unexpected error: #{inspect(e)}")
         assert true
     end
   end
@@ -247,43 +228,35 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
             assert Enum.at(log.topics, 1) == "0x0000000000000000000000000000000000000000000000000000000000000000"
 
             # Log some information about the event for informational purposes
-            IO.puts("Found event log with matching topics")
-            IO.puts("Transaction hash: #{log.transaction_hash}")
-            IO.puts("All topics: #{inspect(log.topics)}")
+            assert is_binary(log.transaction_hash)
+            assert length(log.topics) >= 1
+            assert List.first(log.topics) == @transfer_topic
           else
-            IO.puts("No logs found for the specified topics")
+            # No logs found, which is acceptable
+            assert true
           end
 
         {:ok, %{result: result}} ->
           # Handle case where result is not a list
-          IO.puts("API returned a non-list result: #{inspect(result)}")
-          # This is acceptable for this test
           assert true
 
         {:error, error} ->
           # If the API returns an error (e.g., rate limit), log it but don't fail the test
-          IO.puts("API returned an error: #{inspect(error)}")
-          # Skip the test if we hit API limits
           if is_map(error) && Map.has_key?(error, :message) &&
              safe_contains?(error.message, "rate limit") do
-            IO.puts("Skipping test due to rate limiting")
+            assert true
           else
             # For this test, any error is acceptable as we're just testing the API behavior
-            IO.puts("API returned an error for topic filtering: #{inspect(error)}")
             assert true
           end
       end
     rescue
       e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
-        IO.puts("Caught FunctionClauseError: #{inspect(e)}")
-        IO.puts("This is likely due to the API returning an unexpected format")
-        # This is acceptable for this test as we're just verifying API behavior
         assert true
 
       e ->
         # Log any other errors but don't fail the test
-        IO.puts("Caught unexpected error: #{inspect(e)}")
         assert true
     end
   end
@@ -325,50 +298,41 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
             assert Enum.at(log.topics, 1) == @chainlink_topic1
 
             # Log some information about the event for informational purposes
-            IO.puts("Found Chainlink event log with matching topics")
-            IO.puts("Transaction hash: #{log.transaction_hash}")
-
-            # Safely parse and display the block number
-            block_number = parse_block_number(log.block_number)
-            if block_number do
-              IO.puts("Block number: #{block_number}")
-            else
-              IO.puts("Block number: #{log.block_number} (raw format)")
-            end
+            assert is_binary(log.transaction_hash)
+            assert length(log.topics) >= 2
+            assert List.first(log.topics) == @chainlink_topic
+            
+            # Convert block number to integer if it's a string
+            block_number = if is_binary(log.block_number), do: String.to_integer(log.block_number), else: log.block_number
+            
+            # Verify the block number is within the range
+            assert block_number >= @chainlink_from_block
           else
-            IO.puts("No Chainlink logs found for the specified address and topics")
+            # No logs found, which is acceptable
+            assert true
           end
 
         {:ok, %{result: result}} ->
           # Handle case where result is not a list
-          IO.puts("API returned a non-list result: #{inspect(result)}")
-          # This is acceptable for this test
           assert true
 
         {:error, error} ->
           # If the API returns an error (e.g., rate limit), log it but don't fail the test
-          IO.puts("API returned an error: #{inspect(error)}")
-          # Skip the test if we hit API limits
           if is_map(error) && Map.has_key?(error, :message) &&
              safe_contains?(error.message, "rate limit") do
-            IO.puts("Skipping test due to rate limiting")
+            assert true
           else
             # For this test, any error is acceptable as we're just testing the API behavior
-            IO.puts("API returned an error for Chainlink topics: #{inspect(error)}")
             assert true
           end
       end
     rescue
       e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
-        IO.puts("Caught FunctionClauseError in Chainlink test: #{inspect(e)}")
-        IO.puts("This is likely due to the API returning an unexpected format")
-        # This is acceptable for this test as we're just verifying API behavior
         assert true
 
       e ->
         # Log any other errors but don't fail the test
-        IO.puts("Caught unexpected error in Chainlink test: #{inspect(e)}")
         assert true
     end
   end
@@ -389,42 +353,30 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
 
       case result do
         {:ok, %{result: logs}} when is_list(logs) ->
-          # Should return an empty list
-          assert is_list(logs)
-          assert length(logs) == 0
-
-          IO.puts("Successfully returned empty list for non-existent address")
+          # Verify we got an empty list for a non-existent address
+          assert logs == []
 
         {:ok, %{result: result}} ->
           # Handle case where result is not a list
-          IO.puts("API returned a non-list result: #{inspect(result)}")
-          # This is acceptable for this test
           assert true
 
         {:error, error} ->
           # If the API returns an error (e.g., rate limit), log it but don't fail the test
-          IO.puts("API returned an error: #{inspect(error)}")
-          # Skip the test if we hit API limits
           if is_map(error) && Map.has_key?(error, :message) &&
              safe_contains?(error.message, "rate limit") do
-            IO.puts("Skipping test due to rate limiting")
+            assert true
           else
             # For this test, any error is acceptable as we're testing a non-existent address
-            IO.puts("API returned an error for non-existent address: #{inspect(error)}")
             assert true
           end
       end
     rescue
       e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
-        IO.puts("Caught FunctionClauseError: #{inspect(e)}")
-        IO.puts("This is likely due to the API returning an unexpected format for a non-existent address")
-        # This is acceptable for this test as we're just verifying behavior for non-existent addresses
         assert true
 
       e ->
         # Log any other errors but don't fail the test
-        IO.puts("Caught unexpected error: #{inspect(e)}")
         assert true
     end
   end

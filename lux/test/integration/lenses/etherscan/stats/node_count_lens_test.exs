@@ -57,10 +57,6 @@ defmodule Lux.Integration.Etherscan.NodeCountLensTest do
     
     # Total node count should be a positive number
     assert total > 0
-
-    # Log the node count for informational purposes
-    IO.puts("Total Ethereum node count: #{total}")
-    IO.puts("Node count details: #{inspect(node_count)}")
   end
 
   test "fails when no auth is provided" do

@@ -66,16 +66,6 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
     # The contract name should be a non-empty string
     assert is_binary(source_info.contract_name)
     assert String.length(source_info.contract_name) > 0
-
-    # Log some information about the source code for informational purposes
-    IO.puts("Contract name: #{source_info.contract_name}")
-    IO.puts("Compiler version: #{source_info.compiler_version}")
-    IO.puts("Optimization used: #{source_info.optimization_used}")
-    IO.puts("License type: #{source_info.license_type}")
-
-    # Log the first 100 characters of the source code
-    source_preview = String.slice(source_info.source_code, 0..100)
-    IO.puts("Source code preview: #{source_preview}...")
   end
 
   test "can fetch source code for another verified contract" do
@@ -95,10 +85,6 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
     # The source code should be a non-empty string
     assert is_binary(source_info.source_code)
     assert String.length(source_info.source_code) > 0
-
-    # Log some information about the source code for informational purposes
-    IO.puts("Contract name: #{source_info.contract_name}")
-    IO.puts("Compiler version: #{source_info.compiler_version}")
   end
 
   test "returns empty source for non-verified contract" do

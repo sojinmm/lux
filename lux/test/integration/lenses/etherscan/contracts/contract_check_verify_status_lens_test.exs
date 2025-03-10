@@ -63,14 +63,9 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
         assert is_binary(status_info.message)
         assert String.length(status_info.message) > 0
 
-        # Log the status information for informational purposes
-        IO.puts("Verification status: #{status_info.status}")
-        IO.puts("Message: #{status_info.message}")
-
       {:error, error} ->
         # If the GUID is no longer valid, it might return an error
         # This is also acceptable for this test
-        IO.puts("Error checking verification status: #{inspect(error)}")
         assert true
     end
   end
@@ -86,13 +81,8 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
         # Should return a failed status for invalid GUID
         assert status_info.status == "Failed" || status_info.status == "Unknown"
 
-        # Log the status information for informational purposes
-        IO.puts("Verification status for invalid GUID: #{status_info.status}")
-        IO.puts("Message: #{status_info.message}")
-
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable
-        IO.puts("Error for invalid GUID: #{inspect(error)}")
         assert error != nil
     end
   end

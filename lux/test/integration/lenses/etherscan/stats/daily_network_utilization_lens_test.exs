@@ -60,7 +60,6 @@ defmodule Lux.Integration.Etherscan.DailyNetworkUtilizationLensTest do
   test "can fetch daily network utilization with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyNetworkUtilization or invalid action name")
       :ok
     else
       assert {:ok, %{result: utilization_data, daily_network_utilization: utilization_data}} =
@@ -83,10 +82,6 @@ defmodule Lux.Integration.Etherscan.DailyNetworkUtilizationLensTest do
         assert is_number(first_entry.utilization_percentage)
         assert first_entry.utilization_percentage >= 0
         assert first_entry.utilization_percentage <= 100
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.utc_date}")
-        IO.puts("Network Utilization: #{first_entry.utilization_percentage}%")
       end
     end
   end
@@ -94,7 +89,6 @@ defmodule Lux.Integration.Etherscan.DailyNetworkUtilizationLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyNetworkUtilization or invalid action name")
       :ok
     else
       assert {:ok, %{result: utilization_data}} =
@@ -157,7 +151,6 @@ defmodule Lux.Integration.Etherscan.DailyNetworkUtilizationLensTest do
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint or invalid action name")
@@ -168,7 +161,6 @@ defmodule Lux.Integration.Etherscan.DailyNetworkUtilizationLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyNetworkUtilization or invalid action name")
       :ok
     else
       # Missing startdate and enddate

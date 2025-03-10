@@ -68,14 +68,6 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
       assert String.starts_with?(contract.tx_hash, "0x")
       assert String.length(contract.tx_hash) == 66
     end)
-
-    # Log the contract creation information for informational purposes
-    Enum.each(contracts, fn contract ->
-      IO.puts("Contract: #{contract.contract_address}")
-      IO.puts("Creator: #{contract.creator_address}")
-      IO.puts("Creation TX: #{contract.tx_hash}")
-      IO.puts("---")
-    end)
   end
 
   test "can fetch contract creation info for a single contract" do
@@ -99,11 +91,6 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
     # The contract address should match what we requested
     assert String.downcase(contract.contract_address) == String.downcase(@single_contract)
-
-    # Log the contract creation information for informational purposes
-    IO.puts("Contract: #{contract.contract_address}")
-    IO.puts("Creator: #{contract.creator_address}")
-    IO.puts("Creation TX: #{contract.tx_hash}")
   end
 
   test "returns error for invalid contract address" do

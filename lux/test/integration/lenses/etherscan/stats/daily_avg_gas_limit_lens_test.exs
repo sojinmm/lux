@@ -60,7 +60,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasLimitLensTest do
   test "can fetch daily average gas limit with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgGasLimit or invalid action name")
       :ok
     else
       assert {:ok, %{result: gas_limit_data}} =
@@ -81,10 +80,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasLimitLensTest do
 
         # Gas limit should be a positive number
         assert is_number(first_entry.gas_limit) or is_binary(first_entry.gas_limit)
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.utc_date}")
-        IO.puts("Gas Limit: #{first_entry.gas_limit}")
       end
     end
   end
@@ -92,7 +87,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasLimitLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgGasLimit or invalid action name")
       :ok
     else
       assert {:ok, %{result: gas_limit_data}} =
@@ -155,7 +149,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasLimitLensTest do
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint or invalid action name")
@@ -166,7 +159,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgGasLimitLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgGasLimit or invalid action name")
       :ok
     else
       # Missing startdate and enddate

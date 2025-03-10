@@ -59,14 +59,6 @@ defmodule Lux.Integration.Etherscan.GasOracleLensTest do
 
     # The last block should be an integer
     assert is_integer(gas_info.last_block)
-
-    # Log the gas prices for informational purposes
-    IO.puts("Safe gas price: #{gas_info.safe_gas_price} Gwei")
-    IO.puts("Proposed gas price: #{gas_info.propose_gas_price} Gwei")
-    IO.puts("Fast gas price: #{gas_info.fast_gas_price} Gwei")
-    IO.puts("Suggested base fee: #{gas_info.suggest_base_fee} Gwei")
-    IO.puts("Gas used ratio: #{gas_info.gas_used_ratio}")
-    IO.puts("Last block: #{gas_info.last_block}")
   end
 
   test "can fetch gas prices for a specific chain" do
@@ -92,15 +84,6 @@ defmodule Lux.Integration.Etherscan.GasOracleLensTest do
 
     # The last block should be an integer
     assert is_integer(gas_info.last_block)
-
-    # Log the gas prices for informational purposes
-    IO.puts("Ethereum mainnet gas prices:")
-    IO.puts("Safe gas price: #{gas_info.safe_gas_price} Gwei")
-    IO.puts("Proposed gas price: #{gas_info.propose_gas_price} Gwei")
-    IO.puts("Fast gas price: #{gas_info.fast_gas_price} Gwei")
-    IO.puts("Suggested base fee: #{gas_info.suggest_base_fee} Gwei")
-    IO.puts("Gas used ratio: #{gas_info.gas_used_ratio}")
-    IO.puts("Last block: #{gas_info.last_block}")
   end
 
   test "fails when no auth is provided" do

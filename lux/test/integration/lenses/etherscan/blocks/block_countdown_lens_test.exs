@@ -79,12 +79,6 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     assert is_binary(estimated_time)
     {time_sec, _} = Integer.parse(estimated_time)
     assert time_sec > 0
-
-    # Log the countdown information for informational purposes
-    IO.puts("Current block: #{result.current_block}")
-    IO.puts("Countdown to block: #{result.countdown_block}")
-    IO.puts("Remaining blocks: #{result.remaining_blocks}")
-    IO.puts("Estimated time: #{result.estimated_time_in_sec} seconds")
   end
 
   test "fails when no auth is provided" do

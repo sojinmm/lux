@@ -47,12 +47,6 @@ defmodule Lux.Integration.Etherscan.EthSupply2LensTest do
     assert Map.has_key?(eth_supply_details, :burnt_fees)
     assert Map.has_key?(eth_supply_details, :withdrawn_eth)
 
-    # Log the values for informational purposes
-    IO.puts("ETH Supply: #{eth_supply_details.eth_supply / 1.0e18} ETH")
-    IO.puts("ETH2 Staking: #{eth_supply_details.eth2_staking / 1.0e18} ETH")
-    IO.puts("Burnt Fees: #{eth_supply_details.burnt_fees / 1.0e18} ETH")
-    IO.puts("Withdrawn ETH: #{eth_supply_details.withdrawn_eth / 1.0e18} ETH")
-
     # Verify the values are reasonable
     assert eth_supply_details.eth_supply > 100_000_000 * 1.0e18 # More than 100M ETH in wei
     assert eth_supply_details.eth2_staking > 0
@@ -68,7 +62,6 @@ defmodule Lux.Integration.Etherscan.EthSupply2LensTest do
       {:error, %{message: "NOTOK", result: error_message}} ->
         # Should return an error about missing chainid parameter
         assert String.contains?(error_message, "Missing chainid parameter")
-        IO.puts("Expected error for missing chainid: #{error_message}")
 
       {:ok, _} ->
         flunk("Expected an error for missing chainid parameter")

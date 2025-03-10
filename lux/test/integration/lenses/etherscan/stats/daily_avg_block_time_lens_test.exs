@@ -60,7 +60,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockTimeLensTest do
   test "can fetch daily average block time with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgBlockTime or invalid action name")
       :ok
     else
       assert {:ok, %{result: block_time_data}} =
@@ -81,10 +80,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockTimeLensTest do
 
         # Average block time should be a positive number
         assert is_binary(first_entry.avg_block_time_seconds) or is_number(first_entry.avg_block_time_seconds)
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.date}")
-        IO.puts("Average Block Time: #{first_entry.avg_block_time_seconds} seconds")
       end
     end
   end
@@ -92,7 +87,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockTimeLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgBlockTime or invalid action name")
       :ok
     else
       assert {:ok, %{result: block_time_data}} =
@@ -155,7 +149,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockTimeLensTest do
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint or invalid action name")
@@ -166,7 +159,6 @@ defmodule Lux.Integration.Etherscan.DailyAvgBlockTimeLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyAvgBlockTime or invalid action name")
       :ok
     else
       # Missing startdate and enddate

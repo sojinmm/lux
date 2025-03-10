@@ -61,17 +61,11 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
           # Chain size should be a large number (more than 100 GB in bytes)
           assert is_integer(first_entry.chain_size_bytes)
           assert first_entry.chain_size_bytes > 100 * 1024 * 1024 * 1024 # More than 100 GB
-
-          # Log the data for informational purposes
-          IO.puts("Date: #{first_entry.utc_date}")
-          IO.puts("Block Number: #{first_entry.block_number}")
-          IO.puts("Chain Size: #{first_entry.chain_size_bytes / (1024 * 1024 * 1024)} GB")
         end
 
       {:error, %{message: "Error", result: error_message}} ->
         # This endpoint might require a Pro API key
         if String.contains?(error_message, "Pro") do
-          IO.puts("Chain Size API requires a Pro API key: #{error_message}")
           assert true
         else
           flunk("Unexpected error: #{error_message}")
@@ -97,7 +91,6 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
       {:error, %{message: "Error", result: error_message}} ->
         # This endpoint might require a Pro API key
         if String.contains?(error_message, "Pro") do
-          IO.puts("Chain Size API requires a Pro API key: #{error_message}")
           assert true
         else
           flunk("Unexpected error: #{error_message}")
@@ -121,7 +114,6 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
       {:error, %{message: "Error", result: error_message}} ->
         # This endpoint might require a Pro API key
         if String.contains?(error_message, "Pro") do
-          IO.puts("Chain Size API requires a Pro API key: #{error_message}")
           assert true
         else
           flunk("Unexpected error: #{error_message}")

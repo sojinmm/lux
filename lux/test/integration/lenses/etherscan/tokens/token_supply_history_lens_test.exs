@@ -69,7 +69,6 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   test "can fetch historical token supply at a specific block" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenSupplyHistory")
       :ok
     else
       result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
@@ -85,12 +84,9 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
           {supply_value, _} = Integer.parse(supply)
           assert supply_value > 0
 
-          # Log the supply for informational purposes
-          IO.puts("LINK token supply at block #{@block_number}: #{supply}")
-
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch historical token supply: #{inspect(error)}")
           end
@@ -110,17 +106,14 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
       {:error, error} ->
         # Should return an error for invalid contract address
         assert error != nil
-        IO.puts("Error for invalid contract address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid contract address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid contract address")
         assert true
     end
   end
@@ -137,11 +130,9 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
 
-
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable
         assert error != nil
-        IO.puts("Error for no auth: #{inspect(error)}")
     end
   end
 end

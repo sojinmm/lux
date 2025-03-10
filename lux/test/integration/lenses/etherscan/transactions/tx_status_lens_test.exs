@@ -50,10 +50,6 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
     assert status == "1"
     assert is_error == true
     # The error_message can vary, so we just log it instead of asserting a specific value
-
-    # Log the status for informational purposes
-    IO.puts("Transaction #{@successful_tx} execution status: #{status} (Error: #{is_error})")
-    if error_message != "", do: IO.puts("Error message: #{error_message}")
   end
 
   test "can check execution status for a different chain" do
@@ -67,12 +63,10 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
     case result do
       {:ok, %{result: %{status: status, is_error: is_error, error_message: error_message}}} ->
         # Log the status for informational purposes
-        IO.puts("Transaction #{@successful_tx} execution status on Polygon: #{status} (Error: #{is_error})")
-        if error_message != "", do: IO.puts("Error message: #{error_message}")
+        assert true
 
       {:error, error} ->
         # If the transaction doesn't exist on this chain, that's also acceptable
-        IO.puts("Error checking transaction on Polygon: #{inspect(error)}")
         assert true
     end
   end
@@ -88,11 +82,9 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
       {:error, error} ->
         # Should return an error for invalid transaction hash
         assert error != nil
-        IO.puts("Error for invalid transaction hash: #{inspect(error)}")
 
       {:ok, %{result: %{status: status, is_error: is_error}}} ->
         # Some APIs might return a status for invalid hashes
-        IO.puts("API returned status for invalid transaction hash: #{status} (Error: #{is_error})")
         assert true
     end
   end

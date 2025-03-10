@@ -58,12 +58,6 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
     assert eth_price.eth_usd_timestamp > 1_500_000_000 # Timestamp after 2017
     assert is_integer(eth_price.eth_btc_timestamp)
     assert eth_price.eth_btc_timestamp > 1_500_000_000 # Timestamp after 2017
-
-    # Log the price for informational purposes
-    IO.puts("ETH/USD: $#{eth_price.eth_usd}")
-    IO.puts("ETH/BTC: #{eth_price.eth_btc}")
-    IO.puts("ETH/USD Timestamp: #{eth_price.eth_usd_timestamp}")
-    IO.puts("ETH/BTC Timestamp: #{eth_price.eth_btc_timestamp}")
   end
 
   test "requires chainid parameter for v2 API" do
@@ -74,7 +68,6 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
       {:error, %{message: "NOTOK", result: error_message}} ->
         # Should return an error about missing chainid parameter
         assert String.contains?(error_message, "Missing chainid parameter")
-        IO.puts("Expected error for missing chainid: #{error_message}")
 
       {:ok, _} ->
         flunk("Expected an error for missing chainid parameter")
@@ -90,13 +83,10 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
 
     case result do
       {:ok, %{result: eth_price}} ->
-        # Log the price for informational purposes
-        IO.puts("ETH/USD on Polygon: $#{eth_price.eth_usd}")
         assert true
 
       {:error, error} ->
         # If the endpoint doesn't exist on this chain, that's also acceptable
-        IO.puts("Error fetching ETH price on Polygon: #{inspect(error)}")
         assert true
     end
   end

@@ -48,9 +48,6 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
     # Verify the status is "1" for a successful transaction
     assert status == "1"
     assert is_success == true
-
-    # Log the status for informational purposes
-    IO.puts("Transaction #{@successful_tx} receipt status: #{status} (Success: #{is_success})")
   end
 
   test "can check receipt status for a different chain" do
@@ -63,12 +60,11 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
 
     case result do
       {:ok, %{result: %{status: status, is_success: is_success}}} ->
-        # Log the status for informational purposes
-        IO.puts("Transaction #{@successful_tx} receipt status on Polygon: #{status} (Success: #{is_success})")
+        # If the transaction doesn't exist on this chain, that's also acceptable
+        assert true
 
       {:error, error} ->
         # If the transaction doesn't exist on this chain, that's also acceptable
-        IO.puts("Error checking transaction on Polygon: #{inspect(error)}")
         assert true
     end
   end
@@ -84,11 +80,9 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
       {:error, error} ->
         # Should return an error for invalid transaction hash
         assert error != nil
-        IO.puts("Error for invalid transaction hash: #{inspect(error)}")
 
       {:ok, %{result: %{status: status}}} ->
         # Some APIs might return a status for invalid hashes
-        IO.puts("API returned status for invalid transaction hash: #{status}")
         assert true
     end
   end

@@ -71,7 +71,6 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   test "can fetch NFT balances for an address" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenNFTBalance")
       :ok
     else
       result = RateLimitedAPI.call_standard(AddressTokenNFTBalance, :focus, [%{
@@ -92,19 +91,16 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
             assert Map.has_key?(first_nft, :symbol)
             assert Map.has_key?(first_nft, :quantity)
             assert Map.has_key?(first_nft, :token_id)
-
-            # Log some NFT info for informational purposes
-            IO.puts("Number of NFT collections held by #{@nft_holder}: #{length(nfts)}")
-            IO.puts("First NFT collection name: #{first_nft.name}")
-            IO.puts("First NFT collection symbol: #{first_nft.symbol}")
-            IO.puts("First NFT collection quantity: #{first_nft.quantity}")
-          else
-            IO.puts("No NFTs found for address #{@nft_holder}")
+            
+            # Verify NFT data is valid
+            assert is_binary(first_nft.name)
+            assert is_binary(first_nft.symbol)
+            assert is_binary(first_nft.quantity) || is_number(first_nft.quantity)
           end
 
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch NFT balances: #{inspect(error)}")
           end
@@ -115,7 +111,6 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   test "can fetch NFT balances with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenNFTBalance")
       :ok
     else
       # Using a small offset to test pagination
@@ -134,12 +129,9 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
           assert is_list(nfts)
           assert length(nfts) <= offset
 
-          # Log the number of NFTs returned
-          IO.puts("Number of NFT collections returned with offset #{offset}: #{length(nfts)}")
-
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch NFT balances with pagination: #{inspect(error)}")
           end
@@ -158,17 +150,14 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
       {:error, error} ->
         # Should return an error for invalid address
         assert error != nil
-        IO.puts("Error for invalid address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid address")
         assert true
     end
   end
@@ -183,7 +172,6 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
-        IO.puts("Error for no auth: #{error_message}")
 
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable

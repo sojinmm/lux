@@ -63,10 +63,6 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
     event_count = Enum.count(abi, fn item ->
       is_map(item) && Map.get(item, "type") == "event"
     end)
-
-    IO.puts("Contract ABI contains #{length(abi)} items")
-    IO.puts("Functions: #{function_count}")
-    IO.puts("Events: #{event_count}")
   end
 
   test "can fetch ABI for another verified contract" do
@@ -88,9 +84,6 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
     function_count = Enum.count(abi, fn item ->
       is_map(item) && Map.get(item, "type") == "function"
     end)
-
-    IO.puts("Uniswap Router ABI contains #{length(abi)} items")
-    IO.puts("Functions: #{function_count}")
   end
 
   test "returns error for non-verified contract" do

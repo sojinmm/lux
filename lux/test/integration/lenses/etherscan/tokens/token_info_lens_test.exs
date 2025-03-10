@@ -66,7 +66,6 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
   test "can fetch token info" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenInfo")
       :ok
     else
       result = RateLimitedAPI.call_standard(TokenInfo, :focus, [%{
@@ -86,20 +85,16 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
           assert Map.has_key?(token, :token_name)
           assert Map.has_key?(token, :symbol)
           assert Map.has_key?(token, :token_type)
-
-          # Log some token info for informational purposes
-          IO.puts("Token name: #{token.token_name}")
-          IO.puts("Token symbol: #{token.symbol}")
-          IO.puts("Token type: #{token.token_type}")
-          IO.puts("Total supply: #{token.total_supply}")
-
-          if token.website && token.website != "" do
-            IO.puts("Website: #{token.website}")
-          end
+          
+          # Verify token data is valid
+          assert is_binary(token.token_name)
+          assert is_binary(token.symbol)
+          assert is_binary(token.token_type)
+          assert Map.has_key?(token, :total_supply)
 
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch token info: #{inspect(error)}")
           end
@@ -118,17 +113,14 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
       {:error, error} ->
         # Should return an error for invalid contract address
         assert error != nil
-        IO.puts("Error for invalid contract address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid contract address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid contract address")
         assert true
     end
   end
@@ -143,7 +135,6 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
-        IO.puts("Error for no auth: #{error_message}")
 
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable

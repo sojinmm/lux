@@ -58,9 +58,6 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
     # Verify the balance is a valid string representing a number
     assert is_binary(balance)
     {_balance_value, _} = Integer.parse(balance)
-
-    # Log the balance for informational purposes
-    IO.puts("LINK token balance for #{@token_holder}: #{balance}")
   end
 
   @tag timeout: 120_000
@@ -103,7 +100,6 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
       {:error, error} ->
         # Should return an error for invalid contract address
         assert error != nil
-        IO.puts("Error for invalid contract address: #{inspect(error)}")
 
       _ ->
         flunk("Expected an error for invalid contract address")
@@ -122,7 +118,6 @@ defmodule Lux.Integration.Etherscan.TokenBalanceLensTest do
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
-        IO.puts("Error for no auth: #{error_message}")
 
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable

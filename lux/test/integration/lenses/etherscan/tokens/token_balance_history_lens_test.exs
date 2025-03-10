@@ -72,7 +72,6 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
   test "can fetch historical token balance for an address at a specific block" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for TokenBalanceHistory")
       :ok
     else
       result = RateLimitedAPI.call_standard(TokenBalanceHistory, :focus, [%{
@@ -87,12 +86,9 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
           # Verify the balance is a valid string representing a number
           assert is_binary(balance)
 
-          # Log the balance for informational purposes
-          IO.puts("LINK token balance for #{@token_holder} at block #{@block_number}: #{balance}")
-
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch historical token balance: #{inspect(error)}")
           end
@@ -113,17 +109,14 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
       {:error, error} ->
         # Should return an error for invalid contract address
         assert error != nil
-        IO.puts("Error for invalid contract address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid contract address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid contract address")
         assert true
     end
   end
@@ -140,7 +133,6 @@ defmodule Lux.Integration.Etherscan.TokenBalanceHistoryLensTest do
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
-
 
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable

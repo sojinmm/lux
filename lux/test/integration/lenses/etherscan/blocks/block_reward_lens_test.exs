@@ -79,12 +79,6 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
       assert String.starts_with?(uncle.miner, "0x")
       assert String.length(uncle.miner) == 42
     end
-
-    # Log the block reward information for informational purposes
-    IO.puts("Block number: #{result.block_number}")
-    IO.puts("Block miner: #{result.block_miner}")
-    IO.puts("Block reward: #{result.block_reward}")
-    IO.puts("Number of uncles: #{length(result.uncles)}")
   end
 
   test "can fetch block rewards for a recent block" do
@@ -114,10 +108,6 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
 
     # The block number should match what we requested
     assert result.block_number == to_string(recent_block)
-
-    # Log the block reward information for informational purposes
-    IO.puts("Recent block number: #{result.block_number}")
-    IO.puts("Recent block reward: #{result.block_reward}")
   end
 
   test "fails when no auth is provided" do

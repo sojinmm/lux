@@ -71,7 +71,6 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   test "can fetch token balances for an address" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenBalance")
       :ok
     else
       result = RateLimitedAPI.call_standard(AddressTokenBalance, :focus, [%{
@@ -92,19 +91,16 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
             assert Map.has_key?(first_token, :token_symbol)
             assert Map.has_key?(first_token, :token_decimals)
             assert Map.has_key?(first_token, :token_quantity)
-
-            # Log some token info for informational purposes
-            IO.puts("Number of tokens held by #{@token_holder}: #{length(tokens)}")
-            IO.puts("First token name: #{first_token.token_name}")
-            IO.puts("First token symbol: #{first_token.token_symbol}")
-            IO.puts("First token quantity: #{first_token.token_quantity}")
-          else
-            IO.puts("No tokens found for address #{@token_holder}")
+            
+            # Verify token data is valid
+            assert is_binary(first_token.token_name)
+            assert is_binary(first_token.token_symbol)
+            assert is_binary(first_token.token_quantity)
           end
 
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch token balances: #{inspect(error)}")
           end
@@ -115,7 +111,6 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   test "can fetch token balances with pagination" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for AddressTokenBalance")
       :ok
     else
       # Using a small offset to test pagination
@@ -134,12 +129,9 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
           assert is_list(tokens)
           assert length(tokens) <= offset
 
-          # Log the number of tokens returned
-          IO.puts("Number of tokens returned with offset #{offset}: #{length(tokens)}")
-
         {:error, error} ->
           if is_rate_limited?(result) do
-            IO.puts("Skipping test due to rate limiting: #{inspect(error)}")
+            :ok
           else
             flunk("Failed to fetch token balances with pagination: #{inspect(error)}")
           end
@@ -158,17 +150,14 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
       {:error, error} ->
         # Should return an error for invalid address
         assert error != nil
-        IO.puts("Error for invalid address: #{inspect(error)}")
 
       {:ok, %{result: "0"}} ->
         # Some APIs return "0" for invalid addresses instead of an error
-        IO.puts("API returned '0' for invalid address")
         assert true
 
       {:ok, _} ->
         # If the API doesn't return an error, that's also acceptable
         # as long as we're testing the API behavior
-        IO.puts("API didn't return an error for invalid address")
         assert true
     end
   end
@@ -183,7 +172,6 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
     case result do
       {:ok, %{"status" => "0", "message" => "NOTOK", "result" => error_message}} ->
         assert String.contains?(error_message, "Missing/Invalid API Key")
-        IO.puts("Error for no auth: #{error_message}")
 
       {:error, error} ->
         # If it returns an error tuple, that's also acceptable

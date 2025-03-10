@@ -60,7 +60,6 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
   test "can fetch daily block count with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyBlockCount or invalid action name")
       :ok
     else
       assert {:ok, %{result: block_count_data}} =
@@ -82,11 +81,6 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
 
         # Block count should be a positive number
         assert is_binary(first_entry.block_count) or is_number(first_entry.block_count)
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.date}")
-        IO.puts("Block Count: #{first_entry.block_count}")
-        IO.puts("Block Rewards: #{first_entry.block_rewards}")
       end
     end
   end
@@ -94,7 +88,6 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyBlockCount or invalid action name")
       :ok
     else
       assert {:ok, %{result: block_count_data}} =
@@ -157,7 +150,6 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint or invalid action name")
@@ -168,7 +160,6 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyBlockCount or invalid action name")
       :ok
     else
       # Missing startdate and enddate

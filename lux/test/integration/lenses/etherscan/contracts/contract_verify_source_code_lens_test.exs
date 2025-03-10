@@ -69,7 +69,6 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
 
       {:ok, %{result: result}} ->
         # Or it might return a result with an error message
-        IO.puts("Result for invalid address: #{inspect(result)}")
         # The result should indicate an error
         if is_map(result) && Map.has_key?(result, :status) do
           assert result.status != "Success"
@@ -94,7 +93,6 @@ defmodule Lux.Integration.Etherscan.ContractVerifySourceCodeLensTest do
 
       {:ok, %{result: result}} ->
         # Or it might return a result with an error message
-        IO.puts("Result for missing parameters: #{inspect(result)}")
         # The result should indicate an error
         if is_map(result) && Map.has_key?(result, :status) do
           assert result.status != "Success"

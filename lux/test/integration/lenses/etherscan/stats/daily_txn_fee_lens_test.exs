@@ -59,7 +59,6 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "can fetch daily transaction fees with required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxnFee")
       :ok
     else
       assert {:ok, %{result: txn_fee_data, daily_txn_fee: txn_fee_data}} =
@@ -81,10 +80,6 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
         # Transaction fee should be a positive number
         assert is_number(first_entry.tx_fee_eth)
         assert first_entry.tx_fee_eth > 0
-
-        # Log the data for informational purposes
-        IO.puts("Date: #{first_entry.utc_date}")
-        IO.puts("Transaction Fee: #{first_entry.tx_fee_eth} ETH")
       end
     end
   end
@@ -92,7 +87,6 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxnFee")
       :ok
     else
       assert {:ok, %{result: txn_fee_data}} =
@@ -148,12 +142,10 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
       {:error, %{result: result}} ->
         # If we get an error about API Pro endpoint, that's expected
         assert String.contains?(result, "API Pro endpoint")
-        IO.puts("Expected error for Pro API endpoint: #{result}")
 
       _ ->
         # If we get here, we might have a Pro API key, so the test should be skipped
         if has_pro_api_key?() do
-          IO.puts("Skipping test: We have a Pro API key, so this test is not applicable")
           :ok
         else
           flunk("Expected an error for Pro API endpoint")
@@ -164,7 +156,6 @@ defmodule Lux.Integration.Etherscan.DailyTxnFeeLensTest do
   test "returns error for missing required parameters" do
     # Skip this test if we don't have a Pro API key
     if not has_pro_api_key?() do
-      IO.puts("Skipping test: Pro API key required for DailyTxnFee")
       :ok
     else
       # Missing startdate and enddate
