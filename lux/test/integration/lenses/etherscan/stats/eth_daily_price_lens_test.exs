@@ -28,9 +28,7 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
 
   test "can fetch ETH daily price with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: price_data}} =
                RateLimitedAPI.call_standard(EthDailyPrice, :focus, [%{
                  startdate: @start_date,
@@ -57,9 +55,7 @@ defmodule Lux.Integration.Etherscan.EthDailyPriceLensTest do
 
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: price_data}} =
                RateLimitedAPI.call_standard(EthDailyPrice, :focus, [%{
                  startdate: @start_date,

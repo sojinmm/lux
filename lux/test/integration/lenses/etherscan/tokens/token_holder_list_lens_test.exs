@@ -27,9 +27,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
 
   test "can fetch token holder list" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: holders, token_holders: holders}} =
                RateLimitedAPI.call_standard(TokenHolderList, :focus, [%{
                  contractaddress: @token_contract,
@@ -50,9 +48,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
 
   test "can fetch token holder list with pagination" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       # Using a small offset to test pagination
       offset = 5
 

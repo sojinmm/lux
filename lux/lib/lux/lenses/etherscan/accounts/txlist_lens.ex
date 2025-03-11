@@ -15,7 +15,7 @@ defmodule Lux.Lenses.Etherscan.TxList do
     address: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
     chainid: 1,
     startblock: 0,
-    endblock: 99999999,
+    endblock: 99_999_999,
     page: 1,
     offset: 10,
     sort: "asc"
@@ -56,7 +56,7 @@ defmodule Lux.Lenses.Etherscan.TxList do
         endblock: %{
           type: :integer,
           description: "Upper block height boundary for filtering transactions",
-          default: 99999999
+          default: 99_999_999
         },
         page: %{
           type: :integer,

@@ -7,7 +7,7 @@ defmodule Lux.Integration.Etherscan.BlockTxCountLensTest do
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block number to check transaction count (from the example in the documentation)
-  @block_number 2165403
+  @block_number 2_165_403
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

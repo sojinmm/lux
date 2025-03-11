@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
         address: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
         chainid: 1,
         startblock: 0,
-        endblock: 99999999,
+        endblock: 99_999_999,
         page: 1,
         offset: 10,
         sort: "asc"
@@ -228,7 +228,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
         address: "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC",
         chainid: 1,
         startblock: 0,
-        endblock: 99999999,
+        endblock: 99_999_999,
         page: 1,
         offset: 10,
         sort: "asc"
@@ -243,7 +243,7 @@ defmodule Lux.Lenses.Etherscan.TxListLensTest do
       assert result.address == "0xc5102fE9359FD9a28f877a67E36B0F050d81a3CC"
       assert result.chainid == 1
       assert result.startblock == 0
-      assert result.endblock == 99999999
+      assert result.endblock == 99_999_999
       assert result.page == 1
       assert result.offset == 10
       assert result.sort == "asc"

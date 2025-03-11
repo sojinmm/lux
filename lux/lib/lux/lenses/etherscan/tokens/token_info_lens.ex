@@ -57,7 +57,7 @@ defmodule Lux.Lenses.Etherscan.TokenInfo do
     params = params
     |> Map.put(:module, "token")
     |> Map.put(:action, "tokeninfo")
-    
+
     # Check if this endpoint requires a Pro API key
     case Base.check_pro_endpoint("token", "tokeninfo") do
       {:ok, _} -> params

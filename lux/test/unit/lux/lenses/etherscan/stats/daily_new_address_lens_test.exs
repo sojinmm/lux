@@ -71,17 +71,17 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       # Verify first day's data
       first_day = Enum.at(new_address_data, 0)
       assert first_day.utc_date == "2023-01-01"
-      assert first_day.new_address_count == 12345
+      assert first_day.new_address_count == 12_345
 
       # Verify second day's data
       second_day = Enum.at(new_address_data, 1)
       assert second_day.utc_date == "2023-01-02"
-      assert second_day.new_address_count == 23456
+      assert second_day.new_address_count == 23_456
 
       # Verify third day's data
       third_day = Enum.at(new_address_data, 2)
       assert third_day.utc_date == "2023-01-03"
-      assert third_day.new_address_count == 34567
+      assert third_day.new_address_count == 34_567
     end
 
     test "makes correct API call with descending sort" do
@@ -302,9 +302,9 @@ defmodule Lux.Lenses.Etherscan.DailyNewAddressLensTest do
       assert {:ok, %{result: new_address_data, daily_new_address: new_address_data}} = result
       assert length(new_address_data) == 2
       assert Enum.at(new_address_data, 0).utc_date == "2023-01-01"
-      assert Enum.at(new_address_data, 0).new_address_count == 12345
+      assert Enum.at(new_address_data, 0).new_address_count == 12_345
       assert Enum.at(new_address_data, 1).utc_date == "2023-01-02"
-      assert Enum.at(new_address_data, 1).new_address_count == 23456
+      assert Enum.at(new_address_data, 1).new_address_count == 23_456
     end
 
     test "processes empty result" do

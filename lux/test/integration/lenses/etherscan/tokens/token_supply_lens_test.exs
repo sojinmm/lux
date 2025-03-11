@@ -27,9 +27,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyLensTest do
 
   test "can fetch total supply for an ERC-20 token" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: supply, token_supply: supply}} =
                RateLimitedAPI.call_standard(TokenSupply, :focus, [%{
                  contractaddress: @token_contract,

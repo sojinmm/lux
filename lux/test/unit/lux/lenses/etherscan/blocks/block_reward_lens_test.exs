@@ -19,7 +19,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
     test "makes correct API call and processes the response with block rewards" do
       # Set up the test parameters
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 1
       }
 
@@ -77,7 +77,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
     test "makes correct API call and processes the response with no uncles" do
       # Set up the test parameters
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 1
       }
 
@@ -138,7 +138,7 @@ defmodule Lux.Lenses.Etherscan.BlockRewardLensTest do
     test "prepares parameters correctly with integer block number" do
       # Set up the test parameters with integer block number
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 1
       }
 

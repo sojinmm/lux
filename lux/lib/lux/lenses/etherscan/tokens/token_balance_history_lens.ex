@@ -11,14 +11,14 @@ defmodule Lux.Lenses.Etherscan.TokenBalanceHistory do
   Lux.Lenses.Etherscan.TokenBalanceHistory.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
     address: "0xe04f27eb70e025b78871a2ad7eabe85e61212761",
-    blockno: 8000000
+    blockno: 8_000_000
   })
 
   # Get historical ERC20 token balance for an address on a specific chain
   Lux.Lenses.Etherscan.TokenBalanceHistory.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
     address: "0xe04f27eb70e025b78871a2ad7eabe85e61212761",
-    blockno: 8000000,
+    blockno: 8_000_000,
     chainid: 1
   })
   ```

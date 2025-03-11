@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.TokenContractTxLensTest do
         contractaddress: "0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2",
         chainid: 1,
         startblock: 0,
-        endblock: 27025780,
+        endblock: 27_025_780,
         page: 1,
         offset: 100,
         sort: "asc"

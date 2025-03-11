@@ -19,7 +19,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
     test "makes correct API call and processes the response with default closest parameter" do
       # Set up the test parameters
       params = %{
-        timestamp: 1578638524,
+        timestamp: 1_578_638_524,
         chainid: 1
       }
 
@@ -56,7 +56,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
     test "makes correct API call and processes the response with 'after' closest parameter" do
       # Set up the test parameters
       params = %{
-        timestamp: 1578638524,
+        timestamp: 1_578_638_524,
         closest: "after",
         chainid: 1
       }
@@ -112,7 +112,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
     test "prepares parameters correctly with integer timestamp" do
       # Set up the test parameters with integer timestamp
       params = %{
-        timestamp: 1578638524,
+        timestamp: 1_578_638_524,
         chainid: 1
       }
 
@@ -146,7 +146,7 @@ defmodule Lux.Lenses.Etherscan.BlockByTimestampLensTest do
     test "prepares parameters correctly with closest parameter" do
       # Set up the test parameters with closest parameter
       params = %{
-        timestamp: 1578638524,
+        timestamp: 1_578_638_524,
         closest: "after",
         chainid: 1
       }

@@ -10,7 +10,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   # ERC-721 Transfer event topic
   @transfer_topic "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
   # Block range for testing
-  @from_block 12878196
+  @from_block 12_878_196
   # Example contract with specific events (Chainlink)
   @chainlink_address "0x59728544b08ab483533076417fbbb2fd0b17ce3a"
   # Chainlink specific event topic
@@ -18,7 +18,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   # Chainlink specific address for topic1
   @chainlink_topic1 "0x00000000000000000000000023581767a106ae21c074b2276d25e5c3e136a68b"
   # Block range for Chainlink testing
-  @chainlink_from_block 15073139
+  @chainlink_from_block 15_073_139
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

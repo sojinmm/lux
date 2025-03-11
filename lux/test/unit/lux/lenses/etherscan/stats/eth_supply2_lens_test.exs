@@ -54,10 +54,10 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       assert {:ok, %{result: eth_supply_details, eth_supply_details: eth_supply_details}} = result
 
       # Check that the values are approximately correct (since large numbers are represented in scientific notation)
-      assert_in_delta eth_supply_details.eth_supply, 1.23456789e26, 1.0e20
-      assert_in_delta eth_supply_details.eth2_staking, 1.23456789e19, 1.0e15
-      assert_in_delta eth_supply_details.burnt_fees, 9.87654321e18, 1.0e15
-      assert_in_delta eth_supply_details.withdrawn_eth, 1.23456789e18, 1.0e15
+      assert_in_delta eth_supply_details.eth_supply, 1.23_456_789e26, 1.0e20
+      assert_in_delta eth_supply_details.eth2_staking, 1.23_456_789e19, 1.0e15
+      assert_in_delta eth_supply_details.burnt_fees, 9.87_654_321e18, 1.0e15
+      assert_in_delta eth_supply_details.withdrawn_eth, 1.23_456_789e18, 1.0e15
     end
 
     test "works with empty parameters" do
@@ -89,13 +89,13 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
 
       # Verify the result
       assert {:ok, %{result: eth_supply_details}} = result
-      assert_in_delta eth_supply_details.eth_supply, 1.23456789e26, 1.0e20
+      assert_in_delta eth_supply_details.eth_supply, 1.23_456_789e26, 1.0e20
     end
 
     test "handles error responses" do
       # Set up the test parameters
       params = %{
-        chainid: 999999 # Invalid chain ID
+        chainid: 999_999 # Invalid chain ID
       }
 
       # Mock the API response
@@ -166,10 +166,10 @@ defmodule Lux.Lenses.Etherscan.EthSupply2LensTest do
       assert {:ok, %{result: eth_supply_details, eth_supply_details: eth_supply_details}} = result
 
       # Check that the values are approximately correct (since large numbers are represented in scientific notation)
-      assert_in_delta eth_supply_details.eth_supply, 1.23456789e26, 1.0e20
-      assert_in_delta eth_supply_details.eth2_staking, 1.23456789e19, 1.0e15
-      assert_in_delta eth_supply_details.burnt_fees, 9.87654321e18, 1.0e15
-      assert_in_delta eth_supply_details.withdrawn_eth, 1.23456789e18, 1.0e15
+      assert_in_delta eth_supply_details.eth_supply, 1.23_456_789e26, 1.0e20
+      assert_in_delta eth_supply_details.eth2_staking, 1.23_456_789e19, 1.0e15
+      assert_in_delta eth_supply_details.burnt_fees, 9.87_654_321e18, 1.0e15
+      assert_in_delta eth_supply_details.withdrawn_eth, 1.23_456_789e18, 1.0e15
     end
 
     test "processes float values correctly" do

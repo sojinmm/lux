@@ -28,9 +28,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
 
   test "can fetch daily block count with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: block_count_data}} =
                RateLimitedAPI.call_standard(DailyBlockCount, :focus, [%{
                  startdate: @start_date,
@@ -56,9 +54,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockCountLensTest do
 
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: block_count_data}} =
                RateLimitedAPI.call_standard(DailyBlockCount, :focus, [%{
                  startdate: @start_date,

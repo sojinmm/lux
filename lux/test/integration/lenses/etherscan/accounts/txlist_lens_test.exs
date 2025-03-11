@@ -71,8 +71,8 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
              RateLimitedAPI.call_standard(TxList, :focus, [%{
                address: @address,
                chainid: 1,
-               startblock: 10000000,
-               endblock: 15000000
+               startblock: 10_000_000,
+               endblock: 15_000_000
              }])
 
     # Verify we got results
@@ -82,8 +82,8 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
     if length(transactions) > 0 do
       Enum.each(transactions, fn transaction ->
         block_number = String.to_integer(transaction["blockNumber"])
-        assert block_number >= 10000000
-        assert block_number <= 15000000
+        assert block_number >= 10_000_000
+        assert block_number <= 15_000_000
       end)
     end
   end

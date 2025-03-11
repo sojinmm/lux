@@ -20,7 +20,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       # Set up the test parameters
       params = %{
         contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -62,7 +62,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       # Set up the test parameters with invalid contract address
       params = %{
         contractaddress: "0xinvalid",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -87,7 +87,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       # Set up the test parameters
       params = %{
         contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -112,7 +112,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       # Set up the test parameters
       params = %{
         contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -140,7 +140,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       # Set up the test parameters
       params = %{
         contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -151,7 +151,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       assert result.module == "stats"
       assert result.action == "tokensupplyhistory"
       assert result.contractaddress == "0x57d90b64a1a57749b0f932f1a3395792e12e7055"
-      assert result.blockno == 8000000
+      assert result.blockno == 8_000_000
       assert result.chainid == 1
     end
 
@@ -165,7 +165,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistoryLensTest do
       # Set up the test parameters
       params = %{
         contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 

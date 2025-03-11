@@ -56,7 +56,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalAddress do
         endblock: %{
           type: :integer,
           description: "Ending block number to filter transactions to",
-          default: 99999999
+          default: 99_999_999
         },
         page: %{
           type: :integer,

@@ -80,7 +80,7 @@ defmodule Lux.Lenses.Etherscan.EthSupplyLensTest do
     test "handles error responses" do
       # Set up the test parameters
       params = %{
-        chainid: 999999 # Invalid chain ID
+        chainid: 999_999 # Invalid chain ID
       }
 
       # Mock the API response

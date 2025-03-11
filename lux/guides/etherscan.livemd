@@ -77,7 +77,7 @@ alias Lux.Lenses.Etherscan.BalanceHistory
 
 {:ok, result} = BalanceHistory.focus(%{
   address: "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe",
-  blockno: 8000000,
+  blockno: 8_000_000,
   chainid: 1
 })
 ```

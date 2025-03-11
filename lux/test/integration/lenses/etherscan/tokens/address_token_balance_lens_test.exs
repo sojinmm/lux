@@ -18,7 +18,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
   end
 
   # Helper function to check if we're being rate limited
-  defp is_rate_limited?(result) do
+  defp rate_limited?(result) do
     case result do
       {:error, %{result: "Max rate limit reached"}} -> true
       {:error, %{message: message}} when is_binary(message) ->
@@ -37,9 +37,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
 
   test "can fetch token balances for an address" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       result = RateLimitedAPI.call_standard(AddressTokenBalance, :focus, [%{
         address: @token_holder,
         chainid: 1
@@ -66,7 +64,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
           end
 
         {:error, error} ->
-          if is_rate_limited?(result) do
+          if rate_limited?(result) do
             :ok
           else
             flunk("Failed to fetch token balances: #{inspect(error)}")
@@ -77,9 +75,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
 
   test "can fetch token balances with pagination" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       # Using a small offset to test pagination
       offset = 5
 
@@ -97,7 +93,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenBalanceLensTest do
           assert length(tokens) <= offset
 
         {:error, error} ->
-          if is_rate_limited?(result) do
+          if rate_limited?(result) do
             :ok
           else
             flunk("Failed to fetch token balances with pagination: #{inspect(error)}")

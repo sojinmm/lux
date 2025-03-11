@@ -9,7 +9,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   # Ethereum Foundation address
   @eth_foundation "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
   # Block number to check (Ethereum block from 2019)
-  @block_number 8000000
+  @block_number 8_000_000
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -28,9 +28,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
 
   test "can fetch historical ETH balance for an address at a specific block" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: balance}} =
                RateLimitedAPI.call_pro(BalanceHistory, :focus, [%{
                  address: @eth_foundation,

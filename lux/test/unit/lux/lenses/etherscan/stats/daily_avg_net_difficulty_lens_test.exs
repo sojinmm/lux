@@ -71,17 +71,17 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       # Verify first day's data
       first_day = Enum.at(difficulty_data, 0)
       assert first_day.utc_date == "2023-01-01"
-      assert first_day.difficulty == 12345678901234.56
+      assert first_day.difficulty == 12_345_678_901_234.56
 
       # Verify second day's data
       second_day = Enum.at(difficulty_data, 1)
       assert second_day.utc_date == "2023-01-02"
-      assert second_day.difficulty == 12345678901235.67
+      assert second_day.difficulty == 12_345_678_901_235.67
 
       # Verify third day's data
       third_day = Enum.at(difficulty_data, 2)
       assert third_day.utc_date == "2023-01-03"
-      assert third_day.difficulty == 12345678901236.78
+      assert third_day.difficulty == 12_345_678_901_236.78
     end
 
     test "makes correct API call with descending sort" do
@@ -296,9 +296,9 @@ defmodule Lux.Lenses.Etherscan.DailyAvgNetDifficultyLensTest do
       assert {:ok, %{result: difficulty_data, daily_avg_net_difficulty: difficulty_data}} = result
       assert length(difficulty_data) == 2
       assert Enum.at(difficulty_data, 0).utc_date == "2023-01-01"
-      assert Enum.at(difficulty_data, 0).difficulty == 12345678901234.56
+      assert Enum.at(difficulty_data, 0).difficulty == 12_345_678_901_234.56
       assert Enum.at(difficulty_data, 1).utc_date == "2023-01-02"
-      assert Enum.at(difficulty_data, 1).difficulty == 12345678901235.67
+      assert Enum.at(difficulty_data, 1).difficulty == 12_345_678_901_235.67
     end
 
     test "processes empty result" do

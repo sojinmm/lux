@@ -28,9 +28,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   test "can fetch chain size data with required parameters" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: chain_size_data, chain_size: chain_size_data}} =
                RateLimitedAPI.call_standard(ChainSize, :focus, [%{
                  startdate: @start_date,
@@ -57,9 +55,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   test "can fetch chain size data with all parameters" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: chain_size_data}} =
                RateLimitedAPI.call_standard(ChainSize, :focus, [%{
                  startdate: @start_date,
@@ -77,9 +73,7 @@ defmodule Lux.Integration.Etherscan.ChainSizeLensTest do
 
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: chain_size_data}} =
                RateLimitedAPI.call_standard(ChainSize, :focus, [%{
                  startdate: @start_date,

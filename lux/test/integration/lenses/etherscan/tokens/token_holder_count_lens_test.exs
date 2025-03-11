@@ -27,9 +27,7 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
 
   test "can fetch token holder count" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: count, holder_count: count}} =
                RateLimitedAPI.call_standard(TokenHolderCount, :focus, [%{
                  contractaddress: @token_contract,

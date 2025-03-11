@@ -20,8 +20,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Set up the test parameters
       params = %{
         address: "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
-        fromBlock: 12878196,
-        toBlock: 12878196,
+        fromBlock: 12_878_196,
+        toBlock: 12_878_196,
         chainid: 1
       }
 
@@ -85,8 +85,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Set up the test parameters
       params = %{
         address: "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
-        fromBlock: 12878196,
-        toBlock: 12878196,
+        fromBlock: 12_878_196,
+        toBlock: 12_878_196,
         page: 1,
         offset: 10,
         chainid: 1
@@ -131,8 +131,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
     test "makes correct API call for topics filtering" do
       # Set up the test parameters
       params = %{
-        fromBlock: 12878196,
-        toBlock: 12879196,
+        fromBlock: 12_878_196,
+        toBlock: 12_879_196,
         topic0: "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
         topic0_1_opr: "and",
         topic1: "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -183,8 +183,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Set up the test parameters
       params = %{
         address: "0x59728544b08ab483533076417fbbb2fd0b17ce3a",
-        fromBlock: 15073139,
-        toBlock: 15074139,
+        fromBlock: 15_073_139,
+        toBlock: 15_074_139,
         topic0: "0x27c4f0403323142b599832f26acd21c74a9e5b809f2215726e244a4ac588cd7d",
         topic0_1_opr: "and",
         topic1: "0x00000000000000000000000023581767a106ae21c074b2276d25e5c3e136a68b",
@@ -243,8 +243,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Set up the test parameters with invalid data
       params = %{
         address: "0xinvalid",
-        fromBlock: 12878196,
-        toBlock: 12878196,
+        fromBlock: 12_878_196,
+        toBlock: 12_878_196,
         chainid: 1
       }
 
@@ -269,8 +269,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Set up the test parameters
       params = %{
         address: "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
-        fromBlock: 12878196,
-        toBlock: 12878196,
+        fromBlock: 12_878_196,
+        toBlock: 12_878_196,
         chainid: 1
       }
 
@@ -298,8 +298,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Set up the test parameters
       params = %{
         address: "0xbd3531da5cf5857e7cfaa92426877b022e612cf8",
-        fromBlock: 12878196,
-        toBlock: 12878196,
+        fromBlock: 12_878_196,
+        toBlock: 12_878_196,
         chainid: 1
       }
 
@@ -310,16 +310,16 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       assert result.module == "logs"
       assert result.action == "getLogs"
       assert result.address == "0xbd3531da5cf5857e7cfaa92426877b022e612cf8"
-      assert result.fromBlock == 12878196
-      assert result.toBlock == 12878196
+      assert result.fromBlock == 12_878_196
+      assert result.toBlock == 12_878_196
       assert result.chainid == 1
     end
 
     test "prepares parameters correctly with topics" do
       # Set up the test parameters
       params = %{
-        fromBlock: 12878196,
-        toBlock: 12879196,
+        fromBlock: 12_878_196,
+        toBlock: 12_879_196,
         topic0: "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
         topic0_1_opr: "and",
         topic1: "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -332,8 +332,8 @@ defmodule Lux.Lenses.Etherscan.GetLogsLensTest do
       # Verify the result
       assert result.module == "logs"
       assert result.action == "getLogs"
-      assert result.fromBlock == 12878196
-      assert result.toBlock == 12879196
+      assert result.fromBlock == 12_878_196
+      assert result.toBlock == 12_879_196
       assert result.topic0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
       assert result.topic0_1_opr == "and"
       assert result.topic1 == "0x0000000000000000000000000000000000000000000000000000000000000000"

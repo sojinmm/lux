@@ -20,7 +20,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   end
 
   # Helper function to check if we're being rate limited
-  defp is_rate_limited?(result) do
+  defp rate_limited?(result) do
     case result do
       {:error, %{result: "Max rate limit reached"}} -> true
       {:error, %{message: message}} when is_binary(message) ->
@@ -39,9 +39,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "can fetch NFT inventory for an address filtered by contract" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
         address: @nft_holder,
         contractaddress: @nft_contract,
@@ -69,7 +67,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
           end
 
         {:error, error} ->
-          if is_rate_limited?(result) do
+          if rate_limited?(result) do
             :ok
           else
             flunk("Failed to fetch NFT inventory: #{inspect(error)}")
@@ -80,9 +78,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
 
   test "can fetch NFT inventory with pagination" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       # Using a small offset to test pagination
       offset = 5
 
@@ -101,7 +97,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
           assert length(nfts) <= offset
 
         {:error, error} ->
-          if is_rate_limited?(result) do
+          if rate_limited?(result) do
             :ok
           else
             flunk("Failed to fetch NFT inventory with pagination: #{inspect(error)}")

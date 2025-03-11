@@ -6,7 +6,7 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Unix timestamp (January 10, 2020)
-  @timestamp 1578638524
+  @timestamp 1_578_638_524
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

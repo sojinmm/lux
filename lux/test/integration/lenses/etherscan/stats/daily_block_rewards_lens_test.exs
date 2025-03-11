@@ -28,9 +28,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
 
   test "can fetch daily block rewards with required parameters" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: block_rewards_data}} =
                RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
                  startdate: @start_date,
@@ -60,9 +58,7 @@ defmodule Lux.Integration.Etherscan.DailyBlockRewardsLensTest do
 
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: block_rewards_data}} =
                RateLimitedAPI.call_standard(DailyBlockRewards, :focus, [%{
                  startdate: @start_date,

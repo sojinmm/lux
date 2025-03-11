@@ -59,7 +59,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       assert gas_oracle.fast_gas_price == 25.0
       assert gas_oracle.suggest_base_fee == 19.123456789
       assert gas_oracle.gas_used_ratio == "0.374502284698551,0.5519324043028,0.999999999999999"
-      assert gas_oracle.last_block == 16916759
+      assert gas_oracle.last_block == 16_916_759
     end
 
     test "works with empty parameters" do
@@ -99,7 +99,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
     test "handles error responses" do
       # Set up the test parameters
       params = %{
-        chainid: 999999 # Invalid chain ID
+        chainid: 999_999 # Invalid chain ID
       }
 
       # Mock the API response
@@ -198,7 +198,7 @@ defmodule Lux.Lenses.Etherscan.GasOracleLensTest do
       assert gas_oracle.fast_gas_price == 25.0
       assert gas_oracle.suggest_base_fee == 19.123456789
       assert gas_oracle.gas_used_ratio == "0.374502284698551,0.5519324043028,0.999999999999999"
-      assert gas_oracle.last_block == 16916759
+      assert gas_oracle.last_block == 16_916_759
     end
 
     test "handles non-numeric values" do

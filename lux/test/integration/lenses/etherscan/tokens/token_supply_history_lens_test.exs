@@ -10,7 +10,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
   # Block number to check (Ethereum block from 2019)
-  @block_number 8000000
+  @block_number 8_000_000
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do
@@ -20,7 +20,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   end
 
   # Helper function to check if we're being rate limited
-  defp is_rate_limited?(result) do
+  defp rate_limited?(result) do
     case result do
       {:error, %{result: "Max rate limit reached"}} -> true
       {:error, %{message: message}} when is_binary(message) ->
@@ -39,9 +39,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
 
   test "can fetch historical token supply at a specific block" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
         contractaddress: @token_contract,
         blockno: @block_number,
@@ -56,7 +54,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
           assert supply_value > 0
 
         {:error, error} ->
-          if is_rate_limited?(result) do
+          if rate_limited?(result) do
             :ok
           else
             flunk("Failed to fetch historical token supply: #{inspect(error)}")

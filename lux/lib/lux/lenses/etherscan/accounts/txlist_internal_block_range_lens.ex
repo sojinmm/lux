@@ -7,13 +7,13 @@ defmodule Lux.Lenses.Etherscan.TxListInternalBlockRange do
   ```elixir
   # Get internal transactions by block range
   Lux.Lenses.Etherscan.TxListInternalBlockRange.focus(%{
-    startblock: 13481773,
+    startblock: 13_481_773,
     endblock: 13491773
   })
 
   # With additional parameters
   Lux.Lenses.Etherscan.TxListInternalBlockRange.focus(%{
-    startblock: 13481773,
+    startblock: 13_481_773,
     endblock: 13491773,
     chainid: 1,
     page: 1,
@@ -51,7 +51,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalBlockRange do
         endblock: %{
           type: :integer,
           description: "Ending block number to filter transactions to",
-          default: 99999999
+          default: 99_999_999
         },
         page: %{
           type: :integer,

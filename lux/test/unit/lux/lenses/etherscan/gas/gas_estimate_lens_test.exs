@@ -19,7 +19,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
     test "makes correct API call and processes the response" do
       # Set up the test parameters
       params = %{
-        gasprice: 2000000000,
+        gasprice: 2_000_000_000,
         chainid: 1
       }
 
@@ -78,7 +78,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
     test "handles Pro API key errors" do
       # Set up the test parameters
       params = %{
-        gasprice: 2000000000,
+        gasprice: 2_000_000_000,
         chainid: 1
       }
 
@@ -104,7 +104,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
     test "prepares parameters correctly" do
       # Set up the test parameters
       params = %{
-        gasprice: 2000000000,
+        gasprice: 2_000_000_000,
         chainid: 1
       }
 
@@ -114,7 +114,7 @@ defmodule Lux.Lenses.Etherscan.GasEstimateLensTest do
       # Verify the result
       assert result.module == "gastracker"
       assert result.action == "gasestimate"
-      assert result.gasprice == 2000000000
+      assert result.gasprice == 2_000_000_000
       assert result.chainid == 1
     end
   end

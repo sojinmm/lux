@@ -22,7 +22,7 @@ defmodule Lux.Unit.Lenses.Etherscan.TokenErc1155AddressTxTest do
         address: "0x83f564d180b58ad9a02a449105568189ee7de8cb",
         chainid: 1,
         startblock: 0,
-        endblock: 27025780,
+        endblock: 27_025_780,
         page: 1,
         offset: 100,
         sort: "asc"
@@ -148,7 +148,7 @@ defmodule Lux.Unit.Lenses.Etherscan.TokenErc1155AddressTxTest do
         address: "0x83f564d180b58ad9a02a449105568189ee7de8cb",
         chainid: 1,
         startblock: 0,
-        endblock: 27025780,
+        endblock: 27_025_780,
         page: 1,
         offset: 100,
         sort: "asc"
@@ -163,7 +163,7 @@ defmodule Lux.Unit.Lenses.Etherscan.TokenErc1155AddressTxTest do
       assert result.address == "0x83f564d180b58ad9a02a449105568189ee7de8cb"
       assert result.chainid == 1
       assert result.startblock == 0
-      assert result.endblock == 27025780
+      assert result.endblock == 27_025_780
       assert result.page == 1
       assert result.offset == 100
       assert result.sort == "asc"

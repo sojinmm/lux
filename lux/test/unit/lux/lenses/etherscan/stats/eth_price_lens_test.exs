@@ -53,9 +53,9 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       # Verify the result
       assert {:ok, %{result: eth_price, eth_price: eth_price}} = result
       assert eth_price.eth_btc == 0.05123
-      assert eth_price.eth_btc_timestamp == 1677123456
+      assert eth_price.eth_btc_timestamp == 1_677_123_456
       assert eth_price.eth_usd == 1850.45
-      assert eth_price.eth_usd_timestamp == 1677123456
+      assert eth_price.eth_usd_timestamp == 1_677_123_456
     end
 
     test "works with empty parameters" do
@@ -94,7 +94,7 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
     test "handles error responses" do
       # Set up the test parameters
       params = %{
-        chainid: 999999 # Invalid chain ID
+        chainid: 999_999 # Invalid chain ID
       }
 
       # Mock the API response
@@ -164,9 +164,9 @@ defmodule Lux.Lenses.Etherscan.EthPriceLensTest do
       # Verify the result
       assert {:ok, %{result: eth_price, eth_price: eth_price}} = result
       assert eth_price.eth_btc == 0.05123
-      assert eth_price.eth_btc_timestamp == 1677123456
+      assert eth_price.eth_btc_timestamp == 1_677_123_456
       assert eth_price.eth_usd == 1850.45
-      assert eth_price.eth_usd_timestamp == 1677123456
+      assert eth_price.eth_usd_timestamp == 1_677_123_456
     end
 
     test "processes non-numeric result" do

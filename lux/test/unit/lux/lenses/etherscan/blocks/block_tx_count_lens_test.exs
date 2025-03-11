@@ -19,7 +19,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
     test "makes correct API call and processes the response with map result" do
       # Set up the test parameters
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 1
       }
 
@@ -41,7 +41,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
           "status" => "1",
           "message" => "OK",
           "result" => %{
-            "block" => 2165403,
+            "block" => 2_165_403,
             "txsCount" => 4,
             "internalTxsCount" => 0,
             "erc20TxsCount" => 0,
@@ -56,7 +56,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
-      assert block_info.block_number == 2165403
+      assert block_info.block_number == 2_165_403
       assert block_info.transactions_count == 4
       assert block_info.internal_transactions_count == 0
       assert block_info.erc20_transactions_count == 0
@@ -67,7 +67,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
     test "makes correct API call and processes the response with string result" do
       # Set up the test parameters
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 1
       }
 
@@ -116,7 +116,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
     test "raises error for unsupported chain ID" do
       # Set up the test parameters with unsupported chain ID
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 137
       }
 
@@ -131,7 +131,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
     test "prepares parameters correctly with integer block number" do
       # Set up the test parameters with integer block number
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 1
       }
 
@@ -165,7 +165,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
     test "raises error for unsupported chain ID" do
       # Set up the test parameters with unsupported chain ID
       params = %{
-        blockno: 2165403,
+        blockno: 2_165_403,
         chainid: 137
       }
 
@@ -183,7 +183,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
         "status" => "1",
         "message" => "OK",
         "result" => %{
-          "block" => 2165403,
+          "block" => 2_165_403,
           "txsCount" => 4,
           "internalTxsCount" => 0,
           "erc20TxsCount" => 0,
@@ -197,7 +197,7 @@ defmodule Lux.Lenses.Etherscan.BlockTxCountLensTest do
 
       # Verify the result
       assert {:ok, %{result: block_info}} = result
-      assert block_info.block_number == 2165403
+      assert block_info.block_number == 2_165_403
       assert block_info.transactions_count == 4
       assert block_info.internal_transactions_count == 0
       assert block_info.erc20_transactions_count == 0

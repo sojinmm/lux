@@ -60,8 +60,8 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
              RateLimitedAPI.call_standard(BeaconWithdrawal, :focus, [%{
                address: @withdrawal_address,
                chainid: 1,
-               startblock: 17000000,
-               endblock: 18000000
+               startblock: 17_000_000,
+               endblock: 18_000_000
              }])
 
     # Verify we got results
@@ -71,8 +71,8 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
     if length(withdrawals) > 0 do
       Enum.each(withdrawals, fn withdrawal ->
         block_number = String.to_integer(withdrawal["blockNumber"])
-        assert block_number >= 17000000
-        assert block_number <= 18000000
+        assert block_number >= 17_000_000
+        assert block_number <= 18_000_000
       end)
     end
   end

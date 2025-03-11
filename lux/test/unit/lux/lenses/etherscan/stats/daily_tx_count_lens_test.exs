@@ -71,17 +71,17 @@ defmodule Lux.Lenses.Etherscan.DailyTxCountLensTest do
       # Verify first day's data
       first_day = Enum.at(tx_count_data, 0)
       assert first_day.utc_date == "2023-01-01"
-      assert first_day.tx_count == 1234567
+      assert first_day.tx_count == 1_234_567
 
       # Verify second day's data
       second_day = Enum.at(tx_count_data, 1)
       assert second_day.utc_date == "2023-01-02"
-      assert second_day.tx_count == 1345678
+      assert second_day.tx_count == 1_345_678
 
       # Verify third day's data
       third_day = Enum.at(tx_count_data, 2)
       assert third_day.utc_date == "2023-01-03"
-      assert third_day.tx_count == 1456789
+      assert third_day.tx_count == 1_456_789
     end
 
     test "makes correct API call with descending sort" do
@@ -302,9 +302,9 @@ defmodule Lux.Lenses.Etherscan.DailyTxCountLensTest do
       assert {:ok, %{result: tx_count_data, daily_tx_count: tx_count_data}} = result
       assert length(tx_count_data) == 2
       assert Enum.at(tx_count_data, 0).utc_date == "2023-01-01"
-      assert Enum.at(tx_count_data, 0).tx_count == 1234567
+      assert Enum.at(tx_count_data, 0).tx_count == 1_234_567
       assert Enum.at(tx_count_data, 1).utc_date == "2023-01-02"
-      assert Enum.at(tx_count_data, 1).tx_count == 1345678
+      assert Enum.at(tx_count_data, 1).tx_count == 1_345_678
     end
 
     test "processes empty result" do

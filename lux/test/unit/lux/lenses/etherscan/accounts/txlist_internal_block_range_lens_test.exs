@@ -19,8 +19,8 @@ defmodule Lux.Lenses.Etherscan.TxListInternalBlockRangeLensTest do
     test "makes correct API call and processes the response" do
       # Set up the test parameters
       params = %{
-        startblock: 13481773,
-        endblock: 13491773,
+        startblock: 13_481_773,
+        endblock: 13_491_773,
         page: 1,
         offset: 10,
         sort: "asc",
@@ -82,8 +82,8 @@ defmodule Lux.Lenses.Etherscan.TxListInternalBlockRangeLensTest do
     test "handles empty transaction list" do
       # Set up the test parameters
       params = %{
-        startblock: 13481773,
-        endblock: 13491773,
+        startblock: 13_481_773,
+        endblock: 13_491_773,
         chainid: 1
       }
 
@@ -110,7 +110,7 @@ defmodule Lux.Lenses.Etherscan.TxListInternalBlockRangeLensTest do
       # Set up the test parameters
       params = %{
         startblock: -1,
-        endblock: 13491773,
+        endblock: 13_491_773,
         chainid: 1
       }
 
@@ -134,8 +134,8 @@ defmodule Lux.Lenses.Etherscan.TxListInternalBlockRangeLensTest do
     test "handles API errors" do
       # Set up the test parameters
       params = %{
-        startblock: 13481773,
-        endblock: 13491773,
+        startblock: 13_481_773,
+        endblock: 13_491_773,
         chainid: 1
       }
 

@@ -10,13 +10,13 @@ defmodule Lux.Lenses.Etherscan.BalanceHistory do
   # Get historical ETH balance for an address at a specific block (default chainid: 1 for Ethereum)
   Lux.Lenses.Etherscan.BalanceHistory.focus(%{
     address: "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-    blockno: 8000000
+    blockno: 8_000_000
   })
 
   # Get historical ETH balance for an address at a specific block on a specific chain
   Lux.Lenses.Etherscan.BalanceHistory.focus(%{
     address: "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-    blockno: 8000000,
+    blockno: 8_000_000,
     chainid: 1
   })
   ```

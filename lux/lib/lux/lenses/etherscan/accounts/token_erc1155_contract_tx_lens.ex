@@ -15,7 +15,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155ContractTx do
     contractaddress: "0x76be3b62873462d2142405439777e971754e8e77",
     chainid: 1,
     startblock: 0,
-    endblock: 27025780,
+    endblock: 27_025_780,
     page: 1,
     offset: 100,
     sort: "asc"
@@ -56,7 +56,7 @@ defmodule Lux.Lenses.Etherscan.TokenErc1155ContractTx do
         endblock: %{
           type: :integer,
           description: "Ending block number to filter transfer events to",
-          default: 99999999
+          default: 99_999_999
         },
         page: %{
           type: :integer,

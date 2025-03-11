@@ -10,13 +10,13 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistory do
   # Get historical ERC20 token total supply (default chainid: 1 for Ethereum)
   Lux.Lenses.Etherscan.TokenSupplyHistory.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-    blockno: 8000000
+    blockno: 8_000_000
   })
 
   # Get historical ERC20 token total supply on a specific chain
   Lux.Lenses.Etherscan.TokenSupplyHistory.focus(%{
     contractaddress: "0x57d90b64a1a57749b0f932f1a3395792e12e7055",
-    blockno: 8000000,
+    blockno: 8_000_000,
     chainid: 1
   })
   ```
@@ -63,7 +63,7 @@ defmodule Lux.Lenses.Etherscan.TokenSupplyHistory do
     params = params
     |> Map.put(:module, "stats")
     |> Map.put(:action, "tokensupplyhistory")
-    
+
     # Check if this endpoint requires a Pro API key
     case Base.check_pro_endpoint("stats", "tokensupplyhistory") do
       {:ok, _} -> params

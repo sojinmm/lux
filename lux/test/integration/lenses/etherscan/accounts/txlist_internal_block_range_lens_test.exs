@@ -6,8 +6,8 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
   alias Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block range with internal transactions
-  @startblock 13481773
-  @endblock 13491773
+  @startblock 13_481_773
+  @endblock 13_491_773
 
   # Add a delay between tests to avoid hitting the API rate limit
   setup do

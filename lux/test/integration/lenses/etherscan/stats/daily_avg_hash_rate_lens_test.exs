@@ -28,9 +28,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
 
   test "can fetch daily average hash rate with required parameters" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: hash_rate_data}} =
                RateLimitedAPI.call_standard(DailyAvgHashRate, :focus, [%{
                  startdate: @start_date,
@@ -55,9 +53,7 @@ defmodule Lux.Integration.Etherscan.DailyAvgHashRateLensTest do
 
   test "can specify different sort order" do
     # Skip this test if we don't have a Pro API key
-    if not has_pro_api_key?() do
-      :ok
-    else
+    if has_pro_api_key?() do
       assert {:ok, %{result: hash_rate_data}} =
                RateLimitedAPI.call_standard(DailyAvgHashRate, :focus, [%{
                  startdate: @start_date,

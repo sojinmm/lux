@@ -19,7 +19,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
     test "makes correct API call and processes the response for future block" do
       # Set up the test parameters
       params = %{
-        blockno: 16701588,
+        blockno: 16_701_588,
         chainid: 1
       }
 
@@ -63,7 +63,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
     test "makes correct API call and processes the response for past block" do
       # Set up the test parameters
       params = %{
-        blockno: 16000000,
+        blockno: 16_000_000,
         chainid: 1
       }
 
@@ -122,7 +122,7 @@ defmodule Lux.Lenses.Etherscan.BlockCountdownLensTest do
     test "prepares parameters correctly with integer block number" do
       # Set up the test parameters with integer block number
       params = %{
-        blockno: 16701588,
+        blockno: 16_701_588,
         chainid: 1
       }
 

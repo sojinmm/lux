@@ -20,7 +20,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       # Set up the test parameters
       params = %{
         address: "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -57,7 +57,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       # Set up the test parameters
       params = %{
         address: "0xinvalid",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -88,7 +88,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       # Set up the test parameters
       params = %{
         address: "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -104,7 +104,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       # Set up the test parameters
       params = %{
         address: "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 
@@ -115,7 +115,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       assert result.module == "account"
       assert result.action == "balancehistory"
       assert result.address == "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
-      assert result.blockno == 8000000
+      assert result.blockno == 8_000_000
       assert result.chainid == 1
     end
 
@@ -129,7 +129,7 @@ defmodule Lux.Lenses.Etherscan.BalanceHistoryLensTest do
       # Set up the test parameters
       params = %{
         address: "0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae",
-        blockno: 8000000,
+        blockno: 8_000_000,
         chainid: 1
       }
 

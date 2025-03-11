@@ -22,7 +22,7 @@ defmodule Lux.Lenses.Etherscan.TokenAddressTxLensTest do
         address: "0x4e83362442b8d1bec281594cea3050c8eb01311c",
         chainid: 1,
         startblock: 0,
-        endblock: 27025780,
+        endblock: 27_025_780,
         page: 1,
         offset: 100,
         sort: "asc"

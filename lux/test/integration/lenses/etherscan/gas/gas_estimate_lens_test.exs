@@ -15,7 +15,7 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
   test "can fetch estimated confirmation time for a transaction" do
     # Using a sample gas price of 2 Gwei (2000000000 wei)
-    gas_price = 2000000000
+    gas_price = 2_000_000_000
 
     # Always include chainid parameter for v2 API
     assert {:ok, %{result: estimated_seconds}} =
@@ -56,7 +56,7 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
 
   test "can fetch estimated confirmation time for a specific chain" do
     # Using a sample gas price of 2 Gwei (2000000000 wei) on Ethereum mainnet
-    gas_price = 2000000000
+    gas_price = 2_000_000_000
     chain_id = 1
 
     assert {:ok, %{result: estimated_seconds}} =
@@ -98,7 +98,7 @@ defmodule Lux.Integration.Etherscan.GasEstimateLensTest do
     end
 
     # Using an extremely high gas price (1000 Gwei = 1000000000000 wei)
-    high_gas_price = 1000000000000
+    high_gas_price = 1_000_000_000_000
 
     # Always include chainid parameter for v2 API
     high_result = RateLimitedAPI.call_standard(GasEstimate, :focus, [%{

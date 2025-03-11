@@ -55,7 +55,7 @@ defmodule Lux.Lenses.Etherscan.BeaconWithdrawal do
         endblock: %{
           type: :integer,
           description: "Upper block height boundary for filtering withdrawals",
-          default: 99999999
+          default: 99_999_999
         },
         page: %{
           type: :integer,
