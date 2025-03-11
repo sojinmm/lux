@@ -38,43 +38,19 @@ defmodule Lux.LLM.OpenAITest do
 
   describe "tool_to_function/1" do
     test "converts a beam to an OpenAI function" do
-      beam =
-        Lux.Beam.new(
-          name: "TestBeam",
-          description: "A test beam",
-          input_schema: %{
-            type: "object",
-            properties: %{
-              "value" => %{
-                type: "string",
-                description: "Test value"
-              },
-              "amount" => %{
-                type: "float",
-                description: "Test amount"
-              }
-            }
-          }
-        )
+      beam = TestBeam.view()
 
       function = OpenAI.tool_to_function(beam)
 
       assert %{
                type: "function",
                function: %{
-                 name: "TestBeam",
+                 name: "Lux_LLM_OpenAITest_TestBeam",
                  description: "A test beam",
                  parameters: %{
-                   type: "object",
+                   type: :object,
                    properties: %{
-                     "value" => %{
-                       type: "string",
-                       description: "Test value"
-                     },
-                     "amount" => %{
-                       type: "float",
-                       description: "Test amount"
-                     }
+                    value: %{type: :string}
                    }
                  }
                }
@@ -155,20 +131,7 @@ defmodule Lux.LLM.OpenAITest do
         model: "gpt-3.5-turbo"
       }
 
-      beam =
-        Lux.Beam.new(
-          name: "TestBeam",
-          description: "A test beam",
-          input_schema: %{
-            type: "object",
-            properties: %{
-              "value" => %{
-                type: "string",
-                description: "Test value"
-              }
-            }
-          }
-        )
+      beam = TestBeam.view()
 
       Req.Test.expect(OpenAI, fn conn ->
         assert conn.method == "POST"
@@ -187,7 +150,7 @@ defmodule Lux.LLM.OpenAITest do
 
         assert [tool] = decoded_body["tools"]
         assert tool["type"] == "function"
-        assert tool["function"]["name"] == "TestBeam"
+        assert tool["function"]["name"] == "Lux_LLM_OpenAITest_TestBeam"
 
         Req.Test.json(conn, %{
           "model" => "gpt-3.5-turbo",

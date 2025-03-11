@@ -192,7 +192,7 @@ defmodule Lux.LLM.OpenAI do
     end
   end
 
-  def tool_to_function(%Beam{name: name, description: description, input_schema: input_schema}) do
+  def tool_to_function(%Beam{module_name: name, description: description, input_schema: input_schema}) do
     %{
       type: "function",
       function: %{
