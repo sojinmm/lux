@@ -32,6 +32,26 @@ defmodule Lux.LLM.OpenAITest do
     end
   end
 
+  defmodule TestLens do
+    @moduledoc false
+    use Lux.Lens,
+      name: "WeatherAPI",
+      description: "Gets weather data",
+      schema: %{
+        type: "object",
+        properties: %{
+          location: %{
+            type: "string",
+            description: "City name"
+          },
+          units: %{
+            type: "string",
+            description: "Temperature units"
+          }
+        }
+      }
+  end
+
   setup do
     Req.Test.verify_on_exit!()
   end
@@ -80,31 +100,14 @@ defmodule Lux.LLM.OpenAITest do
     end
 
     test "converts a lens to an OpenAI function" do
-      lens =
-        Lux.Lens.new(
-          name: "WeatherAPI",
-          description: "Gets weather data",
-          schema: %{
-            type: "object",
-            properties: %{
-              location: %{
-                type: "string",
-                description: "City name"
-              },
-              units: %{
-                type: "string",
-                description: "Temperature units"
-              }
-            }
-          }
-        )
+      lens = TestLens.view()
 
       function = OpenAI.tool_to_function(lens)
 
       assert %{
                type: "function",
                function: %{
-                 name: "WeatherAPI",
+                 name: "Lux_LLM_OpenAITest_TestLens",
                  description: "Gets weather data",
                  parameters: %{
                    type: "object",
