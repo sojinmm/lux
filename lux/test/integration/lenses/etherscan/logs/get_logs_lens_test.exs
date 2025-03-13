@@ -1,9 +1,9 @@
 defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.GetLogs
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example NFT contract address (PudgyPenguins)
   @contract_address "0xbd3531da5cf5857e7cfaa92426877b022e612cf8"
@@ -21,11 +21,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   @chainlink_from_block 15_073_139
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to safely parse block number
   defp parse_block_number(block_number) when is_binary(block_number) do
@@ -55,12 +51,12 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
     # Wrap the API call in a try/rescue to handle potential errors
     try do
       # Using a smaller block range to reduce API load
-      result = RateLimitedAPI.call_standard(GetLogs, :focus, [%{
+      result = GetLogs.focus(%{
         address: @contract_address,
         fromBlock: @from_block,
         toBlock: @from_block, # Using same block for from and to to reduce data
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: logs}} when is_list(logs) ->
@@ -130,14 +126,14 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
       # Using a small offset to test pagination
       offset = 5
 
-      result = RateLimitedAPI.call_standard(GetLogs, :focus, [%{
+      result = GetLogs.focus(%{
         address: @contract_address,
         fromBlock: @from_block,
         toBlock: @from_block, # Using same block for from and to to reduce data
         page: 1,
         offset: offset,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: logs}} when is_list(logs) ->
@@ -176,14 +172,14 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   test "can fetch event logs filtered by topics" do
     # Wrap the API call in a try/rescue to handle potential errors
     try do
-      result = RateLimitedAPI.call_standard(GetLogs, :focus, [%{
+      result = GetLogs.focus(%{
         fromBlock: @from_block,
         toBlock: @from_block + 100, # Smaller range to reduce API load
         topic0: @transfer_topic,
         topic0_1_opr: "and",
         topic1: "0x0000000000000000000000000000000000000000000000000000000000000000",
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: logs}} when is_list(logs) ->
@@ -241,7 +237,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
   test "can fetch event logs with complex topic filtering" do
     # Wrap the API call in a try/rescue to handle potential errors
     try do
-      result = RateLimitedAPI.call_standard(GetLogs, :focus, [%{
+      result = GetLogs.focus(%{
         address: @chainlink_address,
         fromBlock: @chainlink_from_block,
         toBlock: @chainlink_from_block, # Using same block for from and to to reduce data
@@ -249,7 +245,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
         topic0_1_opr: "and",
         topic1: @chainlink_topic1,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: logs}} when is_list(logs) ->

@@ -1,22 +1,18 @@
 defmodule Lux.Integration.Etherscan.EthSupply2LensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.EthSupply2
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch ETH supply2 information" do
     assert {:ok, %{result: eth_supply_details, eth_supply_details: eth_supply_details}} =
-             RateLimitedAPI.call_standard(EthSupply2, :focus, [%{
+             EthSupply2.focus(%{
                chainid: 1
-             }])
+             })
 
     # Verify the structure of the response
     assert is_map(eth_supply_details)

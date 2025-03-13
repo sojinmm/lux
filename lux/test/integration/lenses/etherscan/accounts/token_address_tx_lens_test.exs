@@ -1,26 +1,22 @@
 defmodule Lux.Integration.Etherscan.TokenAddressTxLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.TokenAddressTx
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with ERC-20 token transfers
   @address "0x4e83362442b8d1bec281594cea3050c8eb01311c"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch ERC-20 transfers for an address" do
     assert {:ok, %{result: transfers}} =
-             RateLimitedAPI.call_standard(TokenAddressTx, :focus, [%{
+             TokenAddressTx.focus(%{
                address: @address,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(transfers)
@@ -49,12 +45,12 @@ defmodule Lux.Integration.Etherscan.TokenAddressTxLensTest do
 
   test "can fetch ERC-20 transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             RateLimitedAPI.call_standard(TokenAddressTx, :focus, [%{
+             TokenAddressTx.focus(%{
                address: @address,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5

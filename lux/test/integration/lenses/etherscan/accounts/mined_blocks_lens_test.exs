@@ -1,26 +1,22 @@
 defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.MinedBlocks
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address of a known miner/validator (Ethermine pool)
   @miner_address "0xea674fdde714fd979de3edf0f56aa9716b898ec8"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch mined blocks for an address" do
     assert {:ok, %{result: blocks}} =
-             RateLimitedAPI.call_standard(MinedBlocks, :focus, [%{
+             MinedBlocks.focus(%{
                address: @miner_address,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(blocks)
@@ -43,12 +39,12 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
 
   test "can fetch mined blocks with pagination" do
     assert {:ok, %{result: blocks}} =
-             RateLimitedAPI.call_standard(MinedBlocks, :focus, [%{
+             MinedBlocks.focus(%{
                address: @miner_address,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(blocks) <= 5
@@ -56,11 +52,11 @@ defmodule Lux.Integration.Etherscan.MinedBlocksLensTest do
 
   test "can fetch uncle blocks" do
     assert {:ok, %{result: blocks}} =
-             RateLimitedAPI.call_standard(MinedBlocks, :focus, [%{
+             MinedBlocks.focus(%{
                address: @miner_address,
                chainid: 1,
                blocktype: "uncles"
-             }])
+             })
 
     # We may or may not get uncle blocks, but the request should succeed
     assert is_list(blocks)

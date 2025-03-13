@@ -1,27 +1,23 @@
 defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.ContractCheckVerifyStatus
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example GUID from the documentation
   @example_guid "x3ryqcqr1zdknhfhkimqmizlcqpxncqc6nrvp3pgrcpfsqedqi"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can check verification status with example GUID" do
     # Note: This test might fail if the example GUID is no longer valid
     # In that case, we'll need to update the test with a new GUID
-    result = RateLimitedAPI.call_standard(ContractCheckVerifyStatus, :focus, [%{
+    result = ContractCheckVerifyStatus.focus(%{
       guid: @example_guid,
       chainid: 1
-    }])
+    })
 
     case result do
       {:ok, %{result: status_info}} ->

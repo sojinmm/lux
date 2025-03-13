@@ -1,10 +1,10 @@
 defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.BalanceHistory
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Ethereum Foundation address
   @eth_foundation "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
@@ -12,11 +12,7 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
   @block_number 8_000_000
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_pro_api()
-    :ok
-  end
+  setup :throttle_pro_api
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
@@ -30,11 +26,11 @@ defmodule Lux.Integration.Etherscan.BalanceHistoryLensTest do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
       assert {:ok, %{result: balance}} =
-               RateLimitedAPI.call_pro(BalanceHistory, :focus, [%{
+               BalanceHistory.focus(%{
                  address: @eth_foundation,
                  blockno: @block_number,
                  chainid: 1
-               }])
+               })
 
       # Convert balance from wei to ether for easier validation
       balance_in_eth = String.to_integer(balance) / 1.0e18

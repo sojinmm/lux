@@ -1,9 +1,9 @@
 defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.BalanceMulti
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Vitalik's address
   @vitalik "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
@@ -11,18 +11,14 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
   @eth_foundation "0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch ETH balances for multiple addresses" do
     assert {:ok, %{result: balances}} =
-             RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
+             BalanceMulti.focus(%{
                addresses: [@vitalik, @eth_foundation],
                chainid: 1
-             }])
+             })
 
     # Verify we got results for both addresses
     assert length(balances) == 2
@@ -46,11 +42,11 @@ defmodule Lux.Integration.Etherscan.BalanceMultiLensTest do
 
   test "can specify a different tag (block parameter)" do
     assert {:ok, %{result: balances}} =
-             RateLimitedAPI.call_standard(BalanceMulti, :focus, [%{
+             BalanceMulti.focus(%{
                addresses: [@vitalik, @eth_foundation],
                chainid: 1,
                tag: "latest"
-             }])
+             })
 
     assert length(balances) == 2
   end

@@ -1,9 +1,9 @@
 defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.ContractSourceCode
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
@@ -11,18 +11,14 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
   @uniswap_router "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch source code for a verified contract" do
     assert {:ok, %{result: source_info}} =
-             RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
+             ContractSourceCode.focus(%{
                address: @contract_address,
                chainid: 1
-             }])
+             })
 
     # Verify the source code structure
     assert is_map(source_info)
@@ -46,10 +42,10 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
 
   test "can fetch source code for another verified contract" do
     assert {:ok, %{result: source_info}} =
-             RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
+             ContractSourceCode.focus(%{
                address: @uniswap_router,
                chainid: 1
-             }])
+             })
 
     # Verify the source code structure
     assert is_map(source_info)
@@ -68,10 +64,10 @@ defmodule Lux.Integration.Etherscan.ContractSourceCodeLensTest do
     random_address = "0x000000000000000000000000000000000000dEaD"
 
     assert {:ok, %{result: source_info}} =
-             RateLimitedAPI.call_standard(ContractSourceCode, :focus, [%{
+             ContractSourceCode.focus(%{
                address: random_address,
                chainid: 1
-             }])
+             })
 
     # Verify the source code structure
     assert is_map(source_info)

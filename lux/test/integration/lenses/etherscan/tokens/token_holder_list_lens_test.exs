@@ -1,21 +1,17 @@
 defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenHolderList
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
@@ -29,10 +25,10 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
       assert {:ok, %{result: holders, token_holders: holders}} =
-               RateLimitedAPI.call_standard(TokenHolderList, :focus, [%{
+               TokenHolderList.focus(%{
                  contractaddress: @token_contract,
                  chainid: 1
-               }])
+               })
 
       # Verify the holders list structure
       assert is_list(holders)
@@ -53,12 +49,12 @@ defmodule Lux.Integration.Etherscan.TokenHolderListLensTest do
       offset = 5
 
       assert {:ok, %{result: holders}} =
-               RateLimitedAPI.call_standard(TokenHolderList, :focus, [%{
+               TokenHolderList.focus(%{
                  contractaddress: @token_contract,
                  page: 1,
                  offset: offset,
                  chainid: 1
-               }])
+               })
 
       # Verify the holders list structure
       assert is_list(holders)

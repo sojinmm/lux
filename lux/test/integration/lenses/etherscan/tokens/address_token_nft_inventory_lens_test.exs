@@ -1,11 +1,11 @@
 defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenNFTInventory
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example address that holds NFTs
   @nft_holder "0x123432244443b54409430979df8333f9308a6040"
@@ -13,11 +13,7 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   @nft_contract "0xed5af388653567af2f388e6224dc7c4b3241c544"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we're being rate limited
   defp rate_limited?(result) do
@@ -40,11 +36,11 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
   test "can fetch NFT inventory for an address filtered by contract" do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
-      result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
+      result = AddressTokenNFTInventory.focus(%{
         address: @nft_holder,
         contractaddress: @nft_contract,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: nfts, nft_inventory: nfts}} ->
@@ -82,13 +78,13 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTInventoryLensTest do
       # Using a small offset to test pagination
       offset = 5
 
-      result = RateLimitedAPI.call_standard(AddressTokenNFTInventory, :focus, [%{
+      result = AddressTokenNFTInventory.focus(%{
         address: @nft_holder,
         contractaddress: @nft_contract,
         page: 1,
         offset: offset,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: nfts}} ->

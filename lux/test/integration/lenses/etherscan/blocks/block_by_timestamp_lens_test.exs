@@ -1,27 +1,23 @@
 defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Unix timestamp (January 10, 2020)
   @timestamp 1_578_638_524
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch block number by timestamp with 'before' closest parameter" do
     assert {:ok, %{result: result}} =
-             RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
+             BlockByTimestamp.focus(%{
                timestamp: @timestamp,
                closest: "before",
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_map(result)
@@ -40,11 +36,11 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with 'after' closest parameter" do
     assert {:ok, %{result: result}} =
-             RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
+             BlockByTimestamp.focus(%{
                timestamp: @timestamp,
                closest: "after",
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_map(result)
@@ -63,10 +59,10 @@ defmodule Lux.Integration.Etherscan.BlockByTimestampLensTest do
 
   test "can fetch block number by timestamp with default parameters" do
     assert {:ok, %{result: result}} =
-             RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
+             BlockByTimestamp.focus(%{
                timestamp: @timestamp,
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_map(result)

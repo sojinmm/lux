@@ -1,26 +1,22 @@
 defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.TxListInternalAddress
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with internal transactions - using a more active address
   @address "0x7a250d5630b4cf539739df2c5dacb4c659f2488d" # Uniswap Router
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch internal transactions for an address" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxListInternalAddress, :focus, [%{
+             TxListInternalAddress.focus(%{
                address: @address,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(transactions)
@@ -47,12 +43,12 @@ defmodule Lux.Integration.Etherscan.TxListInternalAddressLensTest do
 
   test "can fetch internal transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxListInternalAddress, :focus, [%{
+             TxListInternalAddress.focus(%{
                address: @address,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transactions) <= 5

@@ -1,27 +1,23 @@
 defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.BlockReward
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block number with uncle rewards (from the example in the documentation)
   @block_number 2_165_403
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch block and uncle rewards for a specific block" do
     assert {:ok, %{result: result}} =
-             RateLimitedAPI.call_standard(BlockReward, :focus, [%{
+             BlockReward.focus(%{
                blockno: @block_number,
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_map(result)
@@ -64,20 +60,20 @@ defmodule Lux.Integration.Etherscan.BlockRewardLensTest do
     timestamp = DateTime.utc_now() |> DateTime.add(-5 * 60, :second) |> DateTime.to_unix()
 
     {:ok, %{result: recent_block_result}} =
-      RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
+      BlockByTimestamp.focus(%{
         timestamp: timestamp,
         closest: "before",
         chainid: 1
-      }])
+      })
 
     # Parse the recent block number
     recent_block = String.to_integer(recent_block_result.block_number)
 
     assert {:ok, %{result: result}} =
-             RateLimitedAPI.call_standard(BlockReward, :focus, [%{
+             BlockReward.focus(%{
                blockno: recent_block,
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_map(result)

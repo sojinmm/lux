@@ -1,22 +1,18 @@
 defmodule Lux.Integration.Etherscan.EthPriceLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.EthPrice
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch ETH price information" do
     assert {:ok, %{result: eth_price, eth_price: eth_price}} =
-             RateLimitedAPI.call_standard(EthPrice, :focus, [%{
+             EthPrice.focus(%{
                chainid: 1
-             }])
+             })
 
     # Verify the structure of the response
     assert is_map(eth_price)
@@ -41,9 +37,9 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
   test "can fetch ETH price for a different chain" do
     # This test just verifies that we can specify a different chain
     # The actual result may vary depending on the chain
-    result = RateLimitedAPI.call_standard(EthPrice, :focus, [%{
+    result = EthPrice.focus(%{
       chainid: 137 # Polygon
-    }])
+    })
 
     case result do
       {:ok, %{result: eth_price}} ->

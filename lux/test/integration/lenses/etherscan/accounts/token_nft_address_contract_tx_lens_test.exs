@@ -1,9 +1,9 @@
 defmodule Lux.Integration.Etherscan.TokenNftAddressContractTxLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.TokenNftAddressContractTx
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with NFT transfers
   @address "0x6975be450864c02b4613023c2152ee0743572325"
@@ -11,19 +11,15 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressContractTxLensTest do
   @contract_address "0x06012c8cf97bead5deae237070f9587f8e7a266d"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch NFT transfers for an address filtered by contract" do
     assert {:ok, %{result: transfers}} =
-             RateLimitedAPI.call_standard(TokenNftAddressContractTx, :focus, [%{
+             TokenNftAddressContractTx.focus(%{
                address: @address,
                contractaddress: @contract_address,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(transfers)
@@ -52,13 +48,13 @@ defmodule Lux.Integration.Etherscan.TokenNftAddressContractTxLensTest do
 
   test "can fetch NFT transfers with pagination" do
     assert {:ok, %{result: transfers}} =
-             RateLimitedAPI.call_standard(TokenNftAddressContractTx, :focus, [%{
+             TokenNftAddressContractTx.focus(%{
                address: @address,
                contractaddress: @contract_address,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transfers) <= 5

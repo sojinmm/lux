@@ -1,26 +1,22 @@
 defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.BeaconWithdrawal
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with beacon withdrawals
   @withdrawal_address "0xB9D7934878B5FB9610B3fE8A5e441e8fad7E293f"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch beacon withdrawals for an address" do
     assert {:ok, %{result: withdrawals}} =
-             RateLimitedAPI.call_standard(BeaconWithdrawal, :focus, [%{
+             BeaconWithdrawal.focus(%{
                address: @withdrawal_address,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(withdrawals)
@@ -44,12 +40,12 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
 
   test "can fetch beacon withdrawals with pagination" do
     assert {:ok, %{result: withdrawals}} =
-             RateLimitedAPI.call_standard(BeaconWithdrawal, :focus, [%{
+             BeaconWithdrawal.focus(%{
                address: @withdrawal_address,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(withdrawals) <= 5
@@ -57,12 +53,12 @@ defmodule Lux.Integration.Etherscan.BeaconWithdrawalLensTest do
 
   test "can specify a block range for withdrawals" do
     assert {:ok, %{result: withdrawals}} =
-             RateLimitedAPI.call_standard(BeaconWithdrawal, :focus, [%{
+             BeaconWithdrawal.focus(%{
                address: @withdrawal_address,
                chainid: 1,
                startblock: 17_000_000,
                endblock: 18_000_000
-             }])
+             })
 
     # Verify we got results
     assert is_list(withdrawals)

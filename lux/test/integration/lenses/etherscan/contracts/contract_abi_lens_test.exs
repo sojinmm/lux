@@ -1,9 +1,9 @@
 defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.ContractAbi
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # The DAO contract address (verified contract from the example in the documentation)
   @contract_address "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413"
@@ -11,18 +11,14 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
   @uniswap_router "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch ABI for a verified contract" do
     assert {:ok, %{result: abi}} =
-             RateLimitedAPI.call_standard(ContractAbi, :focus, [%{
+             ContractAbi.focus(%{
                address: @contract_address,
                chainid: 1
-             }])
+             })
 
     # Verify the ABI structure
     assert is_list(abi)
@@ -43,10 +39,10 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
 
   test "can fetch ABI for another verified contract" do
     assert {:ok, %{result: abi}} =
-             RateLimitedAPI.call_standard(ContractAbi, :focus, [%{
+             ContractAbi.focus(%{
                address: @uniswap_router,
                chainid: 1
-             }])
+             })
 
     # Verify the ABI structure
     assert is_list(abi)

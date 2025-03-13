@@ -1,9 +1,9 @@
 defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.ContractCreation
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Contract addresses from the example in the documentation
   @contract_addresses "0xB83c27805aAcA5C7082eB45C868d955Cf04C337F,0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45,0xe4462eb568E2DFbb5b0cA2D3DbB1A35C9Aa98aad"
@@ -11,18 +11,14 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
   @single_contract "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch contract creation info for multiple contracts" do
     assert {:ok, %{result: contracts}} =
-             RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
+             ContractCreation.focus(%{
                contractaddresses: @contract_addresses,
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_list(contracts)
@@ -48,10 +44,10 @@ defmodule Lux.Integration.Etherscan.ContractCreationLensTest do
 
   test "can fetch contract creation info for a single contract" do
     assert {:ok, %{result: contracts}} =
-             RateLimitedAPI.call_standard(ContractCreation, :focus, [%{
+             ContractCreation.focus(%{
                contractaddresses: @single_contract,
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_list(contracts)

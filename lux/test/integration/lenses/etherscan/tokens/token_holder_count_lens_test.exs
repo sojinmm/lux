@@ -1,21 +1,17 @@
 defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenHolderCount
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
@@ -29,10 +25,10 @@ defmodule Lux.Integration.Etherscan.TokenHolderCountLensTest do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
       assert {:ok, %{result: count, holder_count: count}} =
-               RateLimitedAPI.call_standard(TokenHolderCount, :focus, [%{
+               TokenHolderCount.focus(%{
                  contractaddress: @token_contract,
                  chainid: 1
-               }])
+               })
 
       # Verify the count is a valid string representing a number
       assert is_binary(count)

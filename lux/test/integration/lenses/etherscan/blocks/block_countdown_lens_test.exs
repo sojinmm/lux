@@ -1,28 +1,24 @@
 defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.BlockCountdown
   alias Lux.Lenses.Etherscan.BlockByTimestamp
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch block countdown for a future block" do
     # Get the current block by using the current timestamp
     current_timestamp = DateTime.utc_now() |> DateTime.to_unix()
 
     {:ok, %{result: current_block_result}} =
-      RateLimitedAPI.call_standard(BlockByTimestamp, :focus, [%{
+      BlockByTimestamp.focus(%{
         timestamp: current_timestamp,
         closest: "before",
         chainid: 1
-      }])
+      })
 
     # Parse the current block number
     current_block = String.to_integer(current_block_result.block_number)
@@ -31,10 +27,10 @@ defmodule Lux.Integration.Etherscan.BlockCountdownLensTest do
     future_block = current_block + 1000
 
     assert {:ok, %{result: result}} =
-             RateLimitedAPI.call_standard(BlockCountdown, :focus, [%{
+             BlockCountdown.focus(%{
                blockno: future_block,
                chainid: 1
-             }])
+             })
 
     # Verify the result structure
     assert is_map(result)

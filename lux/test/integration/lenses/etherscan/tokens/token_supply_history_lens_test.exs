@@ -1,10 +1,10 @@
 defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenSupplyHistory
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
   alias Lux.Lenses.Etherscan.Base
 
   # Example ERC-20 token contract address (LINK token)
@@ -13,11 +13,7 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   @block_number 8_000_000
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we're being rate limited
   defp rate_limited?(result) do
@@ -40,11 +36,11 @@ defmodule Lux.Integration.Etherscan.TokenSupplyHistoryLensTest do
   test "can fetch historical token supply at a specific block" do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
-      result = RateLimitedAPI.call_standard(TokenSupplyHistory, :focus, [%{
+      result = TokenSupplyHistory.focus(%{
         contractaddress: @token_contract,
         blockno: @block_number,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: supply, token_supply: supply}} ->

@@ -1,21 +1,17 @@
 defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.TokenInfo
-  alias Lux.Integration.Etherscan.RateLimitedAPI
   alias Lux.Lenses.Etherscan.Base
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example ERC-20 token contract address (LINK token)
   @token_contract "0x514910771af9ca656af840dff83e8264ecf986ca"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we're being rate limited
   defp rate_limited?(result) do
@@ -38,10 +34,10 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
   test "can fetch token info" do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
-      result = RateLimitedAPI.call_standard(TokenInfo, :focus, [%{
+      result = TokenInfo.focus(%{
         contractaddress: @token_contract,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: token_info, token_info: token_info}} ->
@@ -55,7 +51,7 @@ defmodule Lux.Integration.Etherscan.TokenInfoLensTest do
           assert Map.has_key?(token, :token_name)
           assert Map.has_key?(token, :symbol)
           assert Map.has_key?(token, :token_type)
-          
+
           # Verify token data is valid
           assert is_binary(token.token_name)
           assert is_binary(token.symbol)

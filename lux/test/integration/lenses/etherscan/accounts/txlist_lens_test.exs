@@ -1,26 +1,22 @@
 defmodule Lux.Integration.Etherscan.TxListLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.TxList
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Address with normal transactions (Vitalik's address)
   @address "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch normal transactions for an address" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxList, :focus, [%{
+             TxList.focus(%{
                address: @address,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(transactions)
@@ -55,12 +51,12 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can fetch transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxList, :focus, [%{
+             TxList.focus(%{
                address: @address,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transactions) <= 5
@@ -68,12 +64,12 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can specify a block range for transactions" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxList, :focus, [%{
+             TxList.focus(%{
                address: @address,
                chainid: 1,
                startblock: 10_000_000,
                endblock: 15_000_000
-             }])
+             })
 
     # Verify we got results
     assert is_list(transactions)
@@ -90,11 +86,11 @@ defmodule Lux.Integration.Etherscan.TxListLensTest do
 
   test "can sort transactions in descending order" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxList, :focus, [%{
+             TxList.focus(%{
                address: @address,
                chainid: 1,
                sort: "desc"
-             }])
+             })
 
     # Verify we got results
     assert is_list(transactions)

@@ -1,22 +1,18 @@
 defmodule Lux.Integration.Etherscan.NodeCountLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.NodeCount
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch node count" do
     assert {:ok, %{result: node_count, node_count: node_count}} =
-             RateLimitedAPI.call_standard(NodeCount, :focus, [%{
+             NodeCount.focus(%{
                chainid: 1
-             }])
+             })
 
     # Verify the structure of the response
     assert is_map(node_count)

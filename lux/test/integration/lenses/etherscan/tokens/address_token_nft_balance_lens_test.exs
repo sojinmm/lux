@@ -1,21 +1,17 @@
 defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.AddressTokenNFTBalance
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example address that holds NFTs
   @nft_holder "0x6b52e83941eb10f9c613c395a834457559a80114"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we're being rate limited
   defp rate_limited?(result) do
@@ -38,10 +34,10 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
   test "can fetch NFT balances for an address" do
     # Skip this test if we don't have a Pro API key
     if has_pro_api_key?() do
-      result = RateLimitedAPI.call_standard(AddressTokenNFTBalance, :focus, [%{
+      result = AddressTokenNFTBalance.focus(%{
         address: @nft_holder,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: nfts, nft_balances: nfts}} ->
@@ -79,12 +75,12 @@ defmodule Lux.Integration.Etherscan.AddressTokenNFTBalanceLensTest do
       # Using a small offset to test pagination
       offset = 5
 
-      result = RateLimitedAPI.call_standard(AddressTokenNFTBalance, :focus, [%{
+      result = AddressTokenNFTBalance.focus(%{
         address: @nft_holder,
         page: 1,
         offset: offset,
         chainid: 1
-      }])
+      })
 
       case result do
         {:ok, %{result: nfts}} ->

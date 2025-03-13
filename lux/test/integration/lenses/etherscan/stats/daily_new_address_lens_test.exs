@@ -1,22 +1,18 @@
 defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
   @moduletag timeout: 120_000
 
   alias Lux.Lenses.Etherscan.DailyNewAddress
   alias Lux.Lenses.Etherscan.Base
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Example date range (one month)
   @start_date "2023-01-01"
   @end_date "2023-01-31"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   # Helper function to check if we have a Pro API key
   defp has_pro_api_key? do
@@ -30,11 +26,11 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if has_pro_api_key?() do
       assert {:ok, %{result: new_address_data}} =
-               RateLimitedAPI.call_standard(DailyNewAddress, :focus, [%{
+               DailyNewAddress.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  chainid: 1
-               }])
+               })
 
       # Verify the structure of the response
       assert is_list(new_address_data)
@@ -55,12 +51,12 @@ defmodule Lux.Integration.Etherscan.DailyNewAddressLensTest do
     # Skip this test if we don't have a Pro API key or if the action name is invalid
     if has_pro_api_key?() do
       assert {:ok, %{result: new_address_data}} =
-               RateLimitedAPI.call_standard(DailyNewAddress, :focus, [%{
+               DailyNewAddress.focus(%{
                  startdate: @start_date,
                  enddate: @end_date,
                  sort: "desc",
                  chainid: 1
-               }])
+               })
 
       # Verify the structure of the response
       assert is_list(new_address_data)

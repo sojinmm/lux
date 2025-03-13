@@ -31,13 +31,7 @@ defmodule IntegrationCase do
   using do
     quote do
       @moduletag :integration
-      
+
     end
-  end
-  
-  # Add a setup callback that will be run before each test
-  setup do
-    # Hammer is now configured in config.exs
-    :ok
   end
 end

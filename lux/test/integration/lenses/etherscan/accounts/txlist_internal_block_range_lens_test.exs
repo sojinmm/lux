@@ -1,28 +1,24 @@
 defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.TxListInternalBlockRange
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Block range with internal transactions
   @startblock 13_481_773
   @endblock 13_491_773
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch internal transactions for a block range" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxListInternalBlockRange, :focus, [%{
+             TxListInternalBlockRange.focus(%{
                startblock: @startblock,
                endblock: @endblock,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(transactions)
@@ -49,13 +45,13 @@ defmodule Lux.Integration.Etherscan.TxListInternalBlockRangeLensTest do
 
   test "can fetch internal transactions with pagination" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxListInternalBlockRange, :focus, [%{
+             TxListInternalBlockRange.focus(%{
                startblock: @startblock,
                endblock: @endblock,
                chainid: 1,
                page: 1,
                offset: 5
-             }])
+             })
 
     # Verify we got at most 5 results due to the offset parameter
     assert length(transactions) <= 5

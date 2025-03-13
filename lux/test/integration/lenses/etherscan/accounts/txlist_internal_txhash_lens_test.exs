@@ -1,26 +1,22 @@
 defmodule Lux.Integration.Etherscan.TxListInternalTxhashLensTest do
   @moduledoc false
-  use IntegrationCase, async: false
+  use IntegrationCase, async: true
 
   alias Lux.Lenses.Etherscan.TxListInternalTxhash
-  alias Lux.Integration.Etherscan.RateLimitedAPI
+  import Lux.Integration.Etherscan.RateLimitedAPI
 
   # Transaction hash with internal transactions
   @txhash "0x40eb908387324f2b575b4879cd9d7188f69c8fc9d87c901b9e2daaea4b442170"
 
   # Add a delay between tests to avoid hitting the API rate limit
-  setup do
-    # Use our rate limiter instead of Process.sleep
-    RateLimitedAPI.throttle_standard_api()
-    :ok
-  end
+  setup :throttle_standard_api
 
   test "can fetch internal transactions for a transaction hash" do
     assert {:ok, %{result: transactions}} =
-             RateLimitedAPI.call_standard(TxListInternalTxhash, :focus, [%{
+             TxListInternalTxhash.focus(%{
                txhash: @txhash,
                chainid: 1
-             }])
+             })
 
     # Verify we got results
     assert is_list(transactions)
