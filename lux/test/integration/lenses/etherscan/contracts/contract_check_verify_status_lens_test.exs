@@ -33,7 +33,7 @@ defmodule Lux.Integration.Etherscan.ContractCheckVerifyStatusLensTest do
         assert is_binary(status_info.message)
         assert String.length(status_info.message) > 0
 
-      {:error, error} ->
+      {:error, _error} ->
         # If the GUID is no longer valid, it might return an error
         # This is also acceptable for this test
         assert true

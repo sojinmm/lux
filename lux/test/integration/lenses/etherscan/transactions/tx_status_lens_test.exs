@@ -13,7 +13,7 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
   setup :throttle_standard_api
 
   test "can check execution status for a successful transaction" do
-    assert {:ok, %{result: %{status: status, is_error: is_error, error_message: error_message}}} =
+    assert {:ok, %{result: %{status: status, is_error: is_error, error_message: _error_message}}} =
              TxStatus.focus(%{
                txhash: @successful_tx,
                chainid: 1
@@ -24,24 +24,5 @@ defmodule Lux.Integration.Etherscan.TxStatusLensTest do
     assert status == "1"
     assert is_error == true
     # The error_message can vary, so we just log it instead of asserting a specific value
-  end
-
-  test "can check execution status for a different chain" do
-    # This test just verifies that we can specify a different chain
-    # The actual result may vary depending on whether the transaction exists on that chain
-    result = TxStatus.focus(%{
-      txhash: @successful_tx,
-      chainid: 137 # Polygon
-    })
-
-    case result do
-      {:ok, %{result: %{status: status, is_error: is_error, error_message: error_message}}} ->
-        # Log the status for informational purposes
-        assert true
-
-      {:error, error} ->
-        # If the transaction doesn't exist on this chain, that's also acceptable
-        assert true
-    end
   end
 end

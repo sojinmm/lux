@@ -27,10 +27,10 @@ defmodule Lux.Integration.Etherscan.EthSupplyLensTest do
     })
 
     case result do
-      {:ok, %{result: eth_supply}} ->
+      {:ok, %{result: _eth_supply}} ->
         assert true
 
-      {:error, error} ->
+      {:error, _error} ->
         # If the endpoint doesn't exist on this chain, that's also acceptable
         assert true
     end

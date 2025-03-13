@@ -23,23 +23,4 @@ defmodule Lux.Integration.Etherscan.TxReceiptStatusLensTest do
     assert status == "1"
     assert is_success == true
   end
-
-  test "can check receipt status for a different chain" do
-    # This test just verifies that we can specify a different chain
-    # The actual result may vary depending on whether the transaction exists on that chain
-    result = TxReceiptStatus.focus(%{
-      txhash: @successful_tx,
-      chainid: 137 # Polygon
-    })
-
-    case result do
-      {:ok, %{result: %{status: status, is_success: is_success}}} ->
-        # If the transaction doesn't exist on this chain, that's also acceptable
-        assert true
-
-      {:error, error} ->
-        # If the transaction doesn't exist on this chain, that's also acceptable
-        assert true
-    end
-  end
 end

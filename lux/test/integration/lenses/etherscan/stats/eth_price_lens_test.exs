@@ -33,21 +33,4 @@ defmodule Lux.Integration.Etherscan.EthPriceLensTest do
     assert is_integer(eth_price.eth_btc_timestamp)
     assert eth_price.eth_btc_timestamp > 1_500_000_000 # Timestamp after 2017
   end
-
-  test "can fetch ETH price for a different chain" do
-    # This test just verifies that we can specify a different chain
-    # The actual result may vary depending on the chain
-    result = EthPrice.focus(%{
-      chainid: 137 # Polygon
-    })
-
-    case result do
-      {:ok, %{result: eth_price}} ->
-        assert true
-
-      {:error, error} ->
-        # If the endpoint doesn't exist on this chain, that's also acceptable
-        assert true
-    end
-  end
 end

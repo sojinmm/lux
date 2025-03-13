@@ -27,14 +27,6 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
     assert Enum.any?(abi, fn item ->
       is_map(item) && Map.has_key?(item, "type")
     end)
-
-    # Log some information about the ABI for informational purposes
-    function_count = Enum.count(abi, fn item ->
-      is_map(item) && Map.get(item, "type") == "function"
-    end)
-    event_count = Enum.count(abi, fn item ->
-      is_map(item) && Map.get(item, "type") == "event"
-    end)
   end
 
   test "can fetch ABI for another verified contract" do
@@ -50,11 +42,6 @@ defmodule Lux.Integration.Etherscan.ContractAbiLensTest do
     # Check that the ABI contains function definitions
     assert Enum.any?(abi, fn item ->
       is_map(item) && Map.has_key?(item, "type")
-    end)
-
-    # Log some information about the ABI for informational purposes
-    function_count = Enum.count(abi, fn item ->
-      is_map(item) && Map.get(item, "type") == "function"
     end)
   end
 end

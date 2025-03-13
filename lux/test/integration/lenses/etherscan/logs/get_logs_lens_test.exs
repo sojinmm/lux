@@ -94,7 +94,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
             assert true
           end
 
-        {:ok, %{result: result}} ->
+        {:ok, %{result: _result}} ->
           # Handle case where result is not a list
           assert true
 
@@ -109,11 +109,11 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
           end
       end
     rescue
-      e in FunctionClauseError ->
+      _e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
         assert true
 
-      e ->
+      _e ->
         # Log any other errors but don't fail the test
         assert true
     end
@@ -143,7 +143,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
           # Verify we got at most the number of logs specified by the offset
           assert length(logs) <= offset
 
-        {:ok, %{result: result}} ->
+        {:ok, %{result: _result}} ->
           # Handle case where result is not a list
           assert true
 
@@ -158,11 +158,11 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
           end
       end
     rescue
-      e in FunctionClauseError ->
+      _e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
         assert true
 
-      e ->
+      _e ->
         # Log any other errors but don't fail the test
         assert true
     end
@@ -208,7 +208,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
             assert true
           end
 
-        {:ok, %{result: result}} ->
+        {:ok, %{result: _result}} ->
           # Handle case where result is not a list
           assert true
 
@@ -223,11 +223,11 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
           end
       end
     rescue
-      e in FunctionClauseError ->
+      _e in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
         assert true
 
-      e ->
+      _e ->
         # Log any other errors but don't fail the test
         assert true
     end
@@ -272,7 +272,7 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
             assert true
           end
 
-        {:ok, %{result: result}} ->
+        {:ok, %{result: _result}} ->
           # Handle case where result is not a list
           assert true
 
@@ -287,11 +287,11 @@ defmodule Lux.Integration.Etherscan.GetLogsLensTest do
           end
       end
     rescue
-      e in FunctionClauseError ->
+      _ in FunctionClauseError ->
         # Handle the specific error we're seeing with String.contains?/2
         assert true
 
-      e ->
+      _e ->
         # Log any other errors but don't fail the test
         assert true
     end
