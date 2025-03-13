@@ -45,3 +45,17 @@ if config_env() in [:dev, :test] do
   config :logger,
     level: env!("LOG_LEVEL", :atom!, :debug)
 end
+
+
+if config_env() == :test do
+  # Add Hammer configuration
+  config :hammer,
+    backend: {Hammer.Backend.ETS,
+      [
+        expiry_ms: 60_000 * 60 * 4,       # 4 hours
+        cleanup_interval_ms: 60_000 * 10,  # 10 minutes
+        pool_size: 1,
+        pool_max_overflow: 2
+      ]
+    }
+end
