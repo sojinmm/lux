@@ -91,6 +91,15 @@ defmodule Lux.Config do
     |> Keyword.get(:wallet_address, "")
   end
 
+  @doc """
+  Gets the Discord bot token from configuration.
+  Raises if the token is not configured.
+  """
+  @spec discord_bot_token() :: api_key()
+  def discord_bot_token do
+    get_required_key(:api_keys, :discord)
+  end
+
   @doc false
   defp get_required_key(group, key) do
     :lux

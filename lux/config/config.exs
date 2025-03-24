@@ -6,6 +6,10 @@ config :lux, :open_ai_models,
   default: "gpt-4o-mini",
   smartest: "gpt-4o"
 
+# API Keys
+config :lux, :api_keys,
+  discord: System.get_env("DISCORD_BOT_TOKEN", "test_bot_token")
+
 config :venomous, :snake_manager, %{
   snake_ttl_minutes: 10,
   perpetual_workers: 2,

@@ -92,25 +92,30 @@ defmodule Lux.Prisms.Discord.Messages.SendMessagePrism do
   Handles the request to send a message to a Discord channel.
   """
   def handler(%{channel_id: channel_id, content: content} = input, %{agent: agent} = _ctx) do
-    Logger.info("Agent #{agent.name} sending message to channel #{channel_id}")
+    case validate(input) do
+      :ok ->
+        Logger.info("Agent #{agent.name} sending message to channel #{channel_id}")
 
-    message_params = %{
-      content: content,
-      tts: input[:tts] || false
-    }
-    |> maybe_add_reference(input[:reference_id])
+        message_params = %{
+          content: content,
+          tts: input[:tts] || false
+        }
+        |> maybe_add_reference(input[:reference_id])
 
-    case DiscordLens.focus(%{
-      endpoint: "/channels/#{channel_id}/messages",
-      method: :post,
-      body: message_params
-    }) do
-      {:ok, response} ->
-        Logger.info("Successfully sent message to channel #{channel_id}")
-        {:ok, %{message: response}}
+        case DiscordLens.focus(%{
+          endpoint: "/channels/#{channel_id}/messages",
+          method: :post,
+          body: message_params
+        }) do
+          {:ok, response} ->
+            Logger.info("Successfully sent message to channel #{channel_id}")
+            {:ok, %{message: response}}
+          {:error, reason} ->
+            Logger.error("Failed to send Discord message: #{inspect(reason)}")
+            handle_discord_error(reason)
+        end
       {:error, reason} ->
-        Logger.error("Failed to send Discord message: #{inspect(reason)}")
-        handle_discord_error(reason)
+        {:error, reason}
     end
   end
 
@@ -124,7 +129,7 @@ defmodule Lux.Prisms.Discord.Messages.SendMessagePrism do
     else
       with {:ok, _} <- validate_channel_id(input.channel_id),
            {:ok, _} <- validate_content(input.content),
-           {:ok, _} <- validate_tts(input[:tts]) do
+           {:ok, _} <- validate_optional_tts(input[:tts]) do
         :ok
       end
     end
@@ -139,11 +144,18 @@ defmodule Lux.Prisms.Discord.Messages.SendMessagePrism do
   end
   defp validate_channel_id(_), do: {:error, "channel_id must be a string"}
 
-  defp validate_content(content) when is_binary(content) and byte_size(content) in 1..2000, do: {:ok, content}
-  defp validate_content(_), do: {:error, "content must be a string between 1 and 2000 characters"}
+  defp validate_content(content) when is_binary(content) do
+    cond do
+      String.length(content) < 1 -> {:error, "content must not be empty"}
+      String.length(content) > 2000 -> {:error, "content must not exceed 2000 characters"}
+      true -> {:ok, content}
+    end
+  end
+  defp validate_content(_), do: {:error, "content must be a string"}
 
-  defp validate_tts(tts) when is_boolean(tts), do: {:ok, tts}
-  defp validate_tts(_), do: {:error, "tts must be a boolean"}
+  defp validate_optional_tts(nil), do: {:ok, nil}
+  defp validate_optional_tts(tts) when is_boolean(tts), do: {:ok, tts}
+  defp validate_optional_tts(_), do: {:error, "tts must be a boolean"}
 
   defp validate_reference_id(nil), do: {:ok, nil}
   defp validate_reference_id(id) when is_binary(id) do
