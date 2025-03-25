@@ -14,6 +14,7 @@ config :lux, env: config_env()
 
 if config_env() in [:dev, :test] do
   config :lux, :api_keys,
+    discord: env!("DISCORD_BOT_TOKEN", :string!, default: "discord-token"),
     alchemy: env!("ALCHEMY_API_KEY", :string!),
     openai: env!("OPENAI_API_KEY", :string!),
     anthropic: env!("ANTHROPIC_API_KEY", :string!),
