@@ -14,19 +14,19 @@ config :lux, env: config_env()
 
 if config_env() in [:dev, :test] do
   config :lux, :api_keys,
-    alchemy: env!("ALCHEMY_API_KEY", :string!),
-    openai: env!("OPENAI_API_KEY", :string!),
-    anthropic: env!("ANTHROPIC_API_KEY", :string!),
-    openweather: env!("OPENWEATHER_API_KEY", :string!),
-    transpose: env!("TRANSPOSE_API_KEY", :string!),
-    discord: env!("DISCORD_API_KEY", :string!),
-    etherscan: env!("ETHERSCAN_API_KEY", :string!),
+    alchemy: env!("ALCHEMY_API_KEY", :string!, "missing alchemy"),
+    openai: env!("OPENAI_API_KEY", :string!, "missing open ai"),
+    anthropic: env!("ANTHROPIC_API_KEY", :string!, "missing anthropic"),
+    openweather: env!("OPENWEATHER_API_KEY", :string!, "missing open weather"),
+    transpose: env!("TRANSPOSE_API_KEY", :string!, "missing transpose"),
+    discord: env!("DISCORD_API_KEY", :string!, "missing discord"),
+    etherscan: env!("ETHERSCAN_API_KEY", :string!, "missing etherscan"),
     etherscan_pro: env!("ETHERSCAN_API_KEY_PRO", :string!, required: false) == "true",
-    integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!),
-    integration_anthropic: env!("INTEGRATION_ANTHROPIC_API_KEY", :string!),
-    integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!),
-    integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!),
-    integration_discord: env!("INTEGRATION_DISCORD_API_KEY", :string!)
+    integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!, "missing open ai"),
+    integration_anthropic: env!("INTEGRATION_ANTHROPIC_API_KEY", :string!, "missing anthropic"),
+    integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!, "missing open weather"),
+    integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, "missing transpose"),
+    integration_discord: env!("INTEGRATION_DISCORD_API_KEY", :string!, "missing discord")
 
   config :lux, :accounts,
     wallet_address: env!("WALLET_ADDRESS", :string!),
