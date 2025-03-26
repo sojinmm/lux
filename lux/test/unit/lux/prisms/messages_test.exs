@@ -1,5 +1,5 @@
 defmodule Lux.Prisms.Discord.MessagesTest do
-  use ExUnit.Case
+  use Lux.UnitCase, async: true
   import Mock
 
   alias Lux.Prisms.Discord.Messages.{

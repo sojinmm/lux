@@ -71,110 +71,31 @@ defmodule Lux.Prisms.Discord.Messages.SendMessagePrism do
       required: ["message"]
     }
 
-  alias Lux.Lenses.DiscordLens
+  alias Lux.Integrations.Discord.Client
   require Logger
-
-  # Discord API error codes
-  @discord_errors %{
-    10003 => "Unknown channel",
-    50001 => "Missing access",
-    50013 => "Missing permissions",
-    50006 => "Cannot send empty message",
-    50035 => "Invalid form body",
-    10008 => "Unknown message",
-    50016 => "Rate limited",
-    40005 => "Request entity too large",
-    50007 => "Cannot send messages to this user",
-    50008 => "Cannot send messages in a voice channel"
-  }
 
   @doc """
   Handles the request to send a message to a Discord channel.
   """
   def handler(%{channel_id: channel_id, content: content} = input, %{agent: agent} = _ctx) do
-    case validate(input) do
-      :ok ->
-        Logger.info("Agent #{agent.name} sending message to channel #{channel_id}")
+    Logger.info("Agent #{agent.name} sending message to channel #{channel_id}")
 
-        message_params = %{
-          content: content,
-          tts: input[:tts] || false
-        }
-        |> maybe_add_reference(input[:reference_id])
+    message_params = %{
+      content: content,
+      tts: input[:tts] || false
+    }
+    |> maybe_add_reference(input[:reference_id])
 
-        case DiscordLens.focus(%{
-          endpoint: "/channels/#{channel_id}/messages",
-          method: :post,
-          body: message_params
-        }) do
-          {:ok, response} ->
-            Logger.info("Successfully sent message to channel #{channel_id}")
-            {:ok, %{message: response}}
-          {:error, reason} ->
-            Logger.error("Failed to send Discord message: #{inspect(reason)}")
-            handle_discord_error(reason)
-        end
-      {:error, reason} ->
-        {:error, reason}
+    case Client.request(:post, "/channels/#{channel_id}/messages", json: message_params) do
+      {:ok, response} ->
+        Logger.info("Successfully sent message to channel #{channel_id}")
+        {:ok, %{message: response}}
+      error -> error
     end
   end
-
-  @doc """
-  Validates the input parameters.
-  """
-  def validate(input) do
-    # Check required fields directly
-    if not (Map.has_key?(input, :channel_id) and Map.has_key?(input, :content)) do
-      {:error, "Missing required fields: channel_id, content"}
-    else
-      with {:ok, _} <- validate_channel_id(input.channel_id),
-           {:ok, _} <- validate_content(input.content),
-           {:ok, _} <- validate_optional_tts(input[:tts]) do
-        :ok
-      end
-    end
-  end
-
-  defp validate_channel_id(channel_id) when is_binary(channel_id) do
-    if Regex.match?(~r/^[0-9]{17,20}$/, channel_id) do
-      {:ok, channel_id}
-    else
-      {:error, "channel_id must be a valid Discord ID (17-20 digits)"}
-    end
-  end
-  defp validate_channel_id(_), do: {:error, "channel_id must be a string"}
-
-  defp validate_content(content) when is_binary(content) do
-    cond do
-      String.length(content) < 1 -> {:error, "content must not be empty"}
-      String.length(content) > 2000 -> {:error, "content must not exceed 2000 characters"}
-      true -> {:ok, content}
-    end
-  end
-  defp validate_content(_), do: {:error, "content must be a string"}
-
-  defp validate_optional_tts(nil), do: {:ok, nil}
-  defp validate_optional_tts(tts) when is_boolean(tts), do: {:ok, tts}
-  defp validate_optional_tts(_), do: {:error, "tts must be a boolean"}
-
-  defp validate_reference_id(nil), do: {:ok, nil}
-  defp validate_reference_id(id) when is_binary(id) do
-    if Regex.match?(~r/^[0-9]{17,20}$/, id) do
-      {:ok, id}
-    else
-      {:error, "reference_id must be a valid Discord message ID (17-20 digits)"}
-    end
-  end
-  defp validate_reference_id(_), do: {:error, "reference_id must be a string"}
 
   defp maybe_add_reference(params, nil), do: params
   defp maybe_add_reference(params, reference_id) do
     Map.put(params, :message_reference, %{message_id: reference_id})
   end
-
-  defp handle_discord_error(%{"code" => code} = error) do
-    error_message = @discord_errors[code] || "Unknown Discord error"
-    {:error, "#{error_message} (code: #{code}): #{error["message"]}"}
-  end
-  defp handle_discord_error(error), do: {:error, "Unexpected error: #{inspect(error)}"}
 end

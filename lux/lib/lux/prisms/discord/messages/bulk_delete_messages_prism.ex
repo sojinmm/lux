@@ -56,19 +56,8 @@ defmodule Lux.Prisms.Discord.Messages.BulkDeleteMessagesPrism do
       required: ["deleted", "count"]
     }
 
-  alias Lux.Lenses.DiscordLens
+  alias Lux.Integrations.Discord.Client
   require Logger
-
-  # Discord API error codes
-  @discord_errors %{
-    10003 => "Unknown channel",
-    10008 => "Unknown message",
-    50001 => "Missing access",
-    50013 => "Missing permissions",
-    50034 => "Messages provided are too old for bulk deletion",
-    50035 => "Invalid form body",
-    50021 => "Cannot execute action on this channel type"
-  }
 
   @doc """
   Handles the request to bulk delete messages in a Discord channel.
@@ -78,78 +67,15 @@ defmodule Lux.Prisms.Discord.Messages.BulkDeleteMessagesPrism do
 
     headers = if input[:reason], do: [{"X-Audit-Log-Reason", input.reason}], else: []
 
-    case DiscordLens.focus(%{
-      endpoint: "/channels/#{channel_id}/messages/bulk-delete",
-      method: :post,
-      body: %{messages: message_ids},
+    case Client.request(:post, "/channels/#{channel_id}/messages/bulk-delete",
+      json: %{messages: message_ids},
       headers: headers
-    }) do
+    ) do
       {:ok, _} ->
         count = length(message_ids)
         Logger.info("Successfully deleted #{count} messages in channel #{channel_id}")
-        {:ok, %{
-          deleted: true,
-          count: count
-        }}
-
-      {:error, reason} ->
-        Logger.error("Failed to bulk delete Discord messages: #{inspect(reason)}")
-        handle_discord_error(reason)
+        {:ok, %{deleted: true, count: count}}
+      error -> error
     end
   end
-
-  @doc """
-  Validates the input parameters.
-  """
-  def validate(input) do
-    if not (Map.has_key?(input, :channel_id) and Map.has_key?(input, :message_ids)) do
-      {:error, "Missing required fields: channel_id, message_ids"}
-    else
-      with {:ok, _} <- validate_channel_id(input.channel_id),
-           {:ok, _} <- validate_message_ids(input.message_ids) do
-        :ok
-      end
-    end
-  end
-
-  defp validate_channel_id(channel_id) when is_binary(channel_id) do
-    if Regex.match?(~r/^[0-9]{17,20}$/, channel_id) do
-      {:ok, channel_id}
-    else
-      {:error, "channel_id must be a valid Discord ID (17-20 digits)"}
-    end
-  end
-  defp validate_channel_id(_), do: {:error, "channel_id must be a string"}
-
-  defp validate_message_ids(message_ids) when is_list(message_ids) do
-    cond do
-      length(message_ids) < 2 ->
-        {:error, "Must provide at least 2 message IDs"}
-      length(message_ids) > 100 ->
-        {:error, "Cannot delete more than 100 messages at once"}
-      not Enum.all?(message_ids, &is_binary/1) ->
-        {:error, "All message IDs must be strings"}
-      not Enum.all?(message_ids, &Regex.match?(~r/^[0-9]{17,20}$/, &1)) ->
-        {:error, "All message IDs must be valid Discord IDs (17-20 digits)"}
-      true ->
-        {:ok, message_ids}
-    end
-  end
-  defp validate_message_ids(_), do: {:error, "message_ids must be a list"}
-
-  defp validate_reason(nil), do: {:ok, nil}
-  defp validate_reason(reason) when is_binary(reason) do
-    if String.length(reason) <= 512 do
-      {:ok, reason}
-    else
-      {:error, "reason must not exceed 512 characters"}
-    end
-  end
-  defp validate_reason(_), do: {:error, "reason must be a string"}
-
-  defp handle_discord_error(%{"code" => code} = error) do
-    error_message = @discord_errors[code] || "Unknown Discord error"
-    {:error, "#{error_message} (code: #{code}): #{error["message"]}"}
-  end
-  defp handle_discord_error(error), do: {:error, "Unexpected error: #{inspect(error)}"}
 end

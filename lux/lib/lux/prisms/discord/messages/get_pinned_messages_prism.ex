@@ -69,16 +69,8 @@ defmodule Lux.Prisms.Discord.Messages.GetPinnedMessagesPrism do
       required: ["messages"]
     }
 
-  alias Lux.Lenses.DiscordLens
+  alias Lux.Integrations.Discord.Client
   require Logger
-
-  # Discord API error codes
-  @discord_errors %{
-    10003 => "Unknown channel",
-    50001 => "Missing access",
-    50013 => "Missing permissions",
-    50035 => "Invalid form body"
-  }
 
   @doc """
   Handles the request to get pinned messages from a Discord channel.
@@ -86,45 +78,11 @@ defmodule Lux.Prisms.Discord.Messages.GetPinnedMessagesPrism do
   def handler(%{channel_id: channel_id}, %{agent: agent} = _ctx) do
     Logger.info("Agent #{agent.name} retrieving pinned messages from channel #{channel_id}")
 
-    case DiscordLens.focus(%{
-      endpoint: "/channels/#{channel_id}/pins",
-      method: :get
-    }) do
+    case Client.request(:get, "/channels/#{channel_id}/pins") do
       {:ok, messages} when is_list(messages) ->
         Logger.info("Successfully retrieved #{length(messages)} pinned messages from channel #{channel_id}")
         {:ok, %{messages: messages}}
-
-      {:error, reason} ->
-        Logger.error("Failed to retrieve pinned Discord messages: #{inspect(reason)}")
-        handle_discord_error(reason)
+      error -> error
     end
   end
-
-  @doc """
-  Validates the input parameters.
-  """
-  def validate(input) do
-    if not Map.has_key?(input, :channel_id) do
-      {:error, "Missing required field: channel_id"}
-    else
-      with {:ok, _} <- validate_channel_id(input.channel_id) do
-        :ok
-      end
-    end
-  end
-
-  defp validate_channel_id(channel_id) when is_binary(channel_id) do
-    if Regex.match?(~r/^[0-9]{17,20}$/, channel_id) do
-      {:ok, channel_id}
-    else
-      {:error, "channel_id must be a valid Discord ID (17-20 digits)"}
-    end
-  end
-  defp validate_channel_id(_), do: {:error, "channel_id must be a string"}
-
-  defp handle_discord_error(%{"code" => code} = error) do
-    error_message = @discord_errors[code] || "Unknown Discord error"
-    {:error, "#{error_message} (code: #{code}): #{error["message"]}"}
-  end
-  defp handle_discord_error(error), do: {:error, "Unexpected error: #{inspect(error)}"}
 end
