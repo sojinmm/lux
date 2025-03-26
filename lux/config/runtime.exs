@@ -19,6 +19,7 @@ if config_env() in [:dev, :test] do
     anthropic: env!("ANTHROPIC_API_KEY", :string!),
     openweather: env!("OPENWEATHER_API_KEY", :string!),
     transpose: env!("TRANSPOSE_API_KEY", :string!),
+    discord: env!("DISCORD_TOKEN", :string!),
     integration_openai: env!("INTEGRATION_OPENAI_API_KEY", :string!, required: false),
     integration_anthropic: env!("INTEGRATION_ANTHROPIC_API_KEY", :string!, required: false),
     integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!, required: false),

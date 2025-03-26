@@ -54,6 +54,15 @@ defmodule Lux.Config do
   end
 
   @doc """
+  Gets the Discord token from configuration.
+  Raises if the token is not configured.
+  """
+  @spec discord_token() :: api_key()
+  def discord_token do
+    get_required_key(:api_keys, :discord)
+  end
+
+  @doc """
   Gets the Hyperliquid account's private key from configuration.
   Raises if the key is not configured.
   """
