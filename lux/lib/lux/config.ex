@@ -54,6 +54,15 @@ defmodule Lux.Config do
   end
 
   @doc """
+  Gets the Discord API key from configuration.
+  Raises if the key is not configured.
+  """
+  @spec discord_api_key() :: api_key()
+  def discord_api_key do
+    get_required_key(:api_keys, :discord)
+  end
+
+  @doc """
   Gets the Etherscan API key from configuration.
   Raises if the key is not configured.
   """

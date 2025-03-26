@@ -7,6 +7,7 @@ defmodule UnitAPICase do
   alias Lux.LLM.OpenAI
   alias Lux.Lenses.Etherscan
   alias Lux.LLM.Anthropic
+  alias Lux.Integrations.Discord.Client, as: DiscordClient
 
   using do
     quote do
@@ -19,7 +20,7 @@ defmodule UnitAPICase do
     Application.put_env(:lux, OpenAI, plug: {Req.Test, OpenAI})
     Application.put_env(:lux, Etherscan, plug: {Req.Test, Etherscan})
     Application.put_env(:lux, Anthropic, plug: {Req.Test, Anthropic})
-
+    Application.put_env(:lux, DiscordClient, plug: {Req.Test, DiscordClientMock})
     :ok
   end
 end
