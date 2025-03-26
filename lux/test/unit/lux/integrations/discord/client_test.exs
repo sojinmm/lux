@@ -13,7 +13,7 @@ defmodule Lux.Integrations.Discord.ClientTest do
       Req.Test.expect(DiscordClientMock, fn conn ->
         assert conn.method == "GET"
         assert conn.request_path == "/api/v10/users/@me"
-        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot integration-discord-api-key"]
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
@@ -58,7 +58,7 @@ defmodule Lux.Integrations.Discord.ClientTest do
 
         assert conn.method == "POST"
         assert conn.request_path == "/api/v10/channels/123/messages"
-        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot integration-discord-api-key"]
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
         assert body_params == %{"content" => "Hello, Discord!"}
 
         conn
@@ -84,7 +84,7 @@ defmodule Lux.Integrations.Discord.ClientTest do
       Req.Test.stub(__MODULE__, fn conn ->
         assert conn.method == "GET"
         assert conn.request_path == "/api/v10/users/@me"
-        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot integration-discord-api-key"]
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
@@ -116,7 +116,7 @@ defmodule Lux.Integrations.Discord.ClientTest do
       Req.Test.stub(__MODULE__, fn conn ->
         assert conn.method == "GET"
         assert conn.request_path == "/api/v10/users/@me"
-        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot integration-discord-api-key"]
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
