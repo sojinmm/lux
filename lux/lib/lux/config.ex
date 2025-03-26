@@ -54,12 +54,15 @@ defmodule Lux.Config do
   end
 
   @doc """
-  Gets the Discord token from configuration.
-  Raises if the token is not configured.
+  Gets the Discord API key from configuration.
+  Raises if the key is not configured.
   """
-  @spec discord_token() :: api_key()
-  def discord_token do
-    get_required_key(:api_keys, :discord)
+  @spec discord_api_key() :: api_key()
+  def discord_api_key do
+    case Application.get_env(:lux, :env) do
+      :test -> get_required_key(:api_keys, :integration_discord)
+      _ -> get_required_key(:api_keys, :discord)
+    end
   end
 
   @doc """
