@@ -148,9 +148,17 @@ defmodule Lux.Lens do
         },
         _opts
       ) do
-    [url: url, headers: headers, max_retries: 2]
+    # Extract plug from params if present
+    {plug, params} = Map.pop(params, :plug)
+    {url, params} = Map.pop(params, :__url__, url)
+
+    # Build request options
+    req_opts = [url: url, headers: headers, max_retries: 2]
     |> Keyword.merge(Application.get_env(:lux, :req_options, []))
-    |> Req.new()
+    |> maybe_add_plug(plug)
+
+    # Make request
+    Req.new(req_opts)
     |> Req.request([method: method] ++ body_or_params(method, params))
     |> case do
       {:ok, %{status: 200, body: body}} ->
@@ -193,4 +201,7 @@ defmodule Lux.Lens do
 
   defp body_or_params(:get, params), do: [params: params]
   defp body_or_params(_method, params), do: [json: params]
+
+  defp maybe_add_plug(opts, nil), do: opts
+  defp maybe_add_plug(opts, plug), do: Keyword.put(opts, :plug, plug)
 end
