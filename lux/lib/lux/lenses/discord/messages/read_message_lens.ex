@@ -19,16 +19,15 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLens do
       }}
   """
 
+  alias Lux.Integrations.Discord.Common
+
   use Lux.Lens,
     name: "Read Discord Message",
     description: "Reads a message from a Discord channel",
     url: "https://discord.com/api/v10/channels/:channel_id/messages/:message_id",
     method: :get,
-    headers: [{"Content-Type", "application/json"}],
-    auth: %{
-      type: :custom,
-      auth_function: &__MODULE__.add_auth_header/1
-    },
+    headers: Common.headers(),
+    auth: Common.auth(),
     schema: %{
       type: :object,
       properties: %{
@@ -46,19 +45,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLens do
       required: ["channel_id", "message_id"]
     }
 
-  def add_auth_header(lens) do
-    token = Lux.Config.discord_api_key()
-    %{lens | headers: lens.headers ++ [{"Authorization", "Bot #{token}"}]}
-  end
-
-  def before_focus(params) do
-    # Replace URL parameters with actual values
-    url = String.replace(view().url, ":channel_id", params.channel_id)
-    url = String.replace(url, ":message_id", params.message_id)
-
-    # Update the lens URL
-    Map.put(params, :__url__, url)
-  end
+  def before_focus(params), do: params
 
   @doc """
   Transforms the Discord API response into a simpler format.

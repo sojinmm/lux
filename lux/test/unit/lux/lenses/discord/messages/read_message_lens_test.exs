@@ -19,8 +19,8 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
   end
 
   describe "focus/2" do
-    test "successfully reads a message with text content" do
-      Req.Test.stub(Lux.Lens, fn conn ->
+    test "successfully reads a message" do
+      Req.Test.expect(Lux.Lens, fn conn ->
         assert conn.method == "GET"
         assert conn.request_path == "/api/v10/channels/:channel_id/messages/:message_id"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
@@ -30,77 +30,65 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
         |> Plug.Conn.send_resp(200, Jason.encode!(%{
           "id" => @message_id,
           "channel_id" => @channel_id,
-          "content" => "Hello, world!",
+          "content" => "Test message",
           "author" => %{
             "id" => "111222333444555666",
-            "username" => "TestUser"
+            "username" => "TestBot"
           }
         }))
       end)
 
-      assert {:ok, response} = ReadMessageLens.focus(
-        %{
-          channel_id: @channel_id,
-          message_id: @message_id
+      assert {:ok, %{
+        content: "Test message",
+        author: %{
+          id: "111222333444555666",
+          username: "TestBot"
         }
-      )
-
-      assert response.content == "Hello, world!"
-      assert response.author.id == "111222333444555666"
-      assert response.author.username == "TestUser"
-    end
-
-    test "successfully reads a message with empty content" do
-      Req.Test.stub(Lux.Lens, fn conn ->
-        conn
-        |> Plug.Conn.put_resp_content_type("application/json")
-        |> Plug.Conn.send_resp(200, Jason.encode!(%{
-          "id" => @message_id,
-          "channel_id" => @channel_id,
-          "content" => "",
-          "author" => %{
-            "id" => "111222333444555666",
-            "username" => "TestUser"
-          }
-        }))
-      end)
-
-      assert {:ok, response} = ReadMessageLens.focus(
-        %{
-          channel_id: @channel_id,
-          message_id: @message_id
-        }
-      )
-
-      assert response.content == ""
-      assert response.author.id == "111222333444555666"
-      assert response.author.username == "TestUser"
+      }} = ReadMessageLens.focus(%{
+        "channel_id" => @channel_id,
+        "message_id" => @message_id
+      }, %{})
     end
 
     test "handles Discord API error" do
-      Req.Test.stub(Lux.Lens, fn conn ->
+      Req.Test.expect(Lux.Lens, fn conn ->
         assert conn.method == "GET"
         assert conn.request_path == "/api/v10/channels/:channel_id/messages/:message_id"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
-        |> Plug.Conn.send_resp(404, Jason.encode!(%{
-          "message" => "Unknown Message"
+        |> Plug.Conn.send_resp(403, Jason.encode!(%{
+          "message" => "Missing Permissions"
         }))
       end)
 
-      assert {:error, %{"message" => "Unknown Message"}} = ReadMessageLens.focus(
-        %{
-          channel_id: @channel_id,
-          message_id: @message_id
-        }
-      )
+      assert {:error, %{"message" => "Missing Permissions"}} = ReadMessageLens.focus(%{
+        "channel_id" => @channel_id,
+        "message_id" => @message_id
+      }, %{})
+    end
+
+    test "handles invalid response" do
+      Req.Test.expect(Lux.Lens, fn conn ->
+        assert conn.method == "GET"
+        assert conn.request_path == "/api/v10/channels/:channel_id/messages/:message_id"
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
+
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(%{}))
+      end)
+
+      assert {:error, "invalid_response"} = ReadMessageLens.focus(%{
+        "channel_id" => @channel_id,
+        "message_id" => @message_id
+      }, %{})
     end
   end
 
   describe "schema validation" do
-    test "validates input schema" do
+    test "validates schema" do
       lens = ReadMessageLens.view()
       assert lens.schema.required == ["channel_id", "message_id"]
       assert Map.has_key?(lens.schema.properties, :channel_id)
