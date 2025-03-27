@@ -81,14 +81,28 @@ defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrism do
   - Returns success/failure responses without additional error transformation
   - Logs the operation for monitoring purposes
   """
-  def handler(%{channel_id: channel_id, message_id: message_id}, %{agent: agent} = _ctx) do
-    Logger.info("Agent #{agent.name} deleting message #{message_id} from channel #{channel_id}")
+  def handler(params, agent) do
+    with {:ok, channel_id} <- validate_param(params, :channel_id),
+         {:ok, message_id} <- validate_param(params, :message_id) do
 
-    case Client.request(:delete, "/channels/#{channel_id}/messages/#{message_id}", %{}) do
-      {:ok, _} ->
-        Logger.info("Successfully deleted message #{message_id} from channel #{channel_id}")
-        {:ok, %{deleted: true, message_id: message_id, channel_id: channel_id}}
-      error -> error
+      agent_name = agent[:name] || "Unknown Agent"
+      Logger.info("Agent #{agent_name} deleting message #{message_id} from channel #{channel_id}")
+
+      case Client.request(:delete, "/channels/#{channel_id}/messages/#{message_id}", %{}) do
+        {:ok, _} ->
+          Logger.info("Successfully deleted message #{message_id} from channel #{channel_id}")
+          {:ok, %{deleted: true, message_id: message_id, channel_id: channel_id}}
+        error ->
+          Logger.error("Failed to delete message #{message_id} from channel #{channel_id}: #{inspect(error)}")
+          error
+      end
+    end
+  end
+
+  defp validate_param(params, key) do
+    case Map.fetch(params, key) do
+      {:ok, value} when is_binary(value) and value != "" -> {:ok, value}
+      _ -> {:error, "Missing or invalid #{key}"}
     end
   end
 end
