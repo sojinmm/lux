@@ -54,14 +54,32 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrism do
   Returns {:ok, %{pinned: true}} on success.
   Returns {:error, {status, message}} on failure.
   """
-  def handler(%{channel_id: channel_id, message_id: message_id} = params, %{agent: agent} = _ctx) do
-    Logger.info("Agent #{agent.name} pinning message #{message_id} in channel #{channel_id}")
+  def handler(params, agent) do
+    with {:ok, channel_id} <- validate_param(params, :channel_id),
+         {:ok, message_id} <- validate_param(params, :message_id) do
 
-    case Client.request(:put, "/channels/#{channel_id}/pins/#{message_id}", Map.take(params, [:plug])) do
-      {:ok, _} ->
-        Logger.info("Successfully pinned message #{message_id} in channel #{channel_id}")
-        {:ok, %{pinned: true}}
-      error -> error
+      agent_name = agent[:name] || "Unknown Agent"
+      Logger.info("Agent #{agent_name} pinning message #{message_id} in channel #{channel_id}")
+
+      case Client.request(:put, "/channels/#{channel_id}/pins/#{message_id}", %{}) do
+        {:ok, _} ->
+          Logger.info("Successfully pinned message #{message_id} in channel #{channel_id}")
+          {:ok, %{pinned: true}}
+        {:error, {status, %{"message" => message}}} ->
+          error = {status, message}
+          Logger.error("Failed to pin message #{message_id} in channel #{channel_id}: #{inspect(error)}")
+          {:error, error}
+        {:error, error} ->
+          Logger.error("Failed to pin message #{message_id} in channel #{channel_id}: #{inspect(error)}")
+          {:error, error}
+      end
+    end
+  end
+
+  defp validate_param(params, key) do
+    case Map.fetch(params, key) do
+      {:ok, value} when is_binary(value) and value != "" -> {:ok, value}
+      _ -> {:error, "Missing or invalid #{key}"}
     end
   end
 end

@@ -13,7 +13,7 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrismTest do
 
   describe "handler/2" do
     test "successfully pins a message" do
-      Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.expect(DiscordClientMock, fn conn ->
         assert conn.method == "PUT"
         assert conn.request_path == "/api/v10/channels/#{@channel_id}/pins/#{@message_id}"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
@@ -26,15 +26,14 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrismTest do
       assert {:ok, %{pinned: true}} = PinMessagePrism.handler(
         %{
           channel_id: @channel_id,
-          message_id: @message_id,
-          plug: {Req.Test, __MODULE__}
+          message_id: @message_id
         },
         @agent_ctx
       )
     end
 
     test "handles Discord API error" do
-      Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.expect(DiscordClientMock, fn conn ->
         assert conn.method == "PUT"
         assert conn.request_path == "/api/v10/channels/#{@channel_id}/pins/#{@message_id}"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
