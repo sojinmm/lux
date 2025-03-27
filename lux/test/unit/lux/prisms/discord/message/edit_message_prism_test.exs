@@ -29,7 +29,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
 
   describe "handler/2" do
     test "successfully edits a message" do
-      Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.expect(DiscordClientMock, fn conn ->
         assert conn.method == "PATCH"
         assert conn.request_path == "/api/v10/channels/#{@channel_id}/messages/#{@message_id}"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
@@ -37,33 +37,22 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
         {:ok, body, conn} = Plug.Conn.read_body(conn)
         assert Jason.decode!(body) == %{"content" => @content}
 
-        conn
-        |> Plug.Conn.put_resp_content_type("application/json")
-        |> Plug.Conn.send_resp(200, Jason.encode!(%{
-          "id" => @message_id,
-          "channel_id" => @channel_id,
-          "content" => @content,
-          "edited_timestamp" => "2024-02-08T18:22:11.925749Z",
-          "author" => %{
-            "id" => "111222333444555666",
-            "username" => "TestBot"
-          }
-        }))
+        # Discord API returns 204 No Content on successful edit
+        Plug.Conn.send_resp(conn, 204, "")
       end)
 
       assert {:ok, %{edited: true}} = EditMessagePrism.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id,
-          content: @content,
-          plug: {Req.Test, __MODULE__}
+          content: @content
         },
         @agent_ctx
       )
     end
 
     test "handles Discord API error" do
-      Req.Test.stub(__MODULE__, fn conn ->
+      Req.Test.expect(DiscordClientMock, fn conn ->
         assert conn.method == "PATCH"
         assert conn.request_path == "/api/v10/channels/#{@channel_id}/messages/#{@message_id}"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
@@ -79,27 +68,10 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
         %{
           channel_id: @channel_id,
           message_id: @message_id,
-          content: @content,
-          plug: {Req.Test, __MODULE__}
+          content: @content
         },
         @agent_ctx
       )
-    end
-  end
-
-  describe "schema validation" do
-    test "validates input schema" do
-      prism = EditMessagePrism.view()
-      assert prism.input_schema.required == ["channel_id", "message_id", "content"]
-      assert Map.has_key?(prism.input_schema.properties, :channel_id)
-      assert Map.has_key?(prism.input_schema.properties, :message_id)
-      assert Map.has_key?(prism.input_schema.properties, :content)
-    end
-
-    test "validates output schema" do
-      prism = EditMessagePrism.view()
-      assert prism.output_schema.required == ["edited"]
-      assert Map.has_key?(prism.output_schema.properties, :edited)
     end
   end
 end

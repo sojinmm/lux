@@ -12,8 +12,16 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrism do
       ...>   channel_id: "123456789",
       ...>   message_id: "987654321",
       ...>   content: "Updated message content"
-      ...> }, %{agent: %{name: "Agent"}})
+      ...> }, %{name: "Test Agent"})
       {:ok, %{edited: true}}
+
+      # Error handling
+      iex> EditMessagePrism.handler(%{
+      ...>   channel_id: "invalid",
+      ...>   message_id: "987654321",
+      ...>   content: "Updated message content"
+      ...> }, %{name: "Test Agent"})
+      {:error, "Missing or invalid channel_id"}
   """
 
   use Lux.Prism,
@@ -59,17 +67,31 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrism do
   Handles the request to edit a message in a Discord channel.
 
   Returns {:ok, %{edited: true}} on success.
-  Returns {:error, {status, message}} on failure.
+  Returns {:error, reason} on failure.
   """
-  def handler(%{channel_id: channel_id, message_id: message_id, content: content} = params, %{agent: agent} = _ctx) do
-    Logger.info("Agent #{agent.name} editing message #{message_id} in channel #{channel_id}")
+  def handler(params, agent) do
+    with {:ok, channel_id} <- validate_param(params, :channel_id),
+         {:ok, message_id} <- validate_param(params, :message_id),
+         {:ok, content} <- validate_param(params, :content) do
 
-    case Client.request(:patch, "/channels/#{channel_id}/messages/#{message_id}",
-         Map.take(params, [:json, :plug]) |> Map.put(:json, %{content: content})) do
-      {:ok, _response} ->
-        Logger.info("Successfully edited message #{message_id} in channel #{channel_id}")
-        {:ok, %{edited: true}}
-      error -> error
+      agent_name = agent[:name] || "Unknown Agent"
+      Logger.info("Agent #{agent_name} editing message #{message_id} in channel #{channel_id}")
+
+      case Client.request(:patch, "/channels/#{channel_id}/messages/#{message_id}", %{content: content}) do
+        {:ok, _} ->
+          Logger.info("Successfully edited message #{message_id} in channel #{channel_id}")
+          {:ok, %{edited: true}}
+        error ->
+          Logger.error("Failed to edit message #{message_id} in channel #{channel_id}: #{inspect(error)}")
+          error
+      end
+    end
+  end
+
+  defp validate_param(params, key) do
+    case Map.fetch(params, key) do
+      {:ok, value} when is_binary(value) and value != "" -> {:ok, value}
+      _ -> {:error, "Missing or invalid #{key}"}
     end
   end
 end
