@@ -20,7 +20,7 @@ defmodule Lux.Lenses.Discord.Channels.ListChannelsTest do
     test "successfully lists channels" do
       Req.Test.expect(Lux.Lens, fn conn ->
         assert conn.method == "GET"
-        assert conn.request_path == "/api/v10/guilds/#{@guild_id}/channels"
+        assert String.replace(conn.request_path, ":guild_id", @guild_id) == "/api/v10/guilds/#{@guild_id}/channels"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
         conn
@@ -62,7 +62,7 @@ defmodule Lux.Lenses.Discord.Channels.ListChannelsTest do
     test "handles Discord API error" do
       Req.Test.expect(Lux.Lens, fn conn ->
         assert conn.method == "GET"
-        assert conn.request_path == "/api/v10/guilds/#{@guild_id}/channels"
+        assert String.replace(conn.request_path, ":guild_id", @guild_id) == "/api/v10/guilds/#{@guild_id}/channels"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
         conn
