@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Messages.PinMessagePrism do
+defmodule Lux.Prisms.Discord.Messages.PinMessage do
   @moduledoc """
   A prism for pinning messages in a Discord channel.
 
@@ -8,10 +8,10 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrism do
   - Simple success/failure response structure
 
   ## Examples
-      iex> PinMessagePrism.handler(%{
-      ...>   channel_id: "123456789",
-      ...>   message_id: "987654321"
-      ...> }, %{agent: %{name: "Agent"}})
+      iex> PinMessage.handler(%{
+      ...>   "channel_id" => "123456789",
+      ...>   "message_id" => "987654321"
+      ...> }, %{name: "Agent"})
       {:ok, %{pinned: true}}
   """
 

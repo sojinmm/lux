@@ -1,6 +1,6 @@
-defmodule Lux.Prisms.Discord.Messages.PinMessagePrismTest do
+defmodule Lux.Prisms.Discord.Messages.PinMessageTest do
   use UnitAPICase, async: true
-  alias Lux.Prisms.Discord.Messages.PinMessagePrism
+  alias Lux.Prisms.Discord.Messages.PinMessage
 
   @channel_id "123456789012345678"
   @message_id "987654321098765432"
@@ -23,7 +23,7 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrismTest do
         |> Plug.Conn.send_resp(200, Jason.encode!(%{}))
       end)
 
-      assert {:ok, %{pinned: true}} = PinMessagePrism.handler(
+      assert {:ok, %{pinned: true}} = PinMessage.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id
@@ -45,7 +45,7 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrismTest do
         }))
       end)
 
-      assert {:error, {403, "Missing Permissions"}} = PinMessagePrism.handler(
+      assert {:error, {403, "Missing Permissions"}} = PinMessage.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id,
@@ -58,14 +58,14 @@ defmodule Lux.Prisms.Discord.Messages.PinMessagePrismTest do
 
   describe "schema validation" do
     test "validates input schema" do
-      prism = PinMessagePrism.view()
+      prism = PinMessage.view()
       assert prism.input_schema.required == ["channel_id", "message_id"]
       assert Map.has_key?(prism.input_schema.properties, :channel_id)
       assert Map.has_key?(prism.input_schema.properties, :message_id)
     end
 
     test "validates output schema" do
-      prism = PinMessagePrism.view()
+      prism = PinMessage.view()
       assert prism.output_schema.required == ["pinned"]
       assert Map.has_key?(prism.output_schema.properties, :pinned)
     end
