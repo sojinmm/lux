@@ -88,7 +88,7 @@ defmodule Lux.Prisms.Discord.Messages.DeleteMessage do
       agent_name = agent[:name] || "Unknown Agent"
       Logger.info("Agent #{agent_name} deleting message #{message_id} from channel #{channel_id}")
 
-      case Client.request(:delete, "/channels/#{channel_id}/messages/#{message_id}", %{}) do
+      case Client.request(:delete, "/channels/#{channel_id}/messages/#{message_id}") do
         {:ok, _} ->
           Logger.info("Successfully deleted message #{message_id} from channel #{channel_id}")
           {:ok, %{deleted: true, message_id: message_id, channel_id: channel_id}}
