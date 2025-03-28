@@ -1,4 +1,4 @@
-defmodule Lux.Lenses.Discord.Messages.ReadMessageLens do
+defmodule Lux.Lenses.Discord.Messages.ReadMessage do
   @moduledoc """
   A lens for reading messages from Discord channels.
   This lens provides a simple interface for reading Discord messages with:
@@ -6,7 +6,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLens do
   - Direct Discord API error propagation
   - Clean response structure
   ## Examples
-      iex> ReadMessageLens.focus(%{
+      iex> ReadMessage.focus(%{
       ...>   channel_id: "123456789",
       ...>   message_id: "987654321"
       ...> })

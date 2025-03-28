@@ -1,6 +1,6 @@
-defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
+defmodule Lux.Lenses.Discord.Messages.ReadMessageTest do
   @moduledoc """
-  Test suite for the ReadMessageLens module.
+  Test suite for the ReadMessage module.
   These tests verify the lens's ability to:
   - Read messages from Discord channels
   - Handle Discord API errors appropriately
@@ -8,7 +8,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
   """
 
   use UnitAPICase, async: true
-  alias Lux.Lenses.Discord.Messages.ReadMessageLens
+  alias Lux.Lenses.Discord.Messages.ReadMessage
 
   @channel_id "123456789012345678"
   @message_id "987654321098765432"
@@ -44,7 +44,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
           id: "111222333444555666",
           username: "TestBot"
         }
-      }} = ReadMessageLens.focus(%{
+      }} = ReadMessage.focus(%{
         "channel_id" => @channel_id,
         "message_id" => @message_id
       }, %{})
@@ -63,7 +63,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
         }))
       end)
 
-      assert {:error, %{"message" => "Missing Permissions"}} = ReadMessageLens.focus(%{
+      assert {:error, %{"message" => "Missing Permissions"}} = ReadMessage.focus(%{
         "channel_id" => @channel_id,
         "message_id" => @message_id
       }, %{})
@@ -80,7 +80,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
         |> Plug.Conn.send_resp(200, Jason.encode!(%{}))
       end)
 
-      assert {:error, "invalid_response"} = ReadMessageLens.focus(%{
+      assert {:error, "invalid_response"} = ReadMessage.focus(%{
         "channel_id" => @channel_id,
         "message_id" => @message_id
       }, %{})
@@ -89,7 +89,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLensTest do
 
   describe "schema validation" do
     test "validates schema" do
-      lens = ReadMessageLens.view()
+      lens = ReadMessage.view()
       assert lens.schema.required == ["channel_id", "message_id"]
       assert Map.has_key?(lens.schema.properties, :channel_id)
       assert Map.has_key?(lens.schema.properties, :message_id)
