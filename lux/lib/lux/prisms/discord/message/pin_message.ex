@@ -61,7 +61,7 @@ defmodule Lux.Prisms.Discord.Messages.PinMessage do
       agent_name = agent[:name] || "Unknown Agent"
       Logger.info("Agent #{agent_name} pinning message #{message_id} in channel #{channel_id}")
 
-      case Client.request(:put, "/channels/#{channel_id}/pins/#{message_id}", %{}) do
+      case Client.request(:put, "/channels/#{channel_id}/pins/#{message_id}") do
         {:ok, _} ->
           Logger.info("Successfully pinned message #{message_id} in channel #{channel_id}")
           {:ok, %{pinned: true}}
