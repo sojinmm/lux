@@ -19,15 +19,15 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageLens do
       }}
   """
 
-  alias Lux.Integrations.Discord.Common
+  alias Lux.Integrations.Discord
 
   use Lux.Lens,
     name: "Read Discord Message",
     description: "Reads a message from a Discord channel",
     url: "https://discord.com/api/v10/channels/:channel_id/messages/:message_id",
     method: :get,
-    headers: Common.headers(),
-    auth: Common.auth(),
+    headers: Discord.headers(),
+    auth: Discord.auth(),
     schema: %{
       type: :object,
       properties: %{

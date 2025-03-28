@@ -1,4 +1,4 @@
-defmodule Lux.Integrations.Discord.Common do
+defmodule Lux.Integrations.Discord do
   @moduledoc """
   Common settings and functions for Discord API integration.
   """
@@ -32,12 +32,14 @@ defmodule Lux.Integrations.Discord.Common do
   @doc """
   Adds Discord bot token authorization header.
   """
+  @spec add_auth_header(%Lux.Lens{}) :: %Lux.Lens{}
   def add_auth_header(%Lux.Lens{} = lens) do
     token = Application.get_env(:lux, :api_keys)[:discord]
     %{lens | headers: lens.headers ++ [{"Authorization", "Bot #{token}"}]}
   end
 
-  def add_auth_header(conn) do
+  @spec add_auth_header(%Plug.Conn{}) :: %Plug.Conn{}
+  def add_auth_header(%Plug.Conn{} = conn) do
     token = Application.get_env(:lux, :api_keys)[:discord]
     Plug.Conn.put_req_header(conn, "authorization", "Bot #{token}")
   end
