@@ -32,13 +32,13 @@ defmodule Lux.Integrations.Discord do
   @doc """
   Adds Discord bot token authorization header.
   """
-  @spec add_auth_header(%Lux.Lens{}) :: %Lux.Lens{}
+  @spec add_auth_header(Lux.Lens.t()) :: Lux.Lens.t()
   def add_auth_header(%Lux.Lens{} = lens) do
     token = Application.get_env(:lux, :api_keys)[:discord]
     %{lens | headers: lens.headers ++ [{"Authorization", "Bot #{token}"}]}
   end
 
-  @spec add_auth_header(%Plug.Conn{}) :: %Plug.Conn{}
+  @spec add_auth_header(Plug.Conn.t()) :: Plug.Conn.t()
   def add_auth_header(%Plug.Conn{} = conn) do
     token = Application.get_env(:lux, :api_keys)[:discord]
     Plug.Conn.put_req_header(conn, "authorization", "Bot #{token}")
