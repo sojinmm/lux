@@ -9,8 +9,8 @@ defmodule Lux.Prisms.Discord.Messages.PinMessage do
 
   ## Examples
       iex> PinMessage.handler(%{
-      ...>   "channel_id" => "123456789",
-      ...>   "message_id" => "987654321"
+      ...>   channel_id: "123456789",
+      ...>   message_id: "987654321"
       ...> }, %{name: "Agent"})
       {:ok, %{pinned: true}}
   """
