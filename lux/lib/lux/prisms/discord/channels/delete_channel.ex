@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Channel.DeleteChannel do
+defmodule Lux.Prisms.Discord.Channels.DeleteChannel do
   @moduledoc """
   A prism for deleting channels from a Discord guild.
 

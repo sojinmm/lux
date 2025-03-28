@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Channel.DeleteChannelTest do
+defmodule Lux.Prisms.Discord.Channels.DeleteChannelTest do
   @moduledoc """
   Test suite for the DeleteChannel module.
   These tests verify the prism's ability to:
@@ -7,7 +7,7 @@ defmodule Lux.Prisms.Discord.Channel.DeleteChannelTest do
   """
 
   use UnitAPICase, async: true
-  alias Lux.Prisms.Discord.Channel.DeleteChannel
+  alias Lux.Prisms.Discord.Channels.DeleteChannel
 
   @channel_id "123456789012345678"
   @agent_ctx %{agent: %{name: "TestAgent"}}
