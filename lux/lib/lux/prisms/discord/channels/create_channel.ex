@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Channel.CreateChannel do
+defmodule Lux.Prisms.Discord.Channels.CreateChannel do
   @moduledoc """
   A prism for creating channels in a Discord guild.
 
