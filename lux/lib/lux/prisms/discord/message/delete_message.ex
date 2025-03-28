@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrism do
+defmodule Lux.Prisms.Discord.Messages.DeleteMessage do
   @moduledoc """
   A prism for deleting Discord messages.
 
@@ -18,17 +18,17 @@ defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrism do
   ## Examples
 
       # Delete a message
-      iex> DeleteMessagePrism.handler(%{
+      iex> DeleteMessage.handler(%{
       ...>   channel_id: "123456789",
       ...>   message_id: "987654321"
-      ...> }, %{agent: %{name: "Agent"}})
+      ...> }, %{name: "Agent"})
       {:ok, %{deleted: true, message_id: "987654321", channel_id: "123456789"}}
 
       # Error handling (passed through from Discord API)
-      iex> DeleteMessagePrism.handler(%{
+      iex> DeleteMessage.handler(%{
       ...>   channel_id: "123456789",
       ...>   message_id: "987654321"
-      ...> }, %{agent: %{name: "Agent"}})
+      ...> }, %{name: "Agent"})
       {:error, {403, "Missing Permissions"}}
   """
 
