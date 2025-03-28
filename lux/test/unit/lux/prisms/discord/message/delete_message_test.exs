@@ -1,6 +1,6 @@
-defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrismTest do
+defmodule Lux.Prisms.Discord.Messages.DeleteMessageTest do
   use UnitAPICase, async: true
-  alias Lux.Prisms.Discord.Messages.DeleteMessagePrism
+  alias Lux.Prisms.Discord.Messages.DeleteMessage
 
   @channel_id "123456789012345678"
   @message_id "987654321098765432"
@@ -27,7 +27,7 @@ defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrismTest do
         deleted: true,
         message_id: @message_id,
         channel_id: @channel_id
-      }} = DeleteMessagePrism.handler(
+      }} = DeleteMessage.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id,
@@ -50,7 +50,7 @@ defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrismTest do
         }))
       end)
 
-      assert {:error, {403, "Missing Permissions"}} = DeleteMessagePrism.handler(
+      assert {:error, {403, "Missing Permissions"}} = DeleteMessage.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id,
@@ -63,14 +63,14 @@ defmodule Lux.Prisms.Discord.Messages.DeleteMessagePrismTest do
 
   describe "schema validation" do
     test "validates input schema" do
-      prism = DeleteMessagePrism.view()
+      prism = DeleteMessage.view()
       assert prism.input_schema.required == ["channel_id", "message_id"]
       assert Map.has_key?(prism.input_schema.properties, :channel_id)
       assert Map.has_key?(prism.input_schema.properties, :message_id)
     end
 
     test "validates output schema" do
-      prism = DeleteMessagePrism.view()
+      prism = DeleteMessage.view()
       assert prism.output_schema.required == ["deleted"]
       assert Map.has_key?(prism.output_schema.properties, :deleted)
       assert Map.has_key?(prism.output_schema.properties, :message_id)
