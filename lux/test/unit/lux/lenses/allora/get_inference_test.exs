@@ -36,7 +36,7 @@ defmodule Lux.Lenses.Allora.GetInferenceTest do
               "confidence_interval_values" => ["1200000000", "1234567890", "1300000000"],
               "confidence_interval_values_normalized" => ["0.12", "0.12345", "0.13"],
               "topic_id" => "1",
-              "timestamp" => 1679529600,
+              "timestamp" => 1_679_529_600,
               "extra_data" => ""
             }
           }
@@ -49,7 +49,7 @@ defmodule Lux.Lenses.Allora.GetInferenceTest do
       assert result.inference_data.network_inference_normalized == "0.12345"
       assert result.inference_data.confidence_interval_percentiles == ["0.1", "0.5", "0.9"]
       assert result.inference_data.topic_id == "1"
-      assert result.inference_data.timestamp == 1679529600
+      assert result.inference_data.timestamp == 1_679_529_600
     end
 
     test "successfully fetches price inference" do
@@ -69,7 +69,7 @@ defmodule Lux.Lenses.Allora.GetInferenceTest do
               "confidence_interval_values" => ["49000000000", "50000000000", "51000000000"],
               "confidence_interval_values_normalized" => ["49000.0", "50000.0", "51000.0"],
               "topic_id" => "btc_5m",
-              "timestamp" => 1679529600,
+              "timestamp" => 1_679_529_600,
               "extra_data" => ""
             }
           }
