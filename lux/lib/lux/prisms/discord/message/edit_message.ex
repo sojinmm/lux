@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Messages.EditMessagePrism do
+defmodule Lux.Prisms.Discord.Messages.EditMessage do
   @moduledoc """
   A prism for editing messages in a Discord channel.
 
@@ -8,7 +8,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrism do
   - Simple success/failure response structure
 
   ## Examples
-      iex> EditMessagePrism.handler(%{
+      iex> EditMessage.handler(%{
       ...>   channel_id: "123456789",
       ...>   message_id: "987654321",
       ...>   content: "Updated message content"
@@ -16,7 +16,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrism do
       {:ok, %{edited: true}}
 
       # Error handling
-      iex> EditMessagePrism.handler(%{
+      iex> EditMessage.handler(%{
       ...>   channel_id: "invalid",
       ...>   message_id: "987654321",
       ...>   content: "Updated message content"
@@ -77,7 +77,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrism do
       agent_name = agent[:name] || "Unknown Agent"
       Logger.info("Agent #{agent_name} editing message #{message_id} in channel #{channel_id}")
 
-      case Client.request(:patch, "/channels/#{channel_id}/messages/#{message_id}", %{content: content}) do
+      case Client.request(:patch, "/channels/#{channel_id}/messages/#{message_id}", %{json: %{content: content}}) do
         {:ok, _} ->
           Logger.info("Successfully edited message #{message_id} in channel #{channel_id}")
           {:ok, %{edited: true}}

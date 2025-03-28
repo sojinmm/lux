@@ -1,4 +1,4 @@
-defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
+defmodule Lux.Prisms.Discord.Messages.EditMessageTest do
   @moduledoc """
   Test suite for the EditMessagePrism module.
 
@@ -15,7 +15,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
   """
 
   use UnitAPICase, async: true
-  alias Lux.Prisms.Discord.Messages.EditMessagePrism
+  alias Lux.Prisms.Discord.Messages.EditMessage
 
   @channel_id "123456789012345678"
   @message_id "987654321098765432"
@@ -41,7 +41,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
         Plug.Conn.send_resp(conn, 204, "")
       end)
 
-      assert {:ok, %{edited: true}} = EditMessagePrism.handler(
+      assert {:ok, %{edited: true}} = EditMessage.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id,
@@ -64,7 +64,7 @@ defmodule Lux.Prisms.Discord.Messages.EditMessagePrismTest do
         }))
       end)
 
-      assert {:error, {403, "Missing Permissions"}} = EditMessagePrism.handler(
+      assert {:error, {403, "Missing Permissions"}} = EditMessage.handler(
         %{
           channel_id: @channel_id,
           message_id: @message_id,
