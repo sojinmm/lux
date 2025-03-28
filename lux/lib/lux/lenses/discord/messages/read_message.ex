@@ -45,8 +45,6 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessage do
       required: ["channel_id", "message_id"]
     }
 
-  def before_focus(params), do: params
-
   @doc """
   Transforms the Discord API response into a simpler format.
   ## Examples
@@ -72,9 +70,5 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessage do
 
   def after_focus(%{"message" => message}) do
     {:error, %{"message" => message}}
-  end
-
-  def after_focus(_) do
-    {:error, "invalid_response"}
   end
 end

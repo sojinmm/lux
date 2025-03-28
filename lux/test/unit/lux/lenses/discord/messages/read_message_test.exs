@@ -69,7 +69,7 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageTest do
       }, %{})
     end
 
-    test "handles invalid response" do
+    test "crashes on unexpected response format" do
       Req.Test.expect(Lux.Lens, fn conn ->
         assert conn.method == "GET"
         assert conn.request_path == "/api/v10/channels/:channel_id/messages/:message_id"
@@ -80,10 +80,12 @@ defmodule Lux.Lenses.Discord.Messages.ReadMessageTest do
         |> Plug.Conn.send_resp(200, Jason.encode!(%{}))
       end)
 
-      assert {:error, "invalid_response"} = ReadMessage.focus(%{
-        "channel_id" => @channel_id,
-        "message_id" => @message_id
-      }, %{})
+      assert_raise FunctionClauseError, fn ->
+        ReadMessage.focus(%{
+          "channel_id" => @channel_id,
+          "message_id" => @message_id
+        }, %{})
+      end
     end
   end
 
