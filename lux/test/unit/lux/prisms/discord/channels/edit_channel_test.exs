@@ -15,36 +15,91 @@ defmodule Lux.Prisms.Discord.Channels.EditChannelTest do
   end
 
   describe "handler/2" do
-    test "successfully edits a channel" do
-      channel_name = "new-channel-name"
-      channel_topic = "New channel topic"
-
+    test "successfully edits a channel with all fields" do
       Req.Test.expect(DiscordClientMock, fn conn ->
         assert conn.method == "PATCH"
         assert conn.request_path == "/api/v10/channels/#{@channel_id}"
         assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
 
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        assert Jason.decode!(body) == %{
+          "name" => "new-channel-name",
+          "topic" => "New channel topic",
+          "bitrate" => 64_000,
+          "user_limit" => 10,
+          "nsfw" => true
+        }
+
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.send_resp(200, Jason.encode!(%{
           "id" => @channel_id,
-          "name" => channel_name,
-          "topic" => channel_topic,
-          "type" => 0
+          "name" => "new-channel-name",
+          "topic" => "New channel topic"
         }))
       end)
 
-      assert {:ok, response} =
-               EditChannel.handler(%{
-                 "channel_id" => @channel_id,
-                 "name" => channel_name,
-                 "topic" => channel_topic
-               }, @agent_ctx)
+      assert {:ok, %{
+        edited: true,
+        channel_id: @channel_id,
+        name: "new-channel-name",
+        topic: "New channel topic"
+      }} = EditChannel.handler(
+        %{
+          channel_id: @channel_id,
+          name: "new-channel-name",
+          topic: "New channel topic",
+          bitrate: 64_000,
+          user_limit: 10,
+          nsfw: true,
+          plug: {Req.Test, DiscordClientMock}
+        },
+        @agent_ctx
+      )
+    end
 
-      assert response.channel_id == @channel_id
-      assert response.name == channel_name
-      assert response.topic == channel_topic
-      assert response.edited == true
+    test "successfully edits a channel with minimal fields" do
+      Req.Test.expect(DiscordClientMock, fn conn ->
+        assert conn.method == "PATCH"
+        assert conn.request_path == "/api/v10/channels/#{@channel_id}"
+        assert Plug.Conn.get_req_header(conn, "authorization") == ["Bot test-discord-token"]
+
+        {:ok, body, conn} = Plug.Conn.read_body(conn)
+        assert Jason.decode!(body) == %{
+          "name" => "new-channel-name"
+        }
+
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, Jason.encode!(%{
+          "id" => @channel_id,
+          "name" => "new-channel-name",
+          "topic" => nil
+        }))
+      end)
+
+      assert {:ok, %{
+        edited: true,
+        channel_id: @channel_id,
+        name: "new-channel-name",
+        topic: nil
+      }} = EditChannel.handler(
+        %{
+          channel_id: @channel_id,
+          name: "new-channel-name",
+          plug: {Req.Test, DiscordClientMock}
+        },
+        @agent_ctx
+      )
+    end
+
+    test "handles missing required channel_id" do
+      assert {:error, "Missing or invalid channel_id"} = EditChannel.handler(
+        %{
+          name: "new-channel-name"
+        },
+        @agent_ctx
+      )
     end
 
     test "handles Discord API error" do
@@ -56,44 +111,59 @@ defmodule Lux.Prisms.Discord.Channels.EditChannelTest do
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
         |> Plug.Conn.send_resp(403, Jason.encode!(%{
-          "message" => "Missing Permissions",
-          "code" => 50_013
+          "message" => "Missing Permissions"
         }))
       end)
 
-      assert {:error, {403, "Missing Permissions"}} =
-               EditChannel.handler(%{
-                 "channel_id" => @channel_id,
-                 "name" => "new-name"
-               }, @agent_ctx)
+      assert {:error, {403, "Missing Permissions"}} = EditChannel.handler(
+        %{
+          channel_id: @channel_id,
+          name: "new-channel-name",
+          plug: {Req.Test, DiscordClientMock}
+        },
+        @agent_ctx
+      )
     end
   end
 
   describe "schema validation" do
-    test "validates required properties" do
-      assert %{
-               "type" => "object",
-               "required" => ["channel_id"],
-               "properties" => %{
-                 "channel_id" => %{"type" => "string", "pattern" => "^\\d{17,20}$"},
-                 "name" => %{"type" => "string", "minLength" => 1, "maxLength" => 100},
-                 "topic" => %{"type" => "string", "maxLength" => 1024},
-                 "bitrate" => %{"type" => "integer", "minimum" => 8000},
-                 "user_limit" => %{"type" => "integer", "minimum" => 0},
-                 "nsfw" => %{"type" => "boolean"}
-               }
-             } = EditChannel.input_schema()
+    test "validates input schema" do
+      prism = EditChannel.view()
+      assert prism.input_schema.required == ["channel_id"]
+      assert Map.has_key?(prism.input_schema.properties, :channel_id)
+      assert Map.has_key?(prism.input_schema.properties, :name)
+      assert Map.has_key?(prism.input_schema.properties, :topic)
+      assert Map.has_key?(prism.input_schema.properties, :bitrate)
+      assert Map.has_key?(prism.input_schema.properties, :user_limit)
+      assert Map.has_key?(prism.input_schema.properties, :nsfw)
+    end
 
-      assert %{
-               "type" => "object",
-               "required" => ["channel_id", "edited"],
-               "properties" => %{
-                 "channel_id" => %{"type" => "string"},
-                 "name" => %{"type" => "string"},
-                 "topic" => %{"type" => "string"},
-                 "edited" => %{"type" => "boolean"}
-               }
-             } = EditChannel.output_schema()
+    test "validates output schema" do
+      prism = EditChannel.view()
+      assert prism.output_schema.required == ["edited"]
+      assert Map.has_key?(prism.output_schema.properties, :edited)
+      assert Map.has_key?(prism.output_schema.properties, :channel_id)
+      assert Map.has_key?(prism.output_schema.properties, :name)
+      assert Map.has_key?(prism.output_schema.properties, :topic)
+    end
+
+    test "validates channel_id format" do
+      invalid_cases = [
+        "",
+        "invalid",
+        "123",  # too short
+        "12345678901234567890123"  # too long
+      ]
+
+      for invalid_id <- invalid_cases do
+        assert {:error, "Missing or invalid channel_id"} = EditChannel.handler(
+          %{
+            channel_id: invalid_id,
+            name: "new-channel-name"
+          },
+          @agent_ctx
+        )
+      end
     end
   end
 end
