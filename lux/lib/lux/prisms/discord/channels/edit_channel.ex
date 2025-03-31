@@ -4,7 +4,7 @@ defmodule Lux.Prisms.Discord.Channels.EditChannel do
 
   This prism provides a simple interface for editing Discord channels with:
   - Required parameters (channel_id)
-  - Optional parameters (name, topic, bitrate, user_limit, nsfw)
+  - Optional parameters (name, topic, nsfw)
   - Direct Discord API error propagation
   - Simple success/failure response structure
 
@@ -43,16 +43,6 @@ defmodule Lux.Prisms.Discord.Channels.EditChannel do
           type: :string,
           description: "New topic of the channel",
           maxLength: 1024
-        },
-        bitrate: %{
-          type: :integer,
-          description: "Voice channel bitrate (bits per second)",
-          minimum: 8000
-        },
-        user_limit: %{
-          type: :integer,
-          description: "Maximum number of users in a voice channel",
-          minimum: 0
         },
         nsfw: %{
           type: :boolean,
@@ -130,7 +120,7 @@ defmodule Lux.Prisms.Discord.Channels.EditChannel do
 
   defp build_request_body(params) do
     body = params
-    |> Map.take([:name, :topic, :bitrate, :user_limit, :nsfw])
+    |> Map.take([:name, :topic, :nsfw])
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Map.new()
 

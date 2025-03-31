@@ -25,8 +25,6 @@ defmodule Lux.Prisms.Discord.Channels.EditChannelTest do
         assert Jason.decode!(body) == %{
           "name" => "new-channel-name",
           "topic" => "New channel topic",
-          "bitrate" => 64_000,
-          "user_limit" => 10,
           "nsfw" => true
         }
 
@@ -49,8 +47,6 @@ defmodule Lux.Prisms.Discord.Channels.EditChannelTest do
           channel_id: @channel_id,
           name: "new-channel-name",
           topic: "New channel topic",
-          bitrate: 64_000,
-          user_limit: 10,
           nsfw: true,
           plug: {Req.Test, DiscordClientMock}
         },
@@ -133,8 +129,6 @@ defmodule Lux.Prisms.Discord.Channels.EditChannelTest do
       assert Map.has_key?(prism.input_schema.properties, :channel_id)
       assert Map.has_key?(prism.input_schema.properties, :name)
       assert Map.has_key?(prism.input_schema.properties, :topic)
-      assert Map.has_key?(prism.input_schema.properties, :bitrate)
-      assert Map.has_key?(prism.input_schema.properties, :user_limit)
       assert Map.has_key?(prism.input_schema.properties, :nsfw)
     end
 
