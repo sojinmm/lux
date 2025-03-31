@@ -26,7 +26,12 @@ if config_env() in [:dev, :test] do
     integration_anthropic: env!("INTEGRATION_ANTHROPIC_API_KEY", :string!, "missing anthropic"),
     integration_openweather: env!("INTEGRATION_OPENWEATHER_API_KEY", :string!, "missing open weather"),
     integration_transpose: env!("INTEGRATION_TRANSPOSE_API_KEY", :string!, "missing transpose"),
-    integration_discord: env!("INTEGRATION_DISCORD_API_KEY", :string!, "missing discord")
+    integration_discord: env!("INTEGRATION_DISCORD_API_KEY", :string!, "missing discord"),
+    allora: env!("ALLORA_API_KEY", :string!, "UP-8cbc632a67a84ac1b4078661")
+
+  config :lux, Lux.Integrations.Allora,
+    base_url: env!("ALLORA_BASE_URL", :string!, "https://api.upshot.xyz/v2"),
+    chain_slug: env!("ALLORA_CHAIN_SLUG", :string!, "testnet")
 
   config :lux, :accounts,
     wallet_address: env!("WALLET_ADDRESS", :string!),
@@ -47,7 +52,6 @@ if config_env() in [:dev, :test] do
   config :logger,
     level: env!("LOG_LEVEL", :atom!, :debug)
 end
-
 
 if config_env() == :test do
   # Add Hammer configuration
