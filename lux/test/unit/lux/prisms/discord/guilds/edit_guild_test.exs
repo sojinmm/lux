@@ -128,18 +128,18 @@ defmodule Lux.Prisms.Discord.Guilds.EditGuildTest do
     end
 
     test "handles Discord API errors" do
-      error_body = %{
-        "message" => "Missing Permissions",
-        "code" => 50_013
+      error_response = %{
+        "code" => 50_013,
+        "message" => "Missing Permissions"
       }
 
       Req.Test.expect(DiscordClientMock, fn conn ->
         conn
         |> Plug.Conn.put_resp_content_type("application/json")
-        |> Plug.Conn.send_resp(403, Jason.encode!(error_body))
+        |> Plug.Conn.send_resp(403, Jason.encode!(error_response))
       end)
 
-      assert {:error, {403, error_body}} = EditGuild.handler(
+      assert {:error, {403, error_response}} = EditGuild.handler(
         %{
           guild_id: @guild_id,
           name: @guild_name,
