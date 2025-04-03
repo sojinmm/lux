@@ -71,7 +71,7 @@ defmodule Lux.Prisms.Discord.Guilds.SendEventReminder do
   defp fetch_event(guild_id, event_id) do
     case Client.request(:get, "/guilds/#{guild_id}/scheduled-events/#{event_id}") do
       {:ok, event} -> {:ok, event}
-      {:error, {_status, %{"code" => code, "message" => message}}} -> {:error, %{"code" => code, "message" => message}}
+      {:error, {status, %{"message" => message}}} -> {:error, {status, message}}
       {:error, error} -> {:error, error}
     end
   end
@@ -117,7 +117,7 @@ defmodule Lux.Prisms.Discord.Guilds.SendEventReminder do
   defp send_message(channel_id, request_data) do
     case Client.request(:post, "/channels/#{channel_id}/messages", %{json: request_data}) do
       {:ok, response} -> {:ok, response}
-      {:error, {_status, %{"code" => code, "message" => message}}} -> {:error, %{"code" => code, "message" => message}}
+      {:error, {status, %{"message" => message}}} -> {:error, {status, message}}
       {:error, error} -> {:error, error}
     end
   end
